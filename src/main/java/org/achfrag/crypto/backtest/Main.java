@@ -5,20 +5,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.ta4j.core.BaseStrategy;
-import org.ta4j.core.BaseTick;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Rule;
-import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 import org.ta4j.core.TimeSeriesManager;
 import org.ta4j.core.Trade;
@@ -33,10 +25,6 @@ import org.ta4j.core.trading.rules.StopLossRule;
 public class Main implements Runnable {
 
 	protected final static String FILENAME = "/Users/kristofnidzwetzki/Desktop/coinbaseGBP.csv";
-
-	protected final long MERGE_SECONDS = TimeUnit.MINUTES.toSeconds(60);
-
-	private ZoneId TIMEZONE = ZoneId.of("Europe/Berlin");
 
 	private TimeSeries timeSeries = new BaseTimeSeries("BTC");
 
@@ -97,59 +85,26 @@ public class Main implements Runnable {
 	protected void loadDataFromFile() throws FileNotFoundException, IOException {
 		final BufferedReader br = new BufferedReader(new FileReader(new File(FILENAME)));
 
-		long timeframeBegin = -1;
-		final List<Float> prices = new ArrayList<>();
+		final TickMerger tickMerger = new TickMerger(TickMerger.MERGE_SECONDS_1H, (t) -> timeSeries.addTick(t));
 
 		String line = null;
 		while ((line = br.readLine()) != null) {
 			final String[] parts = line.split(",");
 			final long timestamp = Long.parseLong(parts[0]);
-			final float price = Float.parseFloat(parts[1]);
-			final float volume = Float.parseFloat(parts[2]);
+			final double price = Double.parseDouble(parts[1]);
+			final double volume = Double.parseDouble(parts[2]);
 
 			// Drop unstable data
 			if (timestamp < 1498867200) {
 				continue;
 			}
-
-			if (timeframeBegin == -1) {
-				timeframeBegin = timestamp;
-			} else if (timestamp > timeframeBegin + MERGE_SECONDS) {
-
-				if (prices.isEmpty()) {
-					System.err.println("Error: prices for series are empty: " + timeframeBegin);
-				}
-
-				final double open = prices.get(0);
-				final double close = prices.get(prices.size() - 1);
-				final double high = prices.stream().mapToDouble(e -> e).max().orElse(-1);
-				final double low = prices.stream().mapToDouble(e -> e).min().orElse(-1);
-
-				final Timestamp timestampValue = new Timestamp(timeframeBegin * 1000);
-				final LocalDateTime localtime = timestampValue.toLocalDateTime();
-				final ZonedDateTime withTimezone = localtime.atZone(TIMEZONE);
-
-				final Tick tick = new BaseTick(withTimezone, open, high, low, close, volume);
-
-				try {
-					timeSeries.addTick(tick);
-				} catch (IllegalArgumentException e) {
-					// ignore time shift
-				}
-
-				while (timestamp > timeframeBegin) {
-					timeframeBegin = timeframeBegin + MERGE_SECONDS;
-				}
-
-				prices.clear();
-			}
-
-			prices.add(price);
+			
+			tickMerger.addNewPrice(timestamp, price, volume);
 		}
 
+		tickMerger.close();
 		br.close();
 	}
-
 
 	public static void main(final String[] args) {
 		final Main main = new Main();
