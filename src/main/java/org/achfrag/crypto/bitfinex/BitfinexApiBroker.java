@@ -1,15 +1,25 @@
 package org.achfrag.crypto.bitfinex;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.misc.APIException;
 import org.achfrag.crypto.bitfinex.misc.WebsocketClientEndpoint;
+import org.achfrag.crypto.pair.CurrencyPair;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ta4j.core.BaseTick;
+import org.ta4j.core.Tick;
 
 public class BitfinexApiBroker {
 
@@ -21,7 +31,7 @@ public class BitfinexApiBroker {
 	/**
 	 * The API callback
 	 */
-	final Consumer<String> apiCallback = ((c) -> handleAPICallback(c));
+	final Consumer<String> apiCallback = ((c) -> websocketCallback(c));
 	
 	/**
 	 * The websocket endpoint
@@ -29,9 +39,23 @@ public class BitfinexApiBroker {
 	private WebsocketClientEndpoint websocketEndpoint;
 	
 	/**
+	 * The ticket map
+	 */
+	private final Map<String, Integer> tickerMap = new HashMap<>();
+	
+	/**
+	 * The ticker callbacks
+	 */
+	private final Map<Integer, List<Consumer<Tick>>> tickerCallbacks = new HashMap<>();
+	
+	/**
 	 * The Logger
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
+
+	private Pattern CHANNEL_PATTERN = Pattern.compile("\\[(\\d+),(\\[.*)\\]");
+
+	private Pattern CHANNEL_ELEMENT_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
 
 
 	public void connect() throws APIException {
@@ -57,18 +81,90 @@ public class BitfinexApiBroker {
 		websocketEndpoint.sendMessage(apiCommand.getCommand());
 	}
 	
-	public void handleAPICallback(final String message) {
-		System.out.println("Got message: " + message);
+	public void websocketCallback(final String message) {
+		logger.debug("Got message: {}", message);
 		
 		if(message.startsWith("{")) {
-			// JSON callback
-			final JSONTokener tokener = new JSONTokener(message);
-			final JSONObject jsonObject = new JSONObject(tokener);
+			handleAPICallback(message);
 		} else if(message.startsWith("[")) {
-			// Channel callback
-			System.out.println("Channel callback");
+			handleChannelCallback(message);
 		} else {
 			logger.error("Got unknown callback: {}", message);
 		}
+	}
+
+	protected void handleAPICallback(final String message) {
+		// JSON callback
+		final JSONTokener tokener = new JSONTokener(message);
+		final JSONObject jsonObject = new JSONObject(tokener);
+		
+		final String eventType = jsonObject.getString("event");
+		
+		switch(eventType) {
+			case "info":
+				break;
+			case "subscribed":
+				final int channelId = jsonObject.getInt("chanId");
+				final String symbol = jsonObject.getString("symbol");
+				logger.info("Registering symbol {} on channel {}", symbol, channelId);
+				tickerMap.put(symbol, channelId);
+				tickerCallbacks.put(channelId, new ArrayList<>());
+				break;
+			default:
+				logger.error("Unknown event: {}", message);
+		}
+	}
+
+	protected void handleChannelCallback(final String message) {
+		// Channel callback
+		logger.debug("Channel callback");
+		
+		Matcher matcher = CHANNEL_PATTERN.matcher(message);
+		
+		if(! matcher.matches()) {
+			if(message.contains("\"hb\"")) {
+				// Ignore HB
+			} else {
+				System.out.println("No match found: ");
+			}
+		} else {
+			final int channel = Integer.parseInt(matcher.group(1));
+			final String conntent = matcher.group(2);
+
+			final Matcher contentMatcher = CHANNEL_ELEMENT_PATTERN.matcher(conntent);
+			
+			while (contentMatcher.find()) {
+				final String element = contentMatcher.group(1);
+				handleTickElement(channel, element);
+			}
+		}
+	}
+
+	protected void handleTickElement(final int channel, final String element) {
+		final String[] elements = element.split(",");
+		// 0 = BID
+		// 2 = ASK
+		// 6 = Price
+		final float price = Float.parseFloat(elements[6]);
+		final Tick tick = new BaseTick(ZonedDateTime.now(), price, price, price, price, price);
+		
+		final List<Consumer<Tick>> callbacks = tickerCallbacks.get(channel);
+		callbacks.forEach(c -> c.accept(tick));
+	}
+	
+	public void registerTickCallback(final CurrencyPair currencyPair, final Consumer<Tick> callback) throws APIException {
+		final String currencyString = currencyPair.toBitfinexString();
+		
+		if(! tickerMap.containsKey(currencyString)) {
+			throw new APIException("Unknown ticker string: " + currencyString);
+		}
+		
+		final Integer channel = tickerMap.get(currencyString);
+		tickerCallbacks.get(channel).add(callback);
+	}
+	
+	public boolean isTickerActive(final CurrencyPair currencyPair) {
+		final String currencyString = currencyPair.toBitfinexString();
+		return tickerMap.containsKey(currencyString);
 	}
 }
