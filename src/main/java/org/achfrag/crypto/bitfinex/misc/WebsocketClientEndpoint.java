@@ -1,7 +1,11 @@
-package org.achfrag.crypto;
+package org.achfrag.crypto.bitfinex.misc;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
@@ -17,16 +21,30 @@ import javax.websocket.WebSocketContainer;
 public class WebsocketClientEndpoint {
 	
     private Session userSession = null;
+    
+    private final List<Consumer<String>> callbackConsumer;
+    
+    private final CountDownLatch connectLatch = new CountDownLatch(1);
+    
+	private URI endpointURI;
 
-	public WebsocketClientEndpoint(final URI endpointURI) throws DeploymentException, IOException {
-	      WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+	public WebsocketClientEndpoint(final URI endpointURI) {
+		this.endpointURI = endpointURI;
+		this.callbackConsumer = new ArrayList<>();
+	}
+	
+	public void connect() throws DeploymentException, IOException, InterruptedException {
+	      final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
           container.connectToServer(this, endpointURI);
+
+          connectLatch.await();
 	}
 
     @OnOpen
     public void onOpen(final Session userSession) {
         System.out.println("opening websocket");
         this.userSession = userSession;
+        connectLatch.countDown();
     }
 
     @OnClose
@@ -37,11 +55,19 @@ public class WebsocketClientEndpoint {
     
     @OnMessage
     public void onMessage(final String message) {
-    		System.out.println("New message: " + message);
+    		callbackConsumer.forEach((c) -> c.accept(message)); 
     }
     
     public void sendMessage(final String message) {
         this.userSession.getAsyncRemote().sendText(message);
+    }
+    
+    public void addConsumer(final Consumer<String> consumer) {
+    		callbackConsumer.add(consumer);
+    }
+    
+    public boolean removeConsumer(final Consumer<String> consumer) {
+		return callbackConsumer.remove(consumer);
     }
 
 }
