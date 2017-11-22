@@ -34,7 +34,7 @@ public class Main implements Runnable {
 
 	protected final static String FILENAME = "/Users/kristofnidzwetzki/Desktop/coinbaseGBP.csv";
 
-	protected final long MERGE_SECONDS = TimeUnit.MINUTES.toSeconds(5);
+	protected final long MERGE_SECONDS = TimeUnit.MINUTES.toSeconds(60);
 
 	private ZoneId TIMEZONE = ZoneId.of("Europe/Berlin");
 
@@ -51,9 +51,8 @@ public class Main implements Runnable {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-		} 
+		}
 	}
-
 
 	protected void executeTrading() {
 		ClosePriceIndicator closePrice = new ClosePriceIndicator(timeSeries);
@@ -68,29 +67,32 @@ public class Main implements Runnable {
 				.or(new StopGainRule(closePrice, Decimal.valueOf("2")));
 
 		TimeSeriesManager seriesManager = new TimeSeriesManager(timeSeries);
-		TradingRecord tradingRecord = seriesManager.run(new BaseStrategy(buyingRule, sellingRule));
-		
+		final BaseStrategy strategy = new BaseStrategy(buyingRule, sellingRule);
+		TradingRecord tradingRecord = seriesManager.run(strategy);
+
 		double totalPl = 0.0;
 		List<Trade> trades = tradingRecord.getTrades();
-		for(final Trade trade : trades) {
+		for (final Trade trade : trades) {
 			final int inIndex = trade.getEntry().getIndex();
 			final int outIndex = trade.getExit().getIndex();
-			
+
 			System.out.println("In: " + timeSeries.getTick(inIndex).getBeginTime());
 			System.out.println("Out: " + timeSeries.getTick(outIndex).getBeginTime());
 
 			final Decimal priceOut = trade.getExit().getPrice();
 			final Decimal priceIn = trade.getEntry().getPrice();
-			
+
 			final double pl = priceOut.minus(priceIn).toDouble();
 			System.out.println("P/L: " + pl + " In " + priceIn + " Out " + priceOut);
 			totalPl = totalPl + pl;
 		}
-		
+
 		System.out.println("Total P/L: " + totalPl);
 		System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
-	}
 
+		final Chart chart = new Chart(strategy, timeSeries);
+		chart.showChart();
+	}
 
 	protected void loadDataFromFile() throws FileNotFoundException, IOException {
 		final BufferedReader br = new BufferedReader(new FileReader(new File(FILENAME)));
@@ -99,50 +101,50 @@ public class Main implements Runnable {
 		final List<Float> prices = new ArrayList<>();
 
 		String line = null;
-		while((line = br.readLine()) != null) {
+		while ((line = br.readLine()) != null) {
 			final String[] parts = line.split(",");
 			final long timestamp = Long.parseLong(parts[0]);
 			final float price = Float.parseFloat(parts[1]);
 			final float volume = Float.parseFloat(parts[2]);
-			
+
 			// Drop unstable data
-			if(timestamp < 1487196154) {
+			if (timestamp < 1498867200) {
 				continue;
 			}
 
-			if(timeframeBegin == -1) {
+			if (timeframeBegin == -1) {
 				timeframeBegin = timestamp;
-			} else if(timestamp > timeframeBegin + MERGE_SECONDS) {
+			} else if (timestamp > timeframeBegin + MERGE_SECONDS) {
 
-				if(prices.isEmpty()) {
+				if (prices.isEmpty()) {
 					System.err.println("Error: prices for series are empty: " + timeframeBegin);
 				}
 
 				final double open = prices.get(0);
-				final double close = prices.get(prices.size() -  1);
+				final double close = prices.get(prices.size() - 1);
 				final double high = prices.stream().mapToDouble(e -> e).max().orElse(-1);
 				final double low = prices.stream().mapToDouble(e -> e).min().orElse(-1);
 
 				final Timestamp timestampValue = new Timestamp(timeframeBegin * 1000);
 				final LocalDateTime localtime = timestampValue.toLocalDateTime();
 				final ZonedDateTime withTimezone = localtime.atZone(TIMEZONE);
-				
+
 				final Tick tick = new BaseTick(withTimezone, open, high, low, close, volume);
-				
+
 				try {
 					timeSeries.addTick(tick);
-				} catch(IllegalArgumentException e) {
+				} catch (IllegalArgumentException e) {
 					// ignore time shift
 				}
-				
-				while(timestamp > timeframeBegin) {
+
+				while (timestamp > timeframeBegin) {
 					timeframeBegin = timeframeBegin + MERGE_SECONDS;
 				}
 
 				prices.clear();
-			} 
+			}
 
-			prices.add(price);	
+			prices.add(price);
 		}
 
 		br.close();
