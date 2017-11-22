@@ -49,7 +49,7 @@ public class WebsocketClientEndpoint {
 
     @OnClose
     public void onClose(Session userSession, CloseReason reason) {
-        System.out.println("closing websocket");
+        System.out.println("closing websocket: " + reason);
         this.userSession = null;
     }
     

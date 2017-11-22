@@ -16,6 +16,10 @@ import org.ta4j.core.Tick;
 
 public class TickMerger implements Closeable {
 	
+	public final static long MERGE_SECONDS_30S = 30;
+
+	public final static long MERGE_SECONDS_1M = TimeUnit.MINUTES.toSeconds(1);
+	
 	public final static long MERGE_SECONDS_5M = TimeUnit.MINUTES.toSeconds(5);
 
 	public final static long MERGE_SECONDS_1H = TimeUnit.MINUTES.toSeconds(60);
@@ -39,9 +43,11 @@ public class TickMerger implements Closeable {
 	
 	public void addNewPrice(final long timestamp, final double price, final double volume)  {
 		
+		final long periodEnd = timeframeBegin + mergeSeconds;
+		
 		if (timeframeBegin == -1) {
 			timeframeBegin = timestamp;
-		} else if (timestamp > timeframeBegin + mergeSeconds) {
+		} else if (timestamp > periodEnd) {
 
 			if (prices.isEmpty()) {
 				System.err.println("Error: prices for series are empty: " + timeframeBegin);
@@ -49,7 +55,7 @@ public class TickMerger implements Closeable {
 
 			closeBar();
 			
-			while (timestamp > timeframeBegin) {
+			while (timestamp >= timeframeBegin + mergeSeconds) {
 				timeframeBegin = timeframeBegin + mergeSeconds;
 			}
 		}
