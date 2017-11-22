@@ -1,8 +1,7 @@
-package org.achfrag.crypto;
+package org.achfrag.crypto.bitfinex;
 
 import java.util.concurrent.TimeUnit;
 
-import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTicker;
 import org.achfrag.crypto.pair.CurrencyPair;
