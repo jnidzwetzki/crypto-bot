@@ -47,44 +47,48 @@ public class Main implements Runnable {
 			loadDataFromFile();
 
 			System.out.println("Executing trading");
-
-			ClosePriceIndicator closePrice = new ClosePriceIndicator(timeSeries);
-
-			SMAIndicator shortSma = new SMAIndicator(closePrice, 5);
-			SMAIndicator longSma = new SMAIndicator(closePrice, 30);
-
-			Rule buyingRule = new CrossedUpIndicatorRule(shortSma, longSma);
-
-			Rule sellingRule = new CrossedDownIndicatorRule(shortSma, longSma)
-					.or(new StopLossRule(closePrice, Decimal.valueOf("3")))
-					.or(new StopGainRule(closePrice, Decimal.valueOf("2")));
-
-			TimeSeriesManager seriesManager = new TimeSeriesManager(timeSeries);
-			TradingRecord tradingRecord = seriesManager.run(new BaseStrategy(buyingRule, sellingRule));
-			
-			double totalPl = 0.0;
-			List<Trade> trades = tradingRecord.getTrades();
-			for(final Trade trade : trades) {
-				final int inIndex = trade.getEntry().getIndex();
-				final int outIndex = trade.getExit().getIndex();
-				
-				System.out.println("In: " + timeSeries.getTick(inIndex).getBeginTime());
-				System.out.println("Out: " + timeSeries.getTick(outIndex).getBeginTime());
-
-				final Decimal priceOut = trade.getExit().getPrice();
-				final Decimal priceIn = trade.getEntry().getPrice();
-				
-				final double pl = priceOut.minus(priceIn).toDouble();
-				System.out.println("P/L: " + pl + " In " + priceIn + " Out " + priceOut);
-				totalPl = totalPl + pl;
-			}
-			
-			System.out.println("Total P/L: " + totalPl);
-			System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
+			executeTrading();
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
+	}
+
+
+	protected void executeTrading() {
+		ClosePriceIndicator closePrice = new ClosePriceIndicator(timeSeries);
+
+		SMAIndicator shortSma = new SMAIndicator(closePrice, 5);
+		SMAIndicator longSma = new SMAIndicator(closePrice, 30);
+
+		Rule buyingRule = new CrossedUpIndicatorRule(shortSma, longSma);
+
+		Rule sellingRule = new CrossedDownIndicatorRule(shortSma, longSma)
+				.or(new StopLossRule(closePrice, Decimal.valueOf("3")))
+				.or(new StopGainRule(closePrice, Decimal.valueOf("2")));
+
+		TimeSeriesManager seriesManager = new TimeSeriesManager(timeSeries);
+		TradingRecord tradingRecord = seriesManager.run(new BaseStrategy(buyingRule, sellingRule));
+		
+		double totalPl = 0.0;
+		List<Trade> trades = tradingRecord.getTrades();
+		for(final Trade trade : trades) {
+			final int inIndex = trade.getEntry().getIndex();
+			final int outIndex = trade.getExit().getIndex();
+			
+			System.out.println("In: " + timeSeries.getTick(inIndex).getBeginTime());
+			System.out.println("Out: " + timeSeries.getTick(outIndex).getBeginTime());
+
+			final Decimal priceOut = trade.getExit().getPrice();
+			final Decimal priceIn = trade.getEntry().getPrice();
+			
+			final double pl = priceOut.minus(priceIn).toDouble();
+			System.out.println("P/L: " + pl + " In " + priceIn + " Out " + priceOut);
+			totalPl = totalPl + pl;
+		}
+		
+		System.out.println("Total P/L: " + totalPl);
+		System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
 	}
 
 
