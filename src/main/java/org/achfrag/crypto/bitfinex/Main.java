@@ -61,7 +61,7 @@ public class Main implements Runnable {
 				timeSeries.put(bitfinexString, currencyTimeSeries);
 				strategy.put(bitfinexString, EMAStrategy02.getStrategy(currencyTimeSeries, 9, 14, 21));
 				tradingRecord.put(bitfinexString, new BaseTradingRecord());
-				tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TickMerger.MERGE_SECONDS_30S, (s, t) -> barDoneCallback(s, t)));
+				tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TickMerger.MERGE_SECONDS_1M, (s, t) -> barDoneCallback(s, t)));
 			
 				
 				final AbstractAPICommand subscribeCommandTicker = new SubscribeTicker(currency);
@@ -95,7 +95,7 @@ public class Main implements Runnable {
 		int endIndex = timeSeries.get(symbol).getEndIndex();
 		if (strategy.get(symbol).shouldEnter(endIndex)) {
 			// Our strategy should enter
-			System.out.println("Strategy should ENTER on " + endIndex);
+			System.out.println("Strategy should ENTER on " + endIndex + " / " + symbol);
 			boolean entered = tradingRecord.get(symbol).enter(endIndex, tick.getClosePrice(), Decimal.TEN);
 			if (entered) {
 				Order entry = tradingRecord.get(symbol).getLastEntry();
@@ -104,7 +104,7 @@ public class Main implements Runnable {
 			}
 		} else if (strategy.get(symbol).shouldExit(endIndex)) {
 			// Our strategy should exit
-			System.out.println("Strategy should EXIT on " + endIndex);
+			System.out.println("Strategy should EXIT on " + endIndex + " / " + symbol);
 			boolean exited = tradingRecord.get(symbol).exit(endIndex, tick.getClosePrice(), Decimal.TEN);
 			if (exited) {
 				Order exit = tradingRecord.get(symbol).getLastExit();
