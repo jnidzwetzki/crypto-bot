@@ -80,14 +80,6 @@
 				<configuration>
 					<mainClass>org.achfrag.crypto.bitfinex.Main</mainClass>
 				</configuration>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-					</execution>
-				</executions>
 
 			</plugin>
 		</plugins>
