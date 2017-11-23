@@ -8,6 +8,7 @@ import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.trading.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
+import org.ta4j.core.trading.rules.OverIndicatorRule;
 
 public class EMAStrategy02 {
 
@@ -18,7 +19,7 @@ public class EMAStrategy02 {
 		EMAIndicator sma2 = new EMAIndicator(closePrice, sma2Value);
 		EMAIndicator sma3 = new EMAIndicator(closePrice, sma3Value);
 		
-		Rule buyingRule = new CrossedUpIndicatorRule(sma1, sma2).and(new CrossedUpIndicatorRule(sma2, sma3));
+		Rule buyingRule = new CrossedUpIndicatorRule(sma1, sma2).and(new OverIndicatorRule(sma2, sma3));
 
 		Rule sellingRule = new CrossedDownIndicatorRule(sma1, sma3);
 		//		.or(new CrossedDownIndicatorRule(sma2, sma3));

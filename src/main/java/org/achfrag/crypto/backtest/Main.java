@@ -41,7 +41,7 @@ public class Main implements Runnable {
 		}
 	}
 
-	protected void executeTrading() {
+	protected void executeTrading() throws InterruptedException {
 		
 		final List<Integer> sma1 = Arrays.asList(5, 6, 7, 8, 9, 10, 11, 12, 15);
 		final List<Integer> sma2 = Arrays.asList(10, 12, 14, 16, 18, 20, 30);
@@ -60,6 +60,8 @@ public class Main implements Runnable {
 					TradingRecord tradingRecord = seriesManager.run(strategy);
 
 					double totalPl = 0.0;
+					int winner = 0;
+					int looser = 0;
 					List<Trade> trades = tradingRecord.getTrades();
 					for (final Trade trade : trades) {
 						final int inIndex = trade.getEntry().getIndex();
@@ -79,14 +81,15 @@ public class Main implements Runnable {
 					System.out.println("Stragegy: " + sma1Value + " / " + sma2Value + " / " + sma3Value);
 					System.out.println("Total P/L: " + totalPl);
 					System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
+				
+					/*
+					final Chart chart = new Chart(strategy, timeSeries);
+					chart.showChart();
+				*/	
+				
 				}
 			}
 		}
-
-		
-		/*
-		final Chart chart = new Chart(strategy, timeSeries);
-		chart.showChart();*/
 	}
 
 	protected void debugTrades(final Strategy strategy) {
@@ -129,10 +132,10 @@ public class Main implements Runnable {
 			final double price = Double.parseDouble(parts[1]);
 			final double volume = Double.parseDouble(parts[2]);
 
-			// Drop unstable data
-		/*	if (timestamp < 1498867200) {
+			// Drop unstable data (01.01.2017)
+			if (timestamp < 1483228800) {
 				continue;
-			}*/
+			}
 			
 			tickMerger.addNewPrice(timestamp, price, volume);
 		}

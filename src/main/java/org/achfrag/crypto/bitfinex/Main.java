@@ -59,7 +59,7 @@ public class Main implements Runnable {
 				final String bitfinexString = currency.toBitfinexString();
 				final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
 				timeSeries.put(bitfinexString, currencyTimeSeries);
-				strategy.put(bitfinexString, EMAStrategy02.getStrategy(currencyTimeSeries, 9, 14, 21));
+				strategy.put(bitfinexString, EMAStrategy02.getStrategy(currencyTimeSeries, 5, 12, 40));
 				tradingRecord.put(bitfinexString, new BaseTradingRecord());
 				tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TickMerger.MERGE_SECONDS_1M, (s, t) -> barDoneCallback(s, t)));
 			

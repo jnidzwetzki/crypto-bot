@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import javax.swing.JButton;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -24,6 +26,7 @@ import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 import org.ta4j.core.TimeSeriesManager;
 import org.ta4j.core.Trade;
+import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
 /**
@@ -41,17 +44,7 @@ public class Chart {
 		this.timeSeries = timeSeries;
 	}
 
-	/**
-	 * Builds a JFreeChart time series from a Ta4j time series and an indicator.
-	 * 
-	 * @param tickSeries
-	 *            the ta4j time series
-	 * @param indicator
-	 *            the indicator
-	 * @param name
-	 *            the name of the chart time series
-	 * @return the JFreeChart time series
-	 */
+
 	private static org.jfree.data.time.TimeSeries buildChartTimeSeries(TimeSeries tickSeries,
 			Indicator<Decimal> indicator, String name) {
 		org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(name);
@@ -61,18 +54,9 @@ public class Chart {
 		}
 		return chartTimeSeries;
 	}
+	
+	
 
-	/**
-	 * Runs a strategy over a time series and adds the value markers corresponding
-	 * to buy/sell signals to the plot.
-	 * 
-	 * @param series
-	 *            a time series
-	 * @param strategy
-	 *            a trading strategy
-	 * @param plot
-	 *            the plot
-	 */
 	private static void addBuySellSignals(TimeSeries series, Strategy strategy, XYPlot plot) {
 		// Running the strategy
 		TimeSeriesManager seriesManager = new TimeSeriesManager(series);
@@ -126,6 +110,15 @@ public class Chart {
 		dataset.addSeries(
 				buildChartTimeSeries(timeSeries, new ClosePriceIndicator(timeSeries), "Bitstamp Bitcoin (BTC)"));
 
+		dataset.addSeries(
+				buildChartTimeSeries(timeSeries, new EMAIndicator(new ClosePriceIndicator(timeSeries), 5), "EMA5"));
+		
+		dataset.addSeries(
+				buildChartTimeSeries(timeSeries, new EMAIndicator(new ClosePriceIndicator(timeSeries), 10), "EMA10"));
+		
+		dataset.addSeries(
+				buildChartTimeSeries(timeSeries, new EMAIndicator(new ClosePriceIndicator(timeSeries), 40), "EMA40"));
+		
 		/**
 		 * Creating the chart
 		 */
@@ -140,15 +133,10 @@ public class Chart {
 		XYPlot plot = (XYPlot) chart.getPlot();
 		DateAxis axis = (DateAxis) plot.getDomainAxis();
 		axis.setDateFormatOverride(new SimpleDateFormat("MM-dd-yyyy HH:mm"));
-
-		/**
-		 * Running the strategy and adding the buy and sell signals to plot
-		 */
+		
+	
 		addBuySellSignals(timeSeries, strategy, plot);
-
-		/**
-		 * Displaying the chart
-		 */
+		
 		displayChart(chart);
 	}
 
