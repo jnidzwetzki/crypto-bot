@@ -77,9 +77,19 @@
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>1.2.1</version>
 
-				<configuration>
-					<mainClass>org.achfrag.crypto.bitfinex.Main</mainClass>
-				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+
+						<configuration>
+							<mainClass>org.achfrag.crypto.bitfinex.Main</mainClass>
+						</configuration>
+					</execution>
+				</executions>
+
 			</plugin>
 		</plugins>
 	</build>
