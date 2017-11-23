@@ -24,7 +24,7 @@ public class WebsocketClientEndpoint {
     
     private final List<Consumer<String>> callbackConsumer;
     
-    private final List<ReconnectHandler> reconnectHandler;
+    private final List<WebsocketCloseHandler> closeHandler;
     
     private final CountDownLatch connectLatch = new CountDownLatch(1);
     
@@ -33,13 +33,12 @@ public class WebsocketClientEndpoint {
 	public WebsocketClientEndpoint(final URI endpointURI) {
 		this.endpointURI = endpointURI;
 		this.callbackConsumer = new ArrayList<>();
-		this.reconnectHandler = new ArrayList<>();
+		this.closeHandler = new ArrayList<>();
 	}
 	
 	public void connect() throws DeploymentException, IOException, InterruptedException {
 	      final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
           container.connectToServer(this, endpointURI);
-
           connectLatch.await();
 	}
 
@@ -54,7 +53,7 @@ public class WebsocketClientEndpoint {
     public void onClose(Session userSession, CloseReason reason) {
         System.out.println("closing websocket: " + reason);
         this.userSession = null;
-        reconnectHandler.forEach((h) -> h.handleReconnect());
+        closeHandler.forEach((h) -> h.handleWebsocketClose());
     }
     
     @OnMessage
@@ -63,7 +62,11 @@ public class WebsocketClientEndpoint {
     }
     
     public void sendMessage(final String message) {
-        this.userSession.getAsyncRemote().sendText(message);
+	    	if(this.userSession != null) {
+	    		if( this.userSession.getAsyncRemote() != null) {
+	    	        this.userSession.getAsyncRemote().sendText(message);
+	    		}
+	    	}
     }
     
     public void addConsumer(final Consumer<String> consumer) {
@@ -74,8 +77,8 @@ public class WebsocketClientEndpoint {
 		return callbackConsumer.remove(consumer);
     }
     
-    public void addReconnectHandler(final ReconnectHandler theReconnectHandler) {
-    		reconnectHandler.add(theReconnectHandler);
+    public void addCloseHandler(final WebsocketCloseHandler theCloseHandler) {
+    		closeHandler.add(theCloseHandler);
     }
 
 }

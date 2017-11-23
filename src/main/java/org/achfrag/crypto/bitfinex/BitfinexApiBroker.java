@@ -1,23 +1,23 @@
 package org.achfrag.crypto.bitfinex;
 
-import java.io.IOException;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.websocket.DeploymentException;
-
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
+import org.achfrag.crypto.bitfinex.commands.PingCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTicker;
 import org.achfrag.crypto.bitfinex.misc.APIException;
-import org.achfrag.crypto.bitfinex.misc.ReconnectHandler;
 import org.achfrag.crypto.bitfinex.misc.WebsocketClientEndpoint;
+import org.achfrag.crypto.bitfinex.misc.WebsocketCloseHandler;
 import org.achfrag.crypto.pair.CurrencyPair;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
 
-public class BitfinexApiBroker implements ReconnectHandler {
+public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 	/**
 	 * The bitfinex api
@@ -51,7 +51,7 @@ public class BitfinexApiBroker implements ReconnectHandler {
 	/**
 	 * The ticker callbacks
 	 */
-	private final Map<Integer, List<Consumer<Tick>>> tickerCallbacks = new HashMap<>();
+	private final Map<Integer, List<BiConsumer<String, Tick>>> tickerCallbacks = new HashMap<>();
 	
 	/**
 	 * The Logger
@@ -62,15 +62,42 @@ public class BitfinexApiBroker implements ReconnectHandler {
 
 	private Pattern CHANNEL_ELEMENT_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
 
+	private long lastHeatbeat;
+
+	class HeartbeatThread implements Runnable {
+
+		@Override
+		public void run() {
+			try {
+				while(! Thread.interrupted()) {
+					if(websocketEndpoint != null) {
+						sendCommand(new PingCommand());
+						
+						if(lastHeatbeat + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
+							logger.error("Heartbeat timeout reconnecting");
+							handleWebsocketClose();
+						}
+					}
+					
+					Thread.sleep(3000);
+				}
+			} catch(Throwable e) {
+				logger.error("Got exception", e);
+			}
+		}
+		
+	}
 
 	public void connect() throws APIException {
 		try {
 			final URI bitfinexURI = new URI(BITFINEX_URI);
 			websocketEndpoint = new WebsocketClientEndpoint(bitfinexURI);
 			websocketEndpoint.addConsumer(apiCallback);
-			websocketEndpoint.addReconnectHandler(this);
+			websocketEndpoint.addCloseHandler(this);
 			websocketEndpoint.connect();
+			lastHeatbeat = System.currentTimeMillis();
 			
+			(new Thread(new HeartbeatThread())).start();
 		} catch (Exception e) {
 			throw new APIException(e);
 		}
@@ -116,6 +143,9 @@ public class BitfinexApiBroker implements ReconnectHandler {
 				tickerMap.put(symbol, channelId);
 				tickerCallbacks.put(channelId, new ArrayList<>());
 				break;
+			case "pong":
+				lastHeatbeat = System.currentTimeMillis();
+				break;
 			default:
 				logger.error("Unknown event: {}", message);
 		}
@@ -154,11 +184,18 @@ public class BitfinexApiBroker implements ReconnectHandler {
 		final float price = Float.parseFloat(elements[6]);
 		final Tick tick = new BaseTick(ZonedDateTime.now(), price, price, price, price, price);
 		
-		final List<Consumer<Tick>> callbacks = tickerCallbacks.get(channel);
-		callbacks.forEach(c -> c.accept(tick));
+		final String symbol = tickerMap.entrySet()
+			.stream()
+			.filter((v) -> v.getValue() == channel)
+			.map((v) -> v.getKey())
+			.findAny()
+			.orElseThrow(() -> new IllegalArgumentException("Unable to find symbol"));
+		
+		final List<BiConsumer<String, Tick>> callbacks = tickerCallbacks.get(channel);
+		callbacks.forEach(c -> c.accept(symbol, tick));
 	}
 	
-	public void registerTickCallback(final CurrencyPair currencyPair, final Consumer<Tick> callback) throws APIException {
+	public void registerTickCallback(final CurrencyPair currencyPair, final BiConsumer<String, Tick> callback) throws APIException {
 		final String currencyString = currencyPair.toBitfinexString();
 		
 		if(! tickerMap.containsKey(currencyString)) {
@@ -178,7 +215,7 @@ public class BitfinexApiBroker implements ReconnectHandler {
 	 * @see org.achfrag.crypto.bitfinex.ReconnectHandler#handleReconnect()
 	 */
 	@Override
-	public void handleReconnect() {
+	public void handleWebsocketClose() {
 		try {
 			logger.info("Performing reconnect");
 			
@@ -186,7 +223,7 @@ public class BitfinexApiBroker implements ReconnectHandler {
 			oldTickerMap.putAll(tickerMap);
 			tickerMap.clear();
 			
-			final Map<Integer, List<Consumer<Tick>>> oldConsumerMap = new HashMap<>();
+			final Map<Integer, List<BiConsumer<String, Tick>>> oldConsumerMap = new HashMap<>();
 			oldConsumerMap.putAll(tickerCallbacks);
 			tickerCallbacks.clear();
 			
@@ -202,6 +239,8 @@ public class BitfinexApiBroker implements ReconnectHandler {
 			for(final String oldTicker : oldTickerMap.keySet()) {
 				final Integer newChannel = tickerMap.get(oldTicker);
 				final Integer oldChannel = oldTickerMap.get(oldTicker);
+				
+				logger.info("Remapping channel {} / {} -> {}", oldTicker, oldChannel, newChannel);
 				
 				tickerCallbacks.put(newChannel, oldConsumerMap.get(oldChannel));
 			}

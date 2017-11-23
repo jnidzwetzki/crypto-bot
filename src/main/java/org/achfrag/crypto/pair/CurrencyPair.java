@@ -2,6 +2,8 @@ package org.achfrag.crypto.pair;
 
 public class CurrencyPair {
 	
+	public final static CurrencyPair ETH_USD = new CurrencyPair("ETH", "USD");
+	
 	public final static CurrencyPair ETH_BTC = new CurrencyPair("ETH", "BTC");
 	
 	public final static CurrencyPair BTC_USD = new CurrencyPair("BTC", "USD");

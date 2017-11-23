@@ -120,7 +120,7 @@ public class Main implements Runnable {
 	protected void loadDataFromFile() throws FileNotFoundException, IOException {
 		final BufferedReader br = new BufferedReader(new FileReader(new File(FILENAME)));
 
-		final TickMerger tickMerger = new TickMerger(TickMerger.MERGE_SECONDS_15M, (t) -> timeSeries.addTick(t));
+		final TickMerger tickMerger = new TickMerger("BTC", TickMerger.MERGE_SECONDS_15M, (s, t) -> timeSeries.addTick(t));
 
 		String line = null;
 		while ((line = br.readLine()) != null) {

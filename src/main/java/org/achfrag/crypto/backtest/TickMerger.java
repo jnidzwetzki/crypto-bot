@@ -9,7 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
@@ -32,7 +32,7 @@ public class TickMerger implements Closeable {
 
 	private long mergeSeconds;
 
-	private Consumer<Tick> tickConsumer;
+	private BiConsumer<String, Tick> tickConsumer;
 	
 	private long timeframeBegin = -1;
 	
@@ -40,7 +40,10 @@ public class TickMerger implements Closeable {
 	
 	private final List<Double> prices = new ArrayList<>();
 
-	public TickMerger(final long mergeSeconds, final Consumer<Tick> tickConsumer) {
+	private String symbol;
+
+	public TickMerger(final String symbol, final long mergeSeconds, final BiConsumer<String, Tick> tickConsumer) {
+		this.symbol = symbol;
 		this.mergeSeconds = mergeSeconds;
 		this.tickConsumer = tickConsumer;
 	}
@@ -81,7 +84,7 @@ public class TickMerger implements Closeable {
 		final Tick tick = new BaseTick(withTimezone, open, high, low, close, totalVolume);
 
 		try {
-			tickConsumer.accept(tick);
+			tickConsumer.accept(symbol, tick);
 		} catch (IllegalArgumentException e) {
 			// ignore time shift
 		}
