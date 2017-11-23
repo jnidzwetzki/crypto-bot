@@ -17,68 +17,88 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
+import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @ClientEndpoint
 public class WebsocketClientEndpoint {
-	
-    private Session userSession = null;
-    
-    private final List<Consumer<String>> callbackConsumer;
-    
-    private final List<WebsocketCloseHandler> closeHandler;
-    
-    private final CountDownLatch connectLatch = new CountDownLatch(1);
-    
+
+	private Session userSession = null;
+
+	private final List<Consumer<String>> callbackConsumer;
+
+	private final List<WebsocketCloseHandler> closeHandler;
+
+	private final CountDownLatch connectLatch = new CountDownLatch(1);
+
 	private URI endpointURI;
+	
+	/**
+	 * The Logger
+	 */
+	private final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
+
 
 	public WebsocketClientEndpoint(final URI endpointURI) {
 		this.endpointURI = endpointURI;
 		this.callbackConsumer = new ArrayList<>();
 		this.closeHandler = new ArrayList<>();
 	}
-	
+
 	public void connect() throws DeploymentException, IOException, InterruptedException {
-	      final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-          container.connectToServer(this, endpointURI);
-          connectLatch.await();
+		final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+		container.connectToServer(this, endpointURI);
+		connectLatch.await();
 	}
 
-    @OnOpen
-    public void onOpen(final Session userSession) {
-        System.out.println("opening websocket");
-        this.userSession = userSession;
-        connectLatch.countDown();
-    }
+	@OnOpen
+	public void onOpen(final Session userSession) {
+		System.out.println("opening websocket");
+		connectLatch.countDown();
+	}
 
-    @OnClose
-    public void onClose(Session userSession, CloseReason reason) {
-        System.out.println("closing websocket: " + reason);
-        this.userSession = null;
-        closeHandler.forEach((h) -> h.handleWebsocketClose());
-    }
-    
-    @OnMessage
-    public void onMessage(final String message) {
-    		callbackConsumer.forEach((c) -> c.accept(message)); 
-    }
-    
-    public void sendMessage(final String message) {
-	    	if(this.userSession != null) {
-	    		if( this.userSession.getAsyncRemote() != null) {
-	    	        this.userSession.getAsyncRemote().sendText(message);
-	    		}
-	    	}
-    }
-    
-    public void addConsumer(final Consumer<String> consumer) {
-    		callbackConsumer.add(consumer);
-    }
-    
-    public boolean removeConsumer(final Consumer<String> consumer) {
+	@OnClose
+	public void onClose(Session userSession, CloseReason reason) {
+		System.out.println("closing websocket: " + reason);
+		closeHandler.forEach((h) -> h.handleWebsocketClose());
+		this.userSession = null;
+	}
+
+	@OnMessage
+	public void onMessage(final String message) {
+		callbackConsumer.forEach((c) -> c.accept(message));
+	}
+
+	public void sendMessage(final String message) {
+		if (this.userSession != null && this.userSession.getAsyncRemote() != null) {
+				this.userSession.getAsyncRemote().sendText(message);
+		} else {
+			logger.error("Unable to send message");
+		}
+	}
+
+	public void addConsumer(final Consumer<String> consumer) {
+		callbackConsumer.add(consumer);
+	}
+
+	public boolean removeConsumer(final Consumer<String> consumer) {
 		return callbackConsumer.remove(consumer);
-    }
-    
-    public void addCloseHandler(final WebsocketCloseHandler theCloseHandler) {
-    		closeHandler.add(theCloseHandler);
-    }
+	}
+
+	public void addCloseHandler(final WebsocketCloseHandler theCloseHandler) {
+		closeHandler.add(theCloseHandler);
+	}
+
+	public void close() {
+		try {
+			if (userSession != null) {
+				userSession.close();
+				userSession = null;
+			}
+		} catch (IOException e) {
+			logger.warn("Got error during close", e);
+		}
+	}
 
 }

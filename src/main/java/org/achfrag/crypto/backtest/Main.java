@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.achfrag.crypto.strategy.EMAStrategy02;
+import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Strategy;
@@ -50,7 +50,7 @@ public class Main implements Runnable {
 		for(final int sma1Value : sma1) {
 			for(final int sma2Value : sma2) {
 				for(final int sma3Value : sma3) {
-					final Strategy strategy = EMAStrategy02.getStrategy(timeSeries, sma1Value, sma2Value, sma3Value);
+					final Strategy strategy = EMAStrategy03.getStrategy(timeSeries, sma1Value, sma2Value, sma3Value);
 					
 					TimeSeriesManager seriesManager = new TimeSeriesManager(timeSeries);
 
@@ -62,6 +62,9 @@ public class Main implements Runnable {
 					double totalPl = 0.0;
 					int winner = 0;
 					int looser = 0;
+					double maxWin = 0;
+					double maxLoose = 0;
+					
 					List<Trade> trades = tradingRecord.getTrades();
 					for (final Trade trade : trades) {
 						final int inIndex = trade.getEntry().getIndex();
@@ -74,14 +77,25 @@ public class Main implements Runnable {
 						final Decimal priceIn = trade.getEntry().getPrice();
 
 						final double pl = priceOut.minus(priceIn).toDouble();
+						
+						if(pl < 0) {
+							maxLoose = Math.min(maxLoose, pl);
+							looser++;
+						} else {
+							maxWin = Math.max(maxWin, pl);
+							winner++;
+						}
+						
 					//	System.out.println("P/L: " + pl + " In " + priceIn + " Out " + priceOut);
 						totalPl = totalPl + (pl * (priceIn.toDouble() / USD_AMOUNT));
 					}
 
-					System.out.println("Stragegy: " + sma1Value + " / " + sma2Value + " / " + sma3Value);
+					System.out.println("Strategy: " + sma1Value + " / " + sma2Value + " / " + sma3Value);
 					System.out.println("Total P/L: " + totalPl);
 					System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
-				
+					System.out.format("Winner %d, looser %d\n", winner, looser);
+					System.out.format("Max win %f, max loose %f\n", maxWin, maxLoose);
+
 					/*
 					final Chart chart = new Chart(strategy, timeSeries);
 					chart.showChart();

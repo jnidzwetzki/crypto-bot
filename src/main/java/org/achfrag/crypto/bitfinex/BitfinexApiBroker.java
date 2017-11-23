@@ -106,6 +106,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	public void disconnect() {
 		if(websocketEndpoint != null) {
 			websocketEndpoint.removeConsumer(apiCallback);
+			websocketEndpoint.close();
 			websocketEndpoint = null;
 		}
 	}
@@ -189,7 +190,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			.filter((v) -> v.getValue() == channel)
 			.map((v) -> v.getKey())
 			.findAny()
-			.orElseThrow(() -> new IllegalArgumentException("Unable to find symbol"));
+			.orElseThrow(() -> new IllegalArgumentException("Unable to find symbol: " + channel + "/" + tickerMap));
 		
 		final List<BiConsumer<String, Tick>> callbacks = tickerCallbacks.get(channel);
 		callbacks.forEach(c -> c.accept(symbol, tick));
@@ -218,6 +219,8 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	public void handleWebsocketClose() {
 		try {
 			logger.info("Performing reconnect");
+			
+			websocketEndpoint.close();
 			
 			final Map<String, Integer> oldTickerMap = new HashMap<>();
 			oldTickerMap.putAll(tickerMap);
