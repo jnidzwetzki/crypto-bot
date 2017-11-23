@@ -17,7 +17,6 @@ import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
-import org.ta4j.core.BaseStrategy;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.Strategy;
@@ -34,10 +33,10 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
  */
 public class Chart {
 
-	private BaseStrategy strategy;
+	private Strategy strategy;
 	private TimeSeries timeSeries;
 
-	public Chart(final BaseStrategy strategy, final TimeSeries timeSeries) {
+	public Chart(final Strategy strategy, final TimeSeries timeSeries) {
 		this.strategy = strategy;
 		this.timeSeries = timeSeries;
 	}

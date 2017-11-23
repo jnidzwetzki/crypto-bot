@@ -24,6 +24,8 @@ public class WebsocketClientEndpoint {
     
     private final List<Consumer<String>> callbackConsumer;
     
+    private final List<ReconnectHandler> reconnectHandler;
+    
     private final CountDownLatch connectLatch = new CountDownLatch(1);
     
 	private URI endpointURI;
@@ -31,6 +33,7 @@ public class WebsocketClientEndpoint {
 	public WebsocketClientEndpoint(final URI endpointURI) {
 		this.endpointURI = endpointURI;
 		this.callbackConsumer = new ArrayList<>();
+		this.reconnectHandler = new ArrayList<>();
 	}
 	
 	public void connect() throws DeploymentException, IOException, InterruptedException {
@@ -51,6 +54,7 @@ public class WebsocketClientEndpoint {
     public void onClose(Session userSession, CloseReason reason) {
         System.out.println("closing websocket: " + reason);
         this.userSession = null;
+        reconnectHandler.forEach((h) -> h.handleReconnect());
     }
     
     @OnMessage
@@ -68,6 +72,10 @@ public class WebsocketClientEndpoint {
     
     public boolean removeConsumer(final Consumer<String> consumer) {
 		return callbackConsumer.remove(consumer);
+    }
+    
+    public void addReconnectHandler(final ReconnectHandler theReconnectHandler) {
+    		reconnectHandler.add(theReconnectHandler);
     }
 
 }

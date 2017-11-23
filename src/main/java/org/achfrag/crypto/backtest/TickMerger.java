@@ -21,6 +21,10 @@ public class TickMerger implements Closeable {
 	public final static long MERGE_SECONDS_1M = TimeUnit.MINUTES.toSeconds(1);
 	
 	public final static long MERGE_SECONDS_5M = TimeUnit.MINUTES.toSeconds(5);
+	
+	public final static long MERGE_SECONDS_15M = TimeUnit.MINUTES.toSeconds(15);
+
+	public final static long MERGE_SECONDS_30M = TimeUnit.MINUTES.toSeconds(30);
 
 	public final static long MERGE_SECONDS_1H = TimeUnit.MINUTES.toSeconds(60);
 

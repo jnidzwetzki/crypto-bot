@@ -1,5 +1,6 @@
 package org.achfrag.crypto.bitfinex;
 
+import java.io.IOException;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -10,8 +11,12 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.websocket.DeploymentException;
+
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
+import org.achfrag.crypto.bitfinex.commands.SubscribeTicker;
 import org.achfrag.crypto.bitfinex.misc.APIException;
+import org.achfrag.crypto.bitfinex.misc.ReconnectHandler;
 import org.achfrag.crypto.bitfinex.misc.WebsocketClientEndpoint;
 import org.achfrag.crypto.pair.CurrencyPair;
 import org.json.JSONObject;
@@ -21,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
 
-public class BitfinexApiBroker {
+public class BitfinexApiBroker implements ReconnectHandler {
 
 	/**
 	 * The bitfinex api
@@ -63,6 +68,7 @@ public class BitfinexApiBroker {
 			final URI bitfinexURI = new URI(BITFINEX_URI);
 			websocketEndpoint = new WebsocketClientEndpoint(bitfinexURI);
 			websocketEndpoint.addConsumer(apiCallback);
+			websocketEndpoint.addReconnectHandler(this);
 			websocketEndpoint.connect();
 			
 		} catch (Exception e) {
@@ -166,5 +172,43 @@ public class BitfinexApiBroker {
 	public boolean isTickerActive(final CurrencyPair currencyPair) {
 		final String currencyString = currencyPair.toBitfinexString();
 		return tickerMap.containsKey(currencyString);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.achfrag.crypto.bitfinex.ReconnectHandler#handleReconnect()
+	 */
+	@Override
+	public void handleReconnect() {
+		try {
+			logger.info("Performing reconnect");
+			
+			final Map<String, Integer> oldTickerMap = new HashMap<>();
+			oldTickerMap.putAll(tickerMap);
+			tickerMap.clear();
+			
+			final Map<Integer, List<Consumer<Tick>>> oldConsumerMap = new HashMap<>();
+			oldConsumerMap.putAll(tickerCallbacks);
+			tickerCallbacks.clear();
+			
+			websocketEndpoint.connect();
+			
+			oldTickerMap.keySet().forEach(c -> sendCommand(new SubscribeTicker(c)));
+			
+			logger.info("Waiting for ticker to resubscribe");
+			while(tickerMap.size() != oldTickerMap.size()) {
+				Thread.sleep(100);
+			}
+			
+			for(final String oldTicker : oldTickerMap.keySet()) {
+				final Integer newChannel = tickerMap.get(oldTicker);
+				final Integer oldChannel = oldTickerMap.get(oldTicker);
+				
+				tickerCallbacks.put(newChannel, oldConsumerMap.get(oldChannel));
+			}
+			
+		} catch (Exception e) {
+			logger.error("Got exception while reconnect", e);
+		} 
+		
 	}
 }
