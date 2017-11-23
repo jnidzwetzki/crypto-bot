@@ -55,6 +55,7 @@ public class WebsocketClientEndpoint {
 	@OnOpen
 	public void onOpen(final Session userSession) {
 		System.out.println("opening websocket");
+		this.userSession = userSession;
 		connectLatch.countDown();
 	}
 

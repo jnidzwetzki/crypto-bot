@@ -44,7 +44,7 @@ public class Main implements Runnable {
 		timeSeries = new HashMap<>();
 		tradingRecord = new HashMap<>();
 		strategy = new HashMap<>();
-		currencies = Arrays.asList(CurrencyPair.BTC_USD, CurrencyPair.ETH_USD);
+		currencies = Arrays.asList(CurrencyPair.BTC_USD, CurrencyPair.ETH_USD, CurrencyPair.LTC_USD);
 	}
 
 	@Override
