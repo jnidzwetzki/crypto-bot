@@ -7,6 +7,11 @@ import org.achfrag.crypto.bitfinex.commands.PingCommand;
 class HeartbeatThread implements Runnable {
 
 	/**
+	 * The API timeout
+	 */
+	private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+	
+	/**
 	 * The API broker
 	 */
 	private final BitfinexApiBroker bitfinexApiBroker;
@@ -25,13 +30,13 @@ class HeartbeatThread implements Runnable {
 				if(bitfinexApiBroker.websocketEndpoint != null) {
 					bitfinexApiBroker.sendCommand(new PingCommand());
 					
-					final long heartbeatTimeout = bitfinexApiBroker.lastHeatbeat + TimeUnit.SECONDS.toMillis(15);
+					final long heartbeatTimeout = bitfinexApiBroker.lastHeatbeat + TIMEOUT;
 					
 					if(heartbeatTimeout < System.currentTimeMillis()) {
 						BitfinexApiBroker.logger.error("Heartbeat timeout reconnecting");
 						
-						// Disable auto reconnect to ignose session closed 
-						// evenents, and preventing duplicate reconnects
+						// Disable auto reconnect to ignore session closed 
+						// events, and preventing duplicate reconnects
 						bitfinexApiBroker.setAutoReconnectEnabled(false);
 						bitfinexApiBroker.reconnect();
 						bitfinexApiBroker.setAutoReconnectEnabled(true);

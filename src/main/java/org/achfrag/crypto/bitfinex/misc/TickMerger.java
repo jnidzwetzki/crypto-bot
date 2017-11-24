@@ -2,8 +2,7 @@ package org.achfrag.crypto.bitfinex.misc;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,7 @@ public class TickMerger implements Closeable {
 	}
 	
 	public void addNewPrice(final long timestamp, final double price, final double volume)  {
-		
+
 		final long periodEnd = timeframeBegin + timeframe.getSeconds();
 		
 		if (timeframeBegin == -1) {
@@ -63,10 +62,9 @@ public class TickMerger implements Closeable {
 		final double high = prices.stream().mapToDouble(e -> e).max().orElse(-1);
 		final double low = prices.stream().mapToDouble(e -> e).min().orElse(-1);
 
-		final Timestamp timestampValue = new Timestamp(timeframeBegin * 1000);
-		final LocalDateTime localtime = timestampValue.toLocalDateTime();
-		final ZonedDateTime withTimezone = localtime.atZone(Const.TIMEZONE);
-
+		final Instant i = Instant.ofEpochMilli(timeframeBegin * 1000);
+		final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
+	
 		final Tick tick = new BaseTick(withTimezone, open, high, low, close, totalVolume);
 
 		try {

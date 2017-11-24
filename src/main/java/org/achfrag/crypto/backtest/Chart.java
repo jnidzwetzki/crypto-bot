@@ -6,8 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.JButton;
-
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -38,8 +36,10 @@ public class Chart {
 
 	private Strategy strategy;
 	private TimeSeries timeSeries;
+	private String symbol;
 
-	public Chart(final Strategy strategy, final TimeSeries timeSeries) {
+	public Chart(final String symbol, final Strategy strategy, final TimeSeries timeSeries) {
+		this.symbol = symbol;
 		this.strategy = strategy;
 		this.timeSeries = timeSeries;
 	}
@@ -102,13 +102,13 @@ public class Chart {
 		frame.setVisible(true);
 	}
 	
-	protected void showChart() {
+	public void showChart() {
 		/**
 		 * Building chart datasets
 		 */
 		TimeSeriesCollection dataset = new TimeSeriesCollection();
 		dataset.addSeries(
-				buildChartTimeSeries(timeSeries, new ClosePriceIndicator(timeSeries), "Bitstamp Bitcoin (BTC)"));
+				buildChartTimeSeries(timeSeries, new ClosePriceIndicator(timeSeries), symbol));
 
 		dataset.addSeries(
 				buildChartTimeSeries(timeSeries, new EMAIndicator(new ClosePriceIndicator(timeSeries), 5), "EMA5"));

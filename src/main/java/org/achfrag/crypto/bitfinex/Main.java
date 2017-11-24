@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import org.achfrag.crypto.backtest.Chart;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeCandles;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTicker;
@@ -40,7 +41,7 @@ public class Main implements Runnable {
 
 	protected final Map<String, TradingRecord> tradingRecord;
 
-	protected final Map<String, Strategy> strategy;
+	protected final Map<String, Strategy> strategies;
 
 	protected final List<CurrencyPair> currencies; 
 	
@@ -50,7 +51,7 @@ public class Main implements Runnable {
 		tickMerger = new HashMap<>();
 		timeSeries = new HashMap<>();
 		tradingRecord = new HashMap<>();
-		strategy = new HashMap<>();
+		strategies = new HashMap<>();
 		currencies = Arrays.asList(CurrencyPair.BTC_USD, CurrencyPair.ETH_USD, CurrencyPair.LTC_USD);
 	}
 
@@ -78,7 +79,8 @@ public class Main implements Runnable {
 			final String bitfinexString = currency.toBitfinexString();
 			final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
 			timeSeries.put(bitfinexString, currencyTimeSeries);
-			strategy.put(bitfinexString, EMAStrategy03.getStrategy(currencyTimeSeries, 5, 12, 40));
+			final Strategy strategy = EMAStrategy03.getStrategy(currencyTimeSeries, 5, 12, 40);
+			strategies.put(bitfinexString, strategy);
 			tradingRecord.put(bitfinexString, new BaseTradingRecord());
 
 			// Add bars to timeseries
@@ -96,6 +98,9 @@ public class Main implements Runnable {
 			System.out.println("Loaded ticks for symbol " 
 					+ bitfinexString + " " 
 					+ timeSeries.get(bitfinexString).getEndIndex());
+			
+		/*	final Chart chart = new Chart(bitfinexString, strategy, currencyTimeSeries);
+			chart.showChart();*/
 		}
 	}
 
@@ -118,17 +123,22 @@ public class Main implements Runnable {
 				Thread.sleep(100);
 			}
 
-			System.out.println("Register callback");
 			bitfinexApiBroker.registerTickCallback(currency.toBitfinexString(), (s, c) -> handleTickCallback(s, c));
 		}
 	}
 
 	private void barDoneCallback(final String symbol, final Tick tick) {
 		System.out.format("Symbol %s Bar %s\n", symbol, tick);
-		timeSeries.get(symbol).addTick(tick);
-
-		int endIndex = timeSeries.get(symbol).getEndIndex();
-		if (strategy.get(symbol).shouldEnter(endIndex)) {
+		
+		try {
+			timeSeries.get(symbol).addTick(tick);
+		} catch(Throwable e) {
+			logger.error("Unable to add {} to symbol {}", tick, symbol);
+		}
+		
+		final int endIndex = timeSeries.get(symbol).getEndIndex();
+		
+		if (strategies.get(symbol).shouldEnter(endIndex)) {
 			// Our strategy should enter
 			System.out.println("Strategy should ENTER on " + endIndex + " / " + symbol);
 			boolean entered = tradingRecord.get(symbol).enter(endIndex, tick.getClosePrice(), Decimal.TEN);
@@ -137,7 +147,7 @@ public class Main implements Runnable {
 				System.out.println("Entered on " + entry.getIndex() + " (price=" + entry.getPrice().toDouble()
 						+ ", amount=" + entry.getAmount().toDouble() + ")");
 			}
-		} else if (strategy.get(symbol).shouldExit(endIndex)) {
+		} else if (strategies.get(symbol).shouldExit(endIndex)) {
 			// Our strategy should exit
 			System.out.println("Strategy should EXIT on " + endIndex + " / " + symbol);
 			boolean exited = tradingRecord.get(symbol).exit(endIndex, tick.getClosePrice(), Decimal.TEN);
@@ -150,7 +160,7 @@ public class Main implements Runnable {
 	}
 
 	private void handleTickCallback(final String symbol, final Tick c) {
-		tickMerger.get(symbol).addNewPrice(c.getBeginTime().toEpochSecond(), c.getOpenPrice().toDouble(), c.getVolume().toDouble());
+		tickMerger.get(symbol).addNewPrice(c.getEndTime().toEpochSecond(), c.getOpenPrice().toDouble(), c.getVolume().toDouble());
 	}
 
 	public static void main(final String[] args) {

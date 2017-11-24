@@ -1,6 +1,7 @@
 package org.achfrag.crypto;
 
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 public class Const {
 
@@ -12,7 +13,9 @@ public class Const {
 	/**
 	 * The bitfinex timezone
 	 */
-	public final static ZoneId BITFINEX_TIMEZONE = ZoneId.of("UTC+1");
+	public final static ZoneId BITFINEX_TIMEZONE = ZoneOffset.UTC;
+
+	
 
 
 }

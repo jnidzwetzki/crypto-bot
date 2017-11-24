@@ -1,8 +1,8 @@
 package org.achfrag.crypto.bitfinex;
 
 import java.net.URI;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -215,11 +215,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			// 3 = High 
 			// 4 = Low
 			// 5 = Volume
+			final Instant i = Instant.ofEpochMilli(Long.parseLong(parts[0]));
+			final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
 			
-			final Timestamp timestampValue = new Timestamp(Long.parseLong(parts[0]));
-			final LocalDateTime localtime = timestampValue.toLocalDateTime();
-			final ZonedDateTime withTimezone = localtime.atZone(Const.BITFINEX_TIMEZONE);
-
 			final Tick tick = new BaseTick(withTimezone, 
 					Double.parseDouble(parts[1]), 
 					Double.parseDouble(parts[2]), 
@@ -261,8 +259,8 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		// 2 = ASK
 		// 6 = Price
 		final double price = Double.parseDouble(elements[6]);
-		final Tick tick = new BaseTick(ZonedDateTime.now(), price, price, price, price, price);
-		
+		final Tick tick = new BaseTick(ZonedDateTime.now(Const.BITFINEX_TIMEZONE), price, price, price, price, price);
+
 		final String symbol = channelIdSymbolMap.get(channel);
 		
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
