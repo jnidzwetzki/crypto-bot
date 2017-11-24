@@ -54,7 +54,7 @@ public class WebsocketClientEndpoint {
 
 	@OnOpen
 	public void onOpen(final Session userSession) {
-		logger.info("Websocket is new open");
+		logger.info("Websocket is now open");
 		connectLatch.countDown();
 	}
 
