@@ -45,7 +45,7 @@ public class Main implements Runnable {
 
 	protected final List<CurrencyPair> currencies; 
 	
-	protected static final Timeframe TIMEFRAME = Timeframe.MINUTES_1;
+	protected static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
 
 	public Main() {
 		tickMerger = new HashMap<>();
