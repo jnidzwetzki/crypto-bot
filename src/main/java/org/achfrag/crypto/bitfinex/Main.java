@@ -6,12 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.achfrag.crypto.backtest.TickMerger;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
+import org.achfrag.crypto.bitfinex.commands.SubscribeCandles;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTicker;
+import org.achfrag.crypto.bitfinex.commands.UnsubscribeCandles;
 import org.achfrag.crypto.bitfinex.misc.APIException;
+import org.achfrag.crypto.bitfinex.misc.TickMerger;
+import org.achfrag.crypto.bitfinex.misc.Timeframe;
 import org.achfrag.crypto.pair.CurrencyPair;
-import org.achfrag.crypto.strategy.EMAStrategy02;
+import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.BaseTimeSeries;
@@ -39,6 +42,8 @@ public class Main implements Runnable {
 	protected final Map<String, Strategy> strategy;
 
 	protected final List<CurrencyPair> currencies; 
+	
+	protected static final Timeframe TIMEFRAME = Timeframe.MINUTES_1;
 
 	public Main() {
 		tickMerger = new HashMap<>();
@@ -54,11 +59,8 @@ public class Main implements Runnable {
 			final BitfinexApiBroker bitfinexApiBroker = new BitfinexApiBroker();
 			bitfinexApiBroker.connect();
 
+			requestHistoricalData(bitfinexApiBroker);			
 			registerTicker(bitfinexApiBroker);
-			
-			// final AbstractAPICommand subscribeCommandCandles = new
-			// SubscribeCandles(CurrencyPair.BTC_USD, SubscribeCandles.TIMEFRAME_1M);
-			// bitfinexApiBroker.sendCommand(subscribeCommandCandles);
 
 			while (true) {
 				Thread.sleep(TimeUnit.MINUTES.toMillis(5));
@@ -68,15 +70,27 @@ public class Main implements Runnable {
 		}
 	}
 
+	private void requestHistoricalData(final BitfinexApiBroker bitfinexApiBroker) throws InterruptedException {
+		logger.info("Request historical candles");
+		for(final CurrencyPair currency : currencies) {
+			bitfinexApiBroker.sendCommand(new SubscribeCandles(currency, TIMEFRAME));
+			Thread.sleep(1000);
+			bitfinexApiBroker.sendCommand(new UnsubscribeCandles(currency, TIMEFRAME));
+		}
+	}
+
 	protected void registerTicker(final BitfinexApiBroker bitfinexApiBroker) throws InterruptedException, APIException {
+		
+		logger.info("Register ticker");
+		
 		for(final CurrencyPair currency : currencies) {
 			
 			final String bitfinexString = currency.toBitfinexString();
 			final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
 			timeSeries.put(bitfinexString, currencyTimeSeries);
-			strategy.put(bitfinexString, EMAStrategy02.getStrategy(currencyTimeSeries, 5, 12, 40));
+			strategy.put(bitfinexString, EMAStrategy03.getStrategy(currencyTimeSeries, 5, 12, 40));
 			tradingRecord.put(bitfinexString, new BaseTradingRecord());
-			tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TickMerger.MERGE_SECONDS_1M, (s, t) -> barDoneCallback(s, t)));
+			tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
 		
 			final AbstractAPICommand subscribeCommandTicker = new SubscribeTicker(currency);
 			bitfinexApiBroker.sendCommand(subscribeCommandTicker);

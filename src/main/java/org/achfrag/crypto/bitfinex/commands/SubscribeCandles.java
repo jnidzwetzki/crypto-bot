@@ -1,29 +1,27 @@
 package org.achfrag.crypto.bitfinex.commands;
 
+import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
+import org.achfrag.crypto.bitfinex.misc.Timeframe;
 import org.achfrag.crypto.pair.CurrencyPair;
 import org.json.JSONObject;
 
 public class SubscribeCandles extends AbstractAPICommand {
 
 	private CurrencyPair currencyPair;
-	
-	public final static String TIMEFRAME_1M = "1m";
-	
-	public final static String TIMEFRAME_5M = "5m";
 
-	private String timeframe;
+	private Timeframe timeframe;
 
-	public SubscribeCandles(final CurrencyPair currencyPair, final String timeframe) {
+	public SubscribeCandles(final CurrencyPair currencyPair, final Timeframe timeframe) {
 		this.currencyPair = currencyPair;
 		this.timeframe = timeframe;
 	}
 
 	@Override
-	public String getCommand() {
+	public String getCommand(final BitfinexApiBroker bitfinexApiBroker) {
 		final JSONObject subscribeJson = new JSONObject();
 		subscribeJson.put("event", "subscribe");
 		subscribeJson.put("channel", "candles");
-		subscribeJson.put("key", "trade:" + timeframe + ":" + currencyPair.toBitfinexString());
+		subscribeJson.put("key", "trade:" + timeframe.getBitfinexString() + ":" + currencyPair.toBitfinexString());
 		
 		System.out.println(subscribeJson.toString());
 		

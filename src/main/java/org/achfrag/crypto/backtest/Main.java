@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.achfrag.crypto.bitfinex.misc.TickMerger;
+import org.achfrag.crypto.bitfinex.misc.Timeframe;
 import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Decimal;
@@ -137,7 +139,7 @@ public class Main implements Runnable {
 	protected void loadDataFromFile() throws FileNotFoundException, IOException {
 		final BufferedReader br = new BufferedReader(new FileReader(new File(FILENAME)));
 
-		final TickMerger tickMerger = new TickMerger("BTC", TickMerger.MERGE_SECONDS_15M, (s, t) -> timeSeries.addTick(t));
+		final TickMerger tickMerger = new TickMerger("BTC", Timeframe.MINUTES_15, (s, t) -> timeSeries.addTick(t));
 
 		String line = null;
 		while ((line = br.readLine()) != null) {

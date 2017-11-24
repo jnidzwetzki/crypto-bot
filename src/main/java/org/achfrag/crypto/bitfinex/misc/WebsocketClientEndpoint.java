@@ -48,20 +48,19 @@ public class WebsocketClientEndpoint {
 
 	public void connect() throws DeploymentException, IOException, InterruptedException {
 		final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-		container.connectToServer(this, endpointURI);
+		this.userSession = container.connectToServer(this, endpointURI);
 		connectLatch.await();
 	}
 
 	@OnOpen
 	public void onOpen(final Session userSession) {
-		System.out.println("opening websocket");
-		this.userSession = userSession;
+		logger.info("Websocket is new open");
 		connectLatch.countDown();
 	}
 
 	@OnClose
 	public void onClose(Session userSession, CloseReason reason) {
-		System.out.println("closing websocket: " + reason);
+		logger.info("Closing websocket: " + reason);
 		closeHandler.forEach((h) -> h.handleWebsocketClose());
 		this.userSession = null;
 	}

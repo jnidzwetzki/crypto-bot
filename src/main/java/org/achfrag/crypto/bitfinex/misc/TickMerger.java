@@ -1,36 +1,22 @@
-package org.achfrag.crypto.backtest;
+package org.achfrag.crypto.bitfinex.misc;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
+import org.achfrag.crypto.Const;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
 
 public class TickMerger implements Closeable {
-	
-	public final static long MERGE_SECONDS_30S = 30;
 
-	public final static long MERGE_SECONDS_1M = TimeUnit.MINUTES.toSeconds(1);
-	
-	public final static long MERGE_SECONDS_5M = TimeUnit.MINUTES.toSeconds(5);
-	
-	public final static long MERGE_SECONDS_15M = TimeUnit.MINUTES.toSeconds(15);
 
-	public final static long MERGE_SECONDS_30M = TimeUnit.MINUTES.toSeconds(30);
-
-	public final static long MERGE_SECONDS_1H = TimeUnit.MINUTES.toSeconds(60);
-
-	private ZoneId TIMEZONE = ZoneId.of("Europe/Berlin");
-
-	private long mergeSeconds;
+	private Timeframe timeframe;
 
 	private BiConsumer<String, Tick> tickConsumer;
 	
@@ -42,15 +28,15 @@ public class TickMerger implements Closeable {
 
 	private String symbol;
 
-	public TickMerger(final String symbol, final long mergeSeconds, final BiConsumer<String, Tick> tickConsumer) {
+	public TickMerger(final String symbol, final Timeframe timeframe, final BiConsumer<String, Tick> tickConsumer) {
 		this.symbol = symbol;
-		this.mergeSeconds = mergeSeconds;
+		this.timeframe = timeframe;
 		this.tickConsumer = tickConsumer;
 	}
 	
 	public void addNewPrice(final long timestamp, final double price, final double volume)  {
 		
-		final long periodEnd = timeframeBegin + mergeSeconds;
+		final long periodEnd = timeframeBegin + timeframe.getSeconds();
 		
 		if (timeframeBegin == -1) {
 			timeframeBegin = timestamp;
@@ -62,8 +48,8 @@ public class TickMerger implements Closeable {
 
 			closeBar();
 			
-			while (timestamp >= timeframeBegin + mergeSeconds) {
-				timeframeBegin = timeframeBegin + mergeSeconds;
+			while (timestamp >= timeframeBegin + timeframe.getSeconds()) {
+				timeframeBegin = timeframeBegin + timeframe.getSeconds();
 			}
 		}
 		
@@ -79,7 +65,7 @@ public class TickMerger implements Closeable {
 
 		final Timestamp timestampValue = new Timestamp(timeframeBegin * 1000);
 		final LocalDateTime localtime = timestampValue.toLocalDateTime();
-		final ZonedDateTime withTimezone = localtime.atZone(TIMEZONE);
+		final ZonedDateTime withTimezone = localtime.atZone(Const.TIMEZONE);
 
 		final Tick tick = new BaseTick(withTimezone, open, high, low, close, totalVolume);
 
