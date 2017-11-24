@@ -213,6 +213,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			return;
 		}
 		
+		reconnect(); 
+	}
+
+	protected void reconnect() {
 		try {
 			logger.info("Performing reconnect");
 			
@@ -248,7 +252,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
-		} 
+		}
 	}
 
 	public boolean isAutoReconnectEnabled() {

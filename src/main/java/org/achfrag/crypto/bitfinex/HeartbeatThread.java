@@ -33,7 +33,7 @@ class HeartbeatThread implements Runnable {
 						// Disable auto reconnect to ignose session closed 
 						// evenents, and preventing duplicate reconnects
 						bitfinexApiBroker.setAutoReconnectEnabled(false);
-						bitfinexApiBroker.handleWebsocketClose();
+						bitfinexApiBroker.reconnect();
 						bitfinexApiBroker.setAutoReconnectEnabled(true);
 					}
 					

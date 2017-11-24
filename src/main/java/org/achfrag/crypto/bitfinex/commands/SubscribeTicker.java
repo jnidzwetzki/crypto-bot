@@ -10,12 +10,7 @@ public class SubscribeTicker extends AbstractAPICommand {
 	public SubscribeTicker(final CurrencyPair currencyPair) {
 		this.currencyPair = currencyPair.toBitfinexString();
 	}
-	
 
-	public SubscribeTicker(final String currencyPair) {
-		this.currencyPair = currencyPair;
-	}
-	
 	@Override
 	public String getCommand() {
 		final JSONObject subscribeJson = new JSONObject();
