@@ -1,6 +1,4 @@
-package org.achfrag.crypto.pair;
-
-import org.achfrag.crypto.bitfinex.misc.Timeframe;
+package org.achfrag.crypto.bitfinex.misc;
 
 public class CurrencyPair {
 	
