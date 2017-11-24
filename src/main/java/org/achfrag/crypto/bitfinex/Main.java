@@ -91,6 +91,10 @@ public class Main implements Runnable {
 			
 			bitfinexApiBroker.removeTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new UnsubscribeCandles(currency, TIMEFRAME));
+			
+			System.out.println("Loaded ticks for symbol " 
+					+ bitfinexString + " " 
+					+ timeSeries.get(bitfinexString).getEndIndex());
 		}
 	}
 

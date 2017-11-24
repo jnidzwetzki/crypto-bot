@@ -174,7 +174,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			if(message.contains("\"hb\"")) {
 				lastHeatbeat = System.currentTimeMillis();
 			} else {
-				System.out.println("No match found: ");
+				logger.error("No match found for message {}", message);
 			}
 		} else {
 			final int channel = Integer.parseInt(matcher.group(1));
@@ -231,9 +231,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 		
 		ticksBuffer.sort((t1, t2) -> t1.getEndTime().compareTo(t2.getEndTime()));
-		
-		System.out.println("-->" + channelSymbol);
-		System.out.println("Callbacks active: " + channelCallbacks);
 
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(channelSymbol);
 
