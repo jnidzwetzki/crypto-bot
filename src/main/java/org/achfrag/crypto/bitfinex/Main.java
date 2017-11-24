@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeCandles;
@@ -70,11 +71,25 @@ public class Main implements Runnable {
 		}
 	}
 
-	private void requestHistoricalData(final BitfinexApiBroker bitfinexApiBroker) throws InterruptedException {
+	private void requestHistoricalData(final BitfinexApiBroker bitfinexApiBroker) throws InterruptedException, APIException {
 		logger.info("Request historical candles");
 		for(final CurrencyPair currency : currencies) {
+			
+			final String bitfinexString = currency.toBitfinexString();
+			final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
+			timeSeries.put(bitfinexString, currencyTimeSeries);
+			strategy.put(bitfinexString, EMAStrategy03.getStrategy(currencyTimeSeries, 5, 12, 40));
+			tradingRecord.put(bitfinexString, new BaseTradingRecord());
+
+			// Add bars to timeseries
+			final String barSymbol = "trade:" + TIMEFRAME.getBitfinexString() + ":" + currency.toBitfinexString();
+			final BiConsumer<String, Tick> callback = (symbol, tick) -> timeSeries.get(symbol).addTick(tick);
+			
+			bitfinexApiBroker.registerTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new SubscribeCandles(currency, TIMEFRAME));
-			Thread.sleep(1000);
+			Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+			
+			bitfinexApiBroker.removeTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new UnsubscribeCandles(currency, TIMEFRAME));
 		}
 	}
@@ -86,10 +101,7 @@ public class Main implements Runnable {
 		for(final CurrencyPair currency : currencies) {
 			
 			final String bitfinexString = currency.toBitfinexString();
-			final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
-			timeSeries.put(bitfinexString, currencyTimeSeries);
-			strategy.put(bitfinexString, EMAStrategy03.getStrategy(currencyTimeSeries, 5, 12, 40));
-			tradingRecord.put(bitfinexString, new BaseTradingRecord());
+
 			tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
 		
 			final AbstractAPICommand subscribeCommandTicker = new SubscribeTicker(currency);
@@ -102,7 +114,7 @@ public class Main implements Runnable {
 			}
 
 			System.out.println("Register callback");
-			bitfinexApiBroker.registerTickCallback(currency, (s, c) -> handleTickCallback(s, c));
+			bitfinexApiBroker.registerTickCallback(currency.toBitfinexString(), (s, c) -> handleTickCallback(s, c));
 		}
 	}
 

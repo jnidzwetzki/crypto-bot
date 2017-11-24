@@ -22,11 +22,11 @@ public class UnsubscribeCandles extends AbstractAPICommand {
 		
 		final String symbol = "trade:" + timeframe.getBitfinexString() + ":" + currencyPair.toBitfinexString();
 		
-		if(! bitfinexApiBroker.getChannelMap().containsKey(symbol)) {
+		final Integer channel = bitfinexApiBroker.getChannelForSymbol(symbol);
+		
+		if(channel == -1) {
 			throw new IllegalArgumentException("Unknown symbol: " + symbol);
 		}
-		
-		final Integer channel = bitfinexApiBroker.getChannelMap().get(symbol);
 		
 		final JSONObject subscribeJson = new JSONObject();
 		subscribeJson.put("event", "unsubscribe");
