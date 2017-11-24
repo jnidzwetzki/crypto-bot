@@ -6,14 +6,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
-import org.achfrag.crypto.bitfinex.commands.PingCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTicker;
 import org.achfrag.crypto.bitfinex.misc.APIException;
 import org.achfrag.crypto.bitfinex.misc.WebsocketClientEndpoint;
@@ -41,7 +39,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	/**
 	 * The websocket endpoint
 	 */
-	private WebsocketClientEndpoint websocketEndpoint;
+	WebsocketClientEndpoint websocketEndpoint;
 	
 	/**
 	 * The ticket map
@@ -54,39 +52,18 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	private final Map<Integer, List<BiConsumer<String, Tick>>> tickerCallbacks = new HashMap<>();
 	
 	/**
+	 * The last heartbeat value
+	 */
+	protected long lastHeatbeat;
+	
+	/**
 	 * The Logger
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
+	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
 
 	private Pattern CHANNEL_PATTERN = Pattern.compile("\\[(\\d+),(\\[.*)\\]");
 
 	private Pattern CHANNEL_ELEMENT_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
-
-	private long lastHeatbeat;
-
-	class HeartbeatThread implements Runnable {
-
-		@Override
-		public void run() {
-			try {
-				while(! Thread.interrupted()) {
-					if(websocketEndpoint != null) {
-						sendCommand(new PingCommand());
-						
-						if(lastHeatbeat + TimeUnit.SECONDS.toMillis(15) < System.currentTimeMillis()) {
-							logger.error("Heartbeat timeout reconnecting");
-							handleWebsocketClose();
-						}
-					}
-					
-					Thread.sleep(3000);
-				}
-			} catch(Throwable e) {
-				logger.error("Got exception", e);
-			}
-		}
-		
-	}
 
 	public void connect() throws APIException {
 		try {
@@ -97,7 +74,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			websocketEndpoint.connect();
 			lastHeatbeat = System.currentTimeMillis();
 			
-			(new Thread(new HeartbeatThread())).start();
+			(new Thread(new HeartbeatThread(this))).start();
 		} catch (Exception e) {
 			throw new APIException(e);
 		}
@@ -216,7 +193,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @see org.achfrag.crypto.bitfinex.ReconnectHandler#handleReconnect()
 	 */
 	@Override
-	public void handleWebsocketClose() {
+	public synchronized void handleWebsocketClose() {
 		try {
 			logger.info("Performing reconnect");
 			
