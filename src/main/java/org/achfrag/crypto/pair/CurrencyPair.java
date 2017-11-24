@@ -1,5 +1,7 @@
 package org.achfrag.crypto.pair;
 
+import org.achfrag.crypto.bitfinex.misc.Timeframe;
+
 public class CurrencyPair {
 	
 	// Ethereum
@@ -25,6 +27,10 @@ public class CurrencyPair {
 	
 	public String toBitfinexString() {
 		return "t" + pair1 + pair2;
+	}
+	
+	public String toBifinexCandlestickString(final Timeframe timeframe) {
+		return "trade:" + timeframe.getBitfinexString() + ":" + toBitfinexString();
 	}
 
 }

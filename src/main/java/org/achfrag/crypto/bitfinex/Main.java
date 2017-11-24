@@ -82,8 +82,9 @@ public class Main implements Runnable {
 			tradingRecord.put(bitfinexString, new BaseTradingRecord());
 
 			// Add bars to timeseries
-			final String barSymbol = "trade:" + TIMEFRAME.getBitfinexString() + ":" + currency.toBitfinexString();
 			final BiConsumer<String, Tick> callback = (symbol, tick) -> timeSeries.get(symbol).addTick(tick);
+			
+			final String barSymbol = currency.toBifinexCandlestickString(TIMEFRAME);
 			
 			bitfinexApiBroker.registerTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new SubscribeCandles(currency, TIMEFRAME));
