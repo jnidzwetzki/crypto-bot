@@ -36,14 +36,18 @@ public class Main implements Runnable {
 			loadDataFromFile();
 
 			System.out.println("Executing trading on ticks: " + timeSeries.getEndIndex());
-			executeTrading();
+			
+			final Strategy strategy = EMAStrategy03.getStrategy(timeSeries, 5, 12, 40);
+			processTrade("Strategy 5-12-40" ,  strategy);	
+
+			//findEma();
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	protected void executeTrading() throws InterruptedException {
+	protected void findEma() throws InterruptedException {
 		
 		final List<Integer> sma1 = Arrays.asList(5, 6, 7, 8, 9, 10, 11, 12, 15);
 		final List<Integer> sma2 = Arrays.asList(10, 12, 14, 16, 18, 20, 30);
@@ -54,58 +58,61 @@ public class Main implements Runnable {
 				for(final int sma3Value : sma3) {
 					final Strategy strategy = EMAStrategy03.getStrategy(timeSeries, sma1Value, sma2Value, sma3Value);
 					
-					TimeSeriesManager seriesManager = new TimeSeriesManager(timeSeries);
-
-					//debugTrades(strategy);
-					
-					
-					TradingRecord tradingRecord = seriesManager.run(strategy);
-
-					double totalPl = 0.0;
-					int winner = 0;
-					int looser = 0;
-					double maxWin = 0;
-					double maxLoose = 0;
-					
-					List<Trade> trades = tradingRecord.getTrades();
-					for (final Trade trade : trades) {
-						final int inIndex = trade.getEntry().getIndex();
-						final int outIndex = trade.getExit().getIndex();
-
-					//	System.out.println("In: " + timeSeries.getTick(inIndex).getBeginTime());
-					//	System.out.println("Out: " + timeSeries.getTick(outIndex).getBeginTime());
-
-						final Decimal priceOut = trade.getExit().getPrice();
-						final Decimal priceIn = trade.getEntry().getPrice();
-
-						final double pl = priceOut.minus(priceIn).toDouble();
-						
-						if(pl < 0) {
-							maxLoose = Math.min(maxLoose, pl);
-							looser++;
-						} else {
-							maxWin = Math.max(maxWin, pl);
-							winner++;
-						}
-						
-					//	System.out.println("P/L: " + pl + " In " + priceIn + " Out " + priceOut);
-						totalPl = totalPl + (pl * (priceIn.toDouble() / USD_AMOUNT));
-					}
-
-					System.out.println("Strategy: " + sma1Value + " / " + sma2Value + " / " + sma3Value);
-					System.out.println("Total P/L: " + totalPl);
-					System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
-					System.out.format("Winner %d, looser %d\n", winner, looser);
-					System.out.format("Max win %f, max loose %f\n", maxWin, maxLoose);
-
-					/*
-					final Chart chart = new Chart(strategy, timeSeries);
-					chart.showChart();
-				*/	
-				
+					processTrade("Strategy " + sma1Value + "-" + sma2Value + "-" + sma3Value,  strategy);	
 				}
 			}
 		}
+	}
+
+	private void processTrade(final String strategyName, final Strategy strategy) {
+		TimeSeriesManager seriesManager = new TimeSeriesManager(timeSeries);
+
+		//debugTrades(strategy);
+		
+		
+		TradingRecord tradingRecord = seriesManager.run(strategy);
+
+		double totalPl = 0.0;
+		int winner = 0;
+		int looser = 0;
+		double maxWin = 0;
+		double maxLoose = 0;
+		
+		List<Trade> trades = tradingRecord.getTrades();
+		for (final Trade trade : trades) {
+			final int inIndex = trade.getEntry().getIndex();
+			final int outIndex = trade.getExit().getIndex();
+
+		//	System.out.println("In: " + timeSeries.getTick(inIndex).getBeginTime());
+		//	System.out.println("Out: " + timeSeries.getTick(outIndex).getBeginTime());
+
+			final Decimal priceOut = trade.getExit().getPrice();
+			final Decimal priceIn = trade.getEntry().getPrice();
+
+			final double pl = priceOut.minus(priceIn).toDouble();
+			
+			if(pl < 0) {
+				maxLoose = Math.min(maxLoose, pl);
+				looser++;
+			} else {
+				maxWin = Math.max(maxWin, pl);
+				winner++;
+			}
+			
+		//	System.out.println("P/L: " + pl + " In " + priceIn + " Out " + priceOut);
+			totalPl = totalPl + (pl * (priceIn.toDouble() / USD_AMOUNT));
+		}
+
+		System.out.println("Strategy: " + strategyName);
+		System.out.println("Total P/L: " + totalPl);
+		System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
+		System.out.format("Winner %d, looser %d\n", winner, looser);
+		System.out.format("Max win %f, max loose %f\n", maxWin, maxLoose);
+
+		/*
+		final Chart chart = new Chart(strategy, timeSeries);
+		chart.showChart();
+*/
 	}
 
 	protected void debugTrades(final Strategy strategy) {

@@ -23,7 +23,7 @@ public class EMAStrategy03 {
 		
 		RSIIndicator rsi = new RSIIndicator(closePrice, 14);
 		
-		Rule buyingRule = new CrossedUpIndicatorRule(sma1, sma2)
+		Rule buyingRule = new OverIndicatorRule(sma1, sma2)
 				.and(new OverIndicatorRule(sma2, sma3))
 				.and(new OverIndicatorRule(rsi, Decimal.valueOf(50)));
 
