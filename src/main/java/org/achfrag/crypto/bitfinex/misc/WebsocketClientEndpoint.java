@@ -71,11 +71,18 @@ public class WebsocketClientEndpoint {
 	}
 
 	public void sendMessage(final String message) {
-		if (this.userSession != null && this.userSession.getAsyncRemote() != null) {
-				this.userSession.getAsyncRemote().sendText(message);
-		} else {
-			logger.error("Unable to send message");
+		
+		if(userSession == null) {
+			logger.error("Unable to send message, user session is null");
+			return;
 		}
+		
+		if(userSession.getAsyncRemote() == null) {
+			logger.error("Unable to send message, async remote is null");
+			return;
+		}
+		
+		userSession.getAsyncRemote().sendText(message);
 	}
 
 	public void addConsumer(final Consumer<String> consumer) {
