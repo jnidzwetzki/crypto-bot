@@ -29,7 +29,12 @@ class HeartbeatThread implements Runnable {
 					
 					if(heartbeatTimeout < System.currentTimeMillis()) {
 						BitfinexApiBroker.logger.error("Heartbeat timeout reconnecting");
-						this.bitfinexApiBroker.handleWebsocketClose();
+						
+						// Disable auto reconnect to ignose session closed 
+						// evenents, and preventing duplicate reconnects
+						bitfinexApiBroker.setAutoReconnectEnabled(false);
+						bitfinexApiBroker.handleWebsocketClose();
+						bitfinexApiBroker.setAutoReconnectEnabled(true);
 					}
 					
 				}

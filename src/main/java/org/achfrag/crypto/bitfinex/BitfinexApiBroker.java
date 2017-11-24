@@ -57,6 +57,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	protected long lastHeatbeat;
 	
 	/**
+	 * The websocket auto reconnect flag
+	 */
+	protected volatile boolean autoReconnectEnabled = true;
+	
+	/**
 	 * The Logger
 	 */
 	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
@@ -202,7 +207,12 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @see org.achfrag.crypto.bitfinex.ReconnectHandler#handleReconnect()
 	 */
 	@Override
-	public synchronized void handleWebsocketClose() {
+	public void handleWebsocketClose() {
+		
+		if(autoReconnectEnabled == false) {
+			return;
+		}
+		
 		try {
 			logger.info("Performing reconnect");
 			
@@ -239,6 +249,13 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
 		} 
-		
+	}
+
+	public boolean isAutoReconnectEnabled() {
+		return autoReconnectEnabled;
+	}
+
+	public void setAutoReconnectEnabled(boolean autoReconnectEnabled) {
+		this.autoReconnectEnabled = autoReconnectEnabled;
 	}
 }

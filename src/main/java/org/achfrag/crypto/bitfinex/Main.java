@@ -50,7 +50,6 @@ public class Main implements Runnable {
 	@Override
 	public void run() {
 		try {
-
 			final BitfinexApiBroker bitfinexApiBroker = new BitfinexApiBroker();
 			bitfinexApiBroker.connect();
 
@@ -63,7 +62,6 @@ public class Main implements Runnable {
 				tradingRecord.put(bitfinexString, new BaseTradingRecord());
 				tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TickMerger.MERGE_SECONDS_1M, (s, t) -> barDoneCallback(s, t)));
 			
-				
 				final AbstractAPICommand subscribeCommandTicker = new SubscribeTicker(currency);
 				bitfinexApiBroker.sendCommand(subscribeCommandTicker);
 	
