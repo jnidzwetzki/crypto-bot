@@ -65,6 +65,8 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 	private Pattern CHANNEL_ELEMENT_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
 
+	private Thread heartbeatThread;
+
 	public void connect() throws APIException {
 		try {
 			final URI bitfinexURI = new URI(BITFINEX_URI);
@@ -74,13 +76,20 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			websocketEndpoint.connect();
 			lastHeatbeat = System.currentTimeMillis();
 			
-			(new Thread(new HeartbeatThread(this))).start();
+			heartbeatThread = new Thread(new HeartbeatThread(this));
+			heartbeatThread.start();
 		} catch (Exception e) {
 			throw new APIException(e);
 		}
 	}
 	
 	public void disconnect() {
+		
+		if(heartbeatThread != null) {
+			heartbeatThread.interrupt();
+			heartbeatThread = null;
+		}
+		
 		if(websocketEndpoint != null) {
 			websocketEndpoint.removeConsumer(apiCallback);
 			websocketEndpoint.close();
@@ -224,7 +233,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 				
 				tickerCallbacks.put(newChannel, oldConsumerMap.get(oldChannel));
 			}
-			
+
+			lastHeatbeat = System.currentTimeMillis();					
+
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
 		} 
