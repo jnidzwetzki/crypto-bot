@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -316,7 +317,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		reconnect(); 
 	}
 
-	protected synchronized void reconnect() {
+	protected synchronized boolean reconnect() {
 		try {
 			logger.info("Performing reconnect");
 			
@@ -335,10 +336,12 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 				Thread.sleep(100);
 			}
 
-			lastHeatbeat = System.currentTimeMillis();					
-
+			lastHeatbeat = System.currentTimeMillis();
+			
+			return true;
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
+			return false;
 		}
 	}
 

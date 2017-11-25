@@ -11,6 +11,13 @@ class HeartbeatThread implements Runnable {
 	 */
 	private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 	
+	
+	/**
+	 * The API timeout
+	 */
+	private static final long HEARTBEAT = TimeUnit.SECONDS.toMillis(5);
+	
+	
 	/**
 	 * The API broker
 	 */
@@ -28,7 +35,12 @@ class HeartbeatThread implements Runnable {
 		try {
 			while(! Thread.interrupted()) {
 				if(bitfinexApiBroker.websocketEndpoint != null) {
-					bitfinexApiBroker.sendCommand(new PingCommand());
+					
+					final long nextHeartbeat = bitfinexApiBroker.lastHeatbeat + HEARTBEAT;
+
+					if(nextHeartbeat < System.currentTimeMillis()) {
+						bitfinexApiBroker.sendCommand(new PingCommand());
+					}
 					
 					final long heartbeatTimeout = bitfinexApiBroker.lastHeatbeat + TIMEOUT;
 					
@@ -38,8 +50,10 @@ class HeartbeatThread implements Runnable {
 						// Disable auto reconnect to ignore session closed 
 						// events, and preventing duplicate reconnects
 						bitfinexApiBroker.setAutoReconnectEnabled(false);
-						bitfinexApiBroker.reconnect();
+						final boolean reconnectState = bitfinexApiBroker.reconnect();
 						bitfinexApiBroker.setAutoReconnectEnabled(true);
+						
+						waitIfReconnectFailed(reconnectState);
 					}
 					
 				}
@@ -48,6 +62,21 @@ class HeartbeatThread implements Runnable {
 			}
 		} catch(Throwable e) {
 			BitfinexApiBroker.logger.error("Got exception", e);
+		}
+	}
+
+	/** 
+	 * Wait some time before the next reconnect is executed
+	 * @param reconnectState
+	 */
+	private void waitIfReconnectFailed(final boolean reconnectState) {
+		if(! reconnectState == false) {
+			// Wait some time for the reconnect
+			try {
+				Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+			} catch (InterruptedException e1) {
+				Thread.currentThread().interrupt();
+			}
 		}
 	}
 	
