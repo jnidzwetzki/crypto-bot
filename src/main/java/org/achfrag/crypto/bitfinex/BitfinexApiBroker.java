@@ -111,7 +111,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			websocketEndpoint.addConsumer(apiCallback);
 			websocketEndpoint.addCloseHandler(this);
 			websocketEndpoint.connect();
-			lastHeatbeat.set(System.currentTimeMillis());
+			handlePongCallback();
 			
 			executeAuthentification();
 			
@@ -172,47 +172,62 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		final JSONObject jsonObject = new JSONObject(tokener);
 		
 		final String eventType = jsonObject.getString("event");
-		
-		switch(eventType) {
-			case "info":
-				break;
-			case "subscribed":			
-				final String channel = jsonObject.getString("channel");
-			
-			if(channel.equals("ticker")) {
-					final int channelId = jsonObject.getInt("chanId");
-					final String symbol = jsonObject.getString("symbol");
-					logger.info("Registering symbol {} on channel {}", symbol, channelId);
-					addToChannelSymbolMap(channelId, symbol);
-				} else if(channel.equals("candles")) {
-					final int channelId = jsonObject.getInt("chanId");
-					final String key = jsonObject.getString("key");
-					logger.info("Registering key {} on channel {}", key, channelId);
-					addToChannelSymbolMap(channelId, key);
-				} else {
-					logger.error("Unknown subscribed callback {}", message);
-				}
 
-				break;
-			case "pong":
-				lastHeatbeat.set(System.currentTimeMillis());
-				break;
-			case "unsubscribed":
-				synchronized (channelIdSymbolMap) {
-					final int channelId = jsonObject.getInt("chanId");
-					final String symbol = getFromChannelSymbolMap(channelId);
-					logger.info("Channel {} ({}) is unsubscribed", channelId, symbol);
-					channelCallbacks.remove(symbol);
-					channelIdSymbolMap.remove(channelId);
-					channelIdSymbolMap.notifyAll();
-					break;
-				}
-			case "auth":
-				authentificatedLatch.countDown();
-				logger.info("Authentification successfully {}", jsonObject.getString("status"));
-				break;
-			default:
-				logger.error("Unknown event: {}", message);
+		switch (eventType) {
+		case "info":
+			break;
+		case "subscribed":
+			handleSubscribedCallback(message, jsonObject);
+			break;
+		case "pong":
+			handlePongCallback();
+			break;
+		case "unsubscribed":
+			handleUnsubscribedCallback(jsonObject);
+			break;
+		case "auth":
+			handleAuthCallback(jsonObject);
+			break;
+		default:
+			logger.error("Unknown event: {}", message);
+		}
+	}
+
+	private void handleAuthCallback(final JSONObject jsonObject) {
+		authentificatedLatch.countDown();
+		logger.info("Authentification successfully {}", jsonObject.getString("status"));
+	}
+
+	private void handleUnsubscribedCallback(final JSONObject jsonObject) {
+		synchronized (channelIdSymbolMap) {
+			final int channelId = jsonObject.getInt("chanId");
+			final String symbol = getFromChannelSymbolMap(channelId);
+			logger.info("Channel {} ({}) is unsubscribed", channelId, symbol);
+			channelCallbacks.remove(symbol);
+			channelIdSymbolMap.remove(channelId);
+			channelIdSymbolMap.notifyAll();
+		}
+	}
+
+	private void handlePongCallback() {
+		lastHeatbeat.set(System.currentTimeMillis());
+	}
+
+	private void handleSubscribedCallback(final String message, final JSONObject jsonObject) {
+		final String channel = jsonObject.getString("channel");
+
+		if (channel.equals("ticker")) {
+			final int channelId = jsonObject.getInt("chanId");
+			final String symbol = jsonObject.getString("symbol");
+			logger.info("Registering symbol {} on channel {}", symbol, channelId);
+			addToChannelSymbolMap(channelId, symbol);
+		} else if (channel.equals("candles")) {
+			final int channelId = jsonObject.getInt("chanId");
+			final String key = jsonObject.getString("key");
+			logger.info("Registering key {} on channel {}", key, channelId);
+			addToChannelSymbolMap(channelId, key);
+		} else {
+			logger.error("Unknown subscribed callback {}", message);
 		}
 	}
 
@@ -226,7 +241,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	protected void handleChannelCallback(final String message) {
 		// Channel callback
 		logger.debug("Channel callback");
-		lastHeatbeat.set(System.currentTimeMillis());
+		handlePongCallback();
 
 		final Matcher matcher = BitfinexApiHelper.CHANNEL_PATTERN.matcher(message);
 		
@@ -386,48 +401,58 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		reconnect(); 
 	}
 
+	/**
+	 * Perform a reconnect
+	 * @return
+	 */
 	protected synchronized boolean reconnect() {
 		try {
 			logger.info("Performing reconnect");
 			
 			websocketEndpoint.close();
-
-			final Map<Integer, String> oldChannelIdSymbolMap = new HashMap<>();
-
-			synchronized (channelIdSymbolMap) {
-				oldChannelIdSymbolMap.putAll(channelIdSymbolMap);
-				channelIdSymbolMap.clear();
-				channelIdSymbolMap.notifyAll();
-			}
-			
 			websocketEndpoint.connect();
 			
 			executeAuthentification();
-			
-			oldChannelIdSymbolMap.entrySet().forEach((e) -> sendCommand(new SubscribeTickerCommand(e.getValue())));
-			
-			logger.info("Waiting for ticker to resubscribe");
-			int execution = 0;
-			
-			synchronized (channelIdSymbolMap) {		
-				while(channelIdSymbolMap.size() != oldChannelIdSymbolMap.size()) {
-					
-					if(execution > 10) {
-						logger.error("Subscription of tiker failed");
-						return false;
-					}
-					
-					channelIdSymbolMap.wait(500);
-					execution++;	
-				}
-			}
+			resubscribeChannels();
 
-			lastHeatbeat.set(System.currentTimeMillis());
+			handlePongCallback();
 			
 			return true;
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
 			return false;
+		}
+	}
+
+	/**
+	 * Resubscribe the old ticker
+	 * @throws InterruptedException
+	 * @throws APIException
+	 */
+	private void resubscribeChannels() throws InterruptedException, APIException {
+		final Map<Integer, String> oldChannelIdSymbolMap = new HashMap<>();
+
+		synchronized (channelIdSymbolMap) {
+			oldChannelIdSymbolMap.putAll(channelIdSymbolMap);
+			channelIdSymbolMap.clear();
+			channelIdSymbolMap.notifyAll();
+		}
+		
+		oldChannelIdSymbolMap.entrySet().forEach((e) -> sendCommand(new SubscribeTickerCommand(e.getValue())));
+		
+		logger.info("Waiting for ticker to resubscribe");
+		int execution = 0;
+		
+		synchronized (channelIdSymbolMap) {		
+			while(channelIdSymbolMap.size() != oldChannelIdSymbolMap.size()) {
+				
+				if(execution > 10) {
+					throw new APIException("Subscription of tiker failed");
+				}
+				
+				channelIdSymbolMap.wait(500);
+				execution++;	
+			}
 		}
 	}
 
