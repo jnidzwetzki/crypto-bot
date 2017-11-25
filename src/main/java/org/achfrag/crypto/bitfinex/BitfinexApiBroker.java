@@ -2,13 +2,12 @@ package org.achfrag.crypto.bitfinex;
 
 import java.net.URI;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -58,7 +57,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	/**
 	 * The last heartbeat value
 	 */
-	protected long lastHeatbeat;
+	protected AtomicLong lastHeatbeat;
 	
 	/**
 	 * The websocket auto reconnect flag
@@ -83,7 +82,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			websocketEndpoint.addConsumer(apiCallback);
 			websocketEndpoint.addCloseHandler(this);
 			websocketEndpoint.connect();
-			lastHeatbeat = System.currentTimeMillis();
+			lastHeatbeat.set(System.currentTimeMillis());
 			
 			heartbeatThread = new Thread(new HeartbeatThread(this));
 			heartbeatThread.start();
@@ -151,7 +150,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 				break;
 			case "pong":
-				lastHeatbeat = System.currentTimeMillis();
+				lastHeatbeat.set(System.currentTimeMillis());
 				break;
 			case "unsubscribed":
 				final int channelId = jsonObject.getInt("chanId");
@@ -173,7 +172,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		
 		if(! matcher.matches()) {
 			if(message.contains("\"hb\"")) {
-				lastHeatbeat = System.currentTimeMillis();
+				lastHeatbeat.set(System.currentTimeMillis());
 			} else {
 				logger.error("No match found for message {}", message);
 			}
@@ -336,7 +335,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 				Thread.sleep(100);
 			}
 
-			lastHeatbeat = System.currentTimeMillis();
+			lastHeatbeat.set(System.currentTimeMillis());
 			
 			return true;
 		} catch (Exception e) {
