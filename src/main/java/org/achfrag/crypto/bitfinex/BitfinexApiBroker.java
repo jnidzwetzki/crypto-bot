@@ -362,8 +362,16 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			oldChannelIdSymbolMap.entrySet().forEach((e) -> sendCommand(new SubscribeTickerCommand(e.getValue())));
 			
 			logger.info("Waiting for ticker to resubscribe");
+			int execution = 0;
 			while(channelIdSymbolMap.size() != oldChannelIdSymbolMap.size()) {
-				Thread.sleep(100);
+				
+				if(execution > 10) {
+					logger.error("Subscription of tiker failed");
+					return false;
+				}
+				
+				Thread.sleep(1000);
+				execution++;				
 			}
 
 			lastHeatbeat.set(System.currentTimeMillis());
