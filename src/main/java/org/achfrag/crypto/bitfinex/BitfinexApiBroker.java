@@ -47,22 +47,27 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	/**
 	 * The channel map
 	 */
-	private final Map<Integer, String> channelIdSymbolMap = new HashMap<>();
+	private final Map<Integer, String> channelIdSymbolMap;
 	
 	/**
 	 * The channel callbacks
 	 */
-	private final Map<String, List<BiConsumer<String, Tick>>> channelCallbacks = new HashMap<>();
+	private final Map<String, List<BiConsumer<String, Tick>>> channelCallbacks;
 	
 	/**
 	 * The last heartbeat value
 	 */
-	protected AtomicLong lastHeatbeat;
+	protected final AtomicLong lastHeatbeat;
 	
 	/**
 	 * The websocket auto reconnect flag
 	 */
 	protected volatile boolean autoReconnectEnabled = true;
+
+	/**
+	 * The heartbeat thread
+	 */
+	private Thread heartbeatThread;
 	
 	/**
 	 * The Logger
@@ -73,8 +78,13 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 	private Pattern CHANNEL_ELEMENT_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
 
-	private Thread heartbeatThread;
 
+	public BitfinexApiBroker() {
+		this.channelIdSymbolMap = new HashMap<>();
+		this.channelCallbacks = new HashMap<>();
+		this.lastHeatbeat = new AtomicLong();
+	}
+	
 	public void connect() throws APIException {
 		try {
 			final URI bitfinexURI = new URI(BITFINEX_URI);
