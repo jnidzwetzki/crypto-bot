@@ -19,6 +19,7 @@ import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
+import org.achfrag.crypto.util.CloseableHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,14 +105,8 @@ public class WebsocketClientEndpoint {
 	}
 
 	public void close() {
-		try {
-			if (userSession != null) {
-				userSession.close();
-				userSession = null;
-			}
-		} catch (IOException e) {
-			logger.warn("Got error during close", e);
-		}
+		CloseableHelper.closeWithoutException(userSession);
+		userSession = null;
 	}
 
 }

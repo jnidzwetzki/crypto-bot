@@ -3,8 +3,9 @@ package org.achfrag.crypto.bitfinex;
 import java.util.concurrent.TimeUnit;
 
 import org.achfrag.crypto.bitfinex.commands.PingCommand;
+import org.achfrag.crypto.util.ExceptionSafeThread;
 
-class HeartbeatThread implements Runnable {
+class HeartbeatThread extends ExceptionSafeThread {
 
 	/**
 	 * The API timeout
@@ -31,38 +32,40 @@ class HeartbeatThread implements Runnable {
 	}
 
 	@Override
-	public void run() {
-		try {
-			while(! Thread.interrupted()) {
-				if(bitfinexApiBroker.websocketEndpoint != null) {
-					
-					final long nextHeartbeat = bitfinexApiBroker.getLastHeatbeat().get() + HEARTBEAT;
+	public void runThread() {
+		
+		while(! Thread.interrupted()) {
+			if(bitfinexApiBroker.websocketEndpoint != null) {
+				
+				final long nextHeartbeat = bitfinexApiBroker.getLastHeatbeat().get() + HEARTBEAT;
 
-					if(nextHeartbeat < System.currentTimeMillis()) {
-						bitfinexApiBroker.sendCommand(new PingCommand());
-					}
-					
-					final long heartbeatTimeout = bitfinexApiBroker.getLastHeatbeat().get() + TIMEOUT;
-					
-					if(heartbeatTimeout < System.currentTimeMillis()) {
-						BitfinexApiBroker.logger.error("Heartbeat timeout reconnecting");
-						
-						// Disable auto reconnect to ignore session closed 
-						// events, and preventing duplicate reconnects
-						bitfinexApiBroker.setAutoReconnectEnabled(false);
-						final boolean reconnectState = bitfinexApiBroker.reconnect();
-						bitfinexApiBroker.setAutoReconnectEnabled(true);
-						
-						waitIfReconnectFailed(reconnectState);
-					}
-					
+				if(nextHeartbeat < System.currentTimeMillis()) {
+					bitfinexApiBroker.sendCommand(new PingCommand());
 				}
 				
-				Thread.sleep(3000);
+				final long heartbeatTimeout = bitfinexApiBroker.getLastHeatbeat().get() + TIMEOUT;
+				
+				if(heartbeatTimeout < System.currentTimeMillis()) {
+					BitfinexApiBroker.logger.error("Heartbeat timeout reconnecting");
+					
+					// Disable auto reconnect to ignore session closed 
+					// events, and preventing duplicate reconnects
+					bitfinexApiBroker.setAutoReconnectEnabled(false);
+					final boolean reconnectState = bitfinexApiBroker.reconnect();
+					bitfinexApiBroker.setAutoReconnectEnabled(true);
+					
+					waitIfReconnectFailed(reconnectState);
+				}
+				
 			}
-		} catch(Throwable e) {
-			BitfinexApiBroker.logger.error("Got exception", e);
+			
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				return;
+			}
 		}
+
 	}
 
 	/** 
