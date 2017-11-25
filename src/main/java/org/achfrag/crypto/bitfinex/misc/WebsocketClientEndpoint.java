@@ -12,6 +12,7 @@ import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.OnClose;
+import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
@@ -59,7 +60,7 @@ public class WebsocketClientEndpoint {
 	}
 
 	@OnClose
-	public void onClose(Session userSession, CloseReason reason) {
+	public void onClose(final Session userSession, final CloseReason reason) {
 		logger.info("Closing websocket: " + reason);
 		closeHandler.forEach((h) -> h.handleWebsocketClose());
 		this.userSession = null;
@@ -69,6 +70,11 @@ public class WebsocketClientEndpoint {
 	public void onMessage(final String message) {
 		callbackConsumer.forEach((c) -> c.accept(message));
 	}
+	
+	@OnError
+    public void onError(final Session session, final Throwable t) {
+        logger.error("OnError called", t);
+    }
 
 	public void sendMessage(final String message) {
 		
