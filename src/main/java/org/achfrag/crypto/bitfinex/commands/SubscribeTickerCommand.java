@@ -4,15 +4,15 @@ import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
 import org.json.JSONObject;
 
-public class SubscribeTicker extends AbstractAPICommand {
+public class SubscribeTickerCommand extends AbstractAPICommand {
 
 	private String currencyPair;
 
-	public SubscribeTicker(final CurrencyPair currencyPair) {
+	public SubscribeTickerCommand(final CurrencyPair currencyPair) {
 		this.currencyPair = currencyPair.toBitfinexString();
 	}
 	
-	public SubscribeTicker(final String currencyPair) {
+	public SubscribeTickerCommand(final String currencyPair) {
 		this.currencyPair = currencyPair;
 	}
 

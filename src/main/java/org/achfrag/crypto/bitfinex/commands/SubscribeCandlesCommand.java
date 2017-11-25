@@ -5,13 +5,13 @@ import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
 import org.achfrag.crypto.bitfinex.misc.Timeframe;
 import org.json.JSONObject;
 
-public class SubscribeCandles extends AbstractAPICommand {
+public class SubscribeCandlesCommand extends AbstractAPICommand {
 
 	private CurrencyPair currencyPair;
 
 	private Timeframe timeframe;
 
-	public SubscribeCandles(final CurrencyPair currencyPair, final Timeframe timeframe) {
+	public SubscribeCandlesCommand(final CurrencyPair currencyPair, final Timeframe timeframe) {
 		this.currencyPair = currencyPair;
 		this.timeframe = timeframe;
 	}

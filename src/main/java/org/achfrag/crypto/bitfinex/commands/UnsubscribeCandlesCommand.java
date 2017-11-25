@@ -5,14 +5,14 @@ import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
 import org.achfrag.crypto.bitfinex.misc.Timeframe;
 import org.json.JSONObject;
 
-public class UnsubscribeCandles extends AbstractAPICommand {
+public class UnsubscribeCandlesCommand extends AbstractAPICommand {
 
 
 	private CurrencyPair currencyPair;
 	
 	private Timeframe timeframe;
 
-	public UnsubscribeCandles(final CurrencyPair currencyPair, final Timeframe timeframe) {
+	public UnsubscribeCandlesCommand(final CurrencyPair currencyPair, final Timeframe timeframe) {
 		this.currencyPair = currencyPair;
 		this.timeframe = timeframe;
 	}

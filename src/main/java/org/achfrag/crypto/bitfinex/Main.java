@@ -8,9 +8,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
-import org.achfrag.crypto.bitfinex.commands.SubscribeCandles;
-import org.achfrag.crypto.bitfinex.commands.SubscribeTicker;
-import org.achfrag.crypto.bitfinex.commands.UnsubscribeCandles;
+import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
+import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
+import org.achfrag.crypto.bitfinex.commands.UnsubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.misc.APIException;
 import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
 import org.achfrag.crypto.bitfinex.misc.TickMerger;
@@ -88,11 +88,11 @@ public class Main implements Runnable {
 			final String barSymbol = currency.toBifinexCandlestickString(TIMEFRAME);
 			
 			bitfinexApiBroker.registerTickCallback(barSymbol, callback);
-			bitfinexApiBroker.sendCommand(new SubscribeCandles(currency, TIMEFRAME));
+			bitfinexApiBroker.sendCommand(new SubscribeCandlesCommand(currency, TIMEFRAME));
 			Thread.sleep(TimeUnit.SECONDS.toMillis(1));
 			
 			bitfinexApiBroker.removeTickCallback(barSymbol, callback);
-			bitfinexApiBroker.sendCommand(new UnsubscribeCandles(currency, TIMEFRAME));
+			bitfinexApiBroker.sendCommand(new UnsubscribeCandlesCommand(currency, TIMEFRAME));
 			
 			System.out.println("Loaded ticks for symbol " 
 					+ bitfinexString + " " 
@@ -113,7 +113,7 @@ public class Main implements Runnable {
 
 			tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
 		
-			final AbstractAPICommand subscribeCommandTicker = new SubscribeTicker(currency);
+			final AbstractAPICommand subscribeCommandTicker = new SubscribeTickerCommand(currency);
 			bitfinexApiBroker.sendCommand(subscribeCommandTicker);
 
 			System.out.println("Wait for ticker");

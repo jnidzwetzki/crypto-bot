@@ -14,7 +14,9 @@ import java.util.regex.Matcher;
 
 import org.achfrag.crypto.Const;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
-import org.achfrag.crypto.bitfinex.commands.SubscribeTicker;
+import org.achfrag.crypto.bitfinex.commands.AuthCommand;
+import org.achfrag.crypto.bitfinex.commands.CommandException;
+import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.misc.APIException;
 import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
 import org.achfrag.crypto.bitfinex.misc.WebsocketClientEndpoint;
@@ -69,6 +71,16 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	private Thread heartbeatThread;
 	
 	/**
+	 * The API key
+	 */
+	private String apiKey;
+	
+	/**
+	 * The API secret
+	 */
+	private String apiSecret;
+	
+	/**
 	 * The Logger
 	 */
 	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
@@ -79,6 +91,12 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		this.lastHeatbeat = new AtomicLong();
 	}
 	
+	public BitfinexApiBroker(final String apiKey, final String apiSecret) {
+		this();
+		this.apiKey = apiKey;
+		this.apiSecret = apiSecret;
+	}
+	
 	public void connect() throws APIException {
 		try {
 			final URI bitfinexURI = new URI(BITFINEX_URI);
@@ -87,6 +105,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			websocketEndpoint.addCloseHandler(this);
 			websocketEndpoint.connect();
 			lastHeatbeat.set(System.currentTimeMillis());
+			
+			if(apiKey != null && apiSecret != null) {
+				sendCommand(new AuthCommand());
+			}
 			
 			heartbeatThread = new Thread(new HeartbeatThread(this));
 			heartbeatThread.start();
@@ -110,7 +132,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	}
 
 	public void sendCommand(final AbstractAPICommand apiCommand) {
-		websocketEndpoint.sendMessage(apiCommand.getCommand(this));
+		try {
+			websocketEndpoint.sendMessage(apiCommand.getCommand(this));
+		} catch (CommandException e) {
+			logger.error("Got Exception while sending command", e);
+		}
 	}
 	
 	public void websocketCallback(final String message) {
@@ -333,7 +359,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			
 			websocketEndpoint.connect();
 			
-			oldChannelIdSymbolMap.entrySet().forEach((e) -> sendCommand(new SubscribeTicker(e.getValue())));
+			oldChannelIdSymbolMap.entrySet().forEach((e) -> sendCommand(new SubscribeTickerCommand(e.getValue())));
 			
 			logger.info("Waiting for ticker to resubscribe");
 			while(channelIdSymbolMap.size() != oldChannelIdSymbolMap.size()) {
@@ -367,5 +393,13 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 */
 	public AtomicLong getLastHeatbeat() {
 		return lastHeatbeat;
+	}
+	
+	public String getApiKey() {
+		return apiKey;
+	}
+	
+	public String getApiSecret() {
+		return apiSecret;
 	}
 }
