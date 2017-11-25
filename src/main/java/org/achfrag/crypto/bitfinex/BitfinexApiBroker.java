@@ -171,12 +171,13 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	protected void handleChannelCallback(final String message) {
 		// Channel callback
 		logger.debug("Channel callback");
-				
+		lastHeatbeat.set(System.currentTimeMillis());
+
 		final Matcher matcher = BitfinexApiHelper.CHANNEL_PATTERN.matcher(message);
 		
 		if(! matcher.matches()) {
 			if(message.contains("\"hb\"")) {
-				lastHeatbeat.set(System.currentTimeMillis());
+				// Ignore channel heartbeat values
 			} else {
 				logger.error("No match found for message {}", message);
 			}
@@ -360,5 +361,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		return channelIdSymbolMap;
 	}
 	
-
+	/**
+	 * Get the last heartbeat value
+	 * @return
+	 */
+	public AtomicLong getLastHeatbeat() {
+		return lastHeatbeat;
+	}
 }

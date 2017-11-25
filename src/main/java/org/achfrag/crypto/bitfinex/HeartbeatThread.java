@@ -36,13 +36,13 @@ class HeartbeatThread implements Runnable {
 			while(! Thread.interrupted()) {
 				if(bitfinexApiBroker.websocketEndpoint != null) {
 					
-					final long nextHeartbeat = bitfinexApiBroker.lastHeatbeat.get() + HEARTBEAT;
+					final long nextHeartbeat = bitfinexApiBroker.getLastHeatbeat().get() + HEARTBEAT;
 
 					if(nextHeartbeat < System.currentTimeMillis()) {
 						bitfinexApiBroker.sendCommand(new PingCommand());
 					}
 					
-					final long heartbeatTimeout = bitfinexApiBroker.lastHeatbeat.get() + TIMEOUT;
+					final long heartbeatTimeout = bitfinexApiBroker.getLastHeatbeat().get() + TIMEOUT;
 					
 					if(heartbeatTimeout < System.currentTimeMillis()) {
 						BitfinexApiBroker.logger.error("Heartbeat timeout reconnecting");

@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import org.achfrag.crypto.backtest.Chart;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeCandles;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTicker;
