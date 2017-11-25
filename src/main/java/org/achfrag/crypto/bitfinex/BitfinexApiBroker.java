@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -81,6 +83,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	private String apiSecret;
 	
 	/**
+	 * The authentification latch
+	 */
+	private CountDownLatch authentificatedLatch;
+	
+	/**
 	 * The Logger
 	 */
 	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
@@ -106,15 +113,23 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			websocketEndpoint.connect();
 			lastHeatbeat.set(System.currentTimeMillis());
 			
-			if(apiKey != null && apiSecret != null) {
-				sendCommand(new AuthCommand());
-			}
+			executeAuthentification();
 			
 			heartbeatThread = new Thread(new HeartbeatThread(this));
 			heartbeatThread.start();
 		} catch (Exception e) {
 			throw new APIException(e);
 		}
+	}
+
+	private void executeAuthentification() throws InterruptedException {
+		authentificatedLatch = new CountDownLatch(1);
+		if(apiKey != null && apiSecret != null) {
+			sendCommand(new AuthCommand());
+		}
+		
+		logger.info("Waiting for authentification");
+		authentificatedLatch.await(10, TimeUnit.SECONDS);
 	}
 	
 	public void disconnect() {
@@ -189,6 +204,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 				channelCallbacks.remove(symbol);
 				channelIdSymbolMap.remove(channelId);
 				break;
+			case "auth":
+				authentificatedLatch.countDown();
+				logger.info("Authentification successfully {}", jsonObject.getString("status"));
+				break;
 			default:
 				logger.error("Unknown event: {}", message);
 		}
@@ -204,6 +223,8 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		if(! matcher.matches()) {
 			if(message.contains("\"hb\"")) {
 				// Ignore channel heartbeat values
+			} else if(message.startsWith("[0,")) {
+				logger.info("Got info for channel 0: {}", message);
 			} else {
 				logger.error("No match found for message {}", message);
 			}
@@ -358,6 +379,8 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			channelIdSymbolMap.clear();
 			
 			websocketEndpoint.connect();
+			
+			executeAuthentification();
 			
 			oldChannelIdSymbolMap.entrySet().forEach((e) -> sendCommand(new SubscribeTickerCommand(e.getValue())));
 			
