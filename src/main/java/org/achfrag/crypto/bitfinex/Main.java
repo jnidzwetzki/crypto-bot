@@ -1,9 +1,11 @@
 package org.achfrag.crypto.bitfinex;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
@@ -57,7 +59,8 @@ public class Main implements Runnable {
 	@Override
 	public void run() {
 		try {
-			final BitfinexApiBroker bitfinexApiBroker = new BitfinexApiBroker();
+			final BitfinexApiBroker bitfinexApiBroker = buildBifinexClient();
+			
 			bitfinexApiBroker.connect();
 
 			requestHistoricalData(bitfinexApiBroker);			
@@ -69,6 +72,33 @@ public class Main implements Runnable {
 		} catch (Exception e) {
 			logger.error("Got exception", e);
 		}
+	}
+
+	private BitfinexApiBroker buildBifinexClient() {
+		final Properties prop = new Properties();
+		
+		try {
+			final InputStream input = Main.class.getClassLoader().getResourceAsStream("auth.properties");
+			prop.load(input);
+			
+			if("true".equals(prop.getProperty("authEnabled"))) {
+				final String apiKey = prop.getProperty("apiKey");
+				final String apiSecret = prop.getProperty("apiSecret");
+				
+				if(apiKey == null || apiSecret == null) {
+					logger.warn("API key or secret are null");
+				} else {
+					logger.info("Building authenticated client");
+					return new BitfinexApiBroker(apiKey, apiSecret);
+				}
+			}
+		} catch(Exception e) {
+			logger.error("Unable to load properties", e);
+		}
+		
+		// Unauthenticated client
+		logger.info("Building unauthenticated client");
+		return new BitfinexApiBroker();
 	}
 
 	private void requestHistoricalData(final BitfinexApiBroker bitfinexApiBroker) throws InterruptedException, APIException {

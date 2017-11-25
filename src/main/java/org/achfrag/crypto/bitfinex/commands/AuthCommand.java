@@ -20,20 +20,21 @@ public class AuthCommand extends AbstractAPICommand {
 			
 			final String authNonce = Long.toString(System.currentTimeMillis());
 			final String authPayload = "AUTH" + authNonce;
-			
-			final SecretKeySpec signingKey = new SecretKeySpec(authPayload.getBytes(), HMAC_SHA1_ALGORITHM);
+
+			final SecretKeySpec signingKey = new SecretKeySpec(APISecret.getBytes(), HMAC_SHA1_ALGORITHM);
 			final Mac mac = Mac.getInstance(HMAC_SHA1_ALGORITHM);
 			mac.init(signingKey);
 			
-			final String authSig = BaseEncoding.base32Hex().encode(mac.doFinal(APISecret.getBytes()));
+			final byte[] encodedBytes = mac.doFinal(authPayload.getBytes());		
+			final String authSig = BaseEncoding.base16().encode(encodedBytes);
 			
 			final JSONObject subscribeJson = new JSONObject();
 			subscribeJson.put("event", "auth");
 			subscribeJson.put("apiKey", APIKey);
-			subscribeJson.put("authSig", authSig);
+			subscribeJson.put("authSig", authSig.toLowerCase());
 			subscribeJson.put("authPayload", authPayload);
 			subscribeJson.put("authNonce", authNonce);
-
+			
 			return subscribeJson.toString();
 		} catch (Exception e) {
 			throw new CommandException(e);
