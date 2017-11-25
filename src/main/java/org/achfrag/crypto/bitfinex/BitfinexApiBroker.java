@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.achfrag.crypto.Const;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
@@ -73,11 +72,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * The Logger
 	 */
 	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
-
-	private Pattern CHANNEL_PATTERN = Pattern.compile("\\[(\\d+),(\\[.*)\\]");
-
-	private Pattern CHANNEL_ELEMENT_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
-
 
 	public BitfinexApiBroker() {
 		this.channelIdSymbolMap = new HashMap<>();
@@ -178,7 +172,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		// Channel callback
 		logger.debug("Channel callback");
 				
-		final Matcher matcher = CHANNEL_PATTERN.matcher(message);
+		final Matcher matcher = BitfinexApiHelper.CHANNEL_PATTERN.matcher(message);
 		
 		if(! matcher.matches()) {
 			if(message.contains("\"hb\"")) {
@@ -212,7 +206,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		// channel symbol trade:1m:tLTCUSD
 		final String symbol = (channelSymbol.split(":"))[2];
 		
-		final Matcher contentMatcher = CHANNEL_ELEMENT_PATTERN.matcher(ticks);
+		final Matcher contentMatcher = BitfinexApiHelper.CHANNEL_ELEMENT_PATTERN.matcher(ticks);
 		
 		final List<Tick> ticksBuffer = new ArrayList<>();
 		while (contentMatcher.find()) {
@@ -255,7 +249,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @param content
 	 */
 	protected void handleTickCallback(final int channel, final String content) {
-		final Matcher contentMatcher = CHANNEL_ELEMENT_PATTERN.matcher(content);
+		final Matcher contentMatcher = BitfinexApiHelper.CHANNEL_ELEMENT_PATTERN.matcher(content);
 		
 		while (contentMatcher.find()) {
 			final String element = contentMatcher.group(1);
