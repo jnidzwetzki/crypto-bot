@@ -79,17 +79,20 @@ public class Main implements Runnable {
 		
 		try {
 			final InputStream input = Main.class.getClassLoader().getResourceAsStream("auth.properties");
-			prop.load(input);
 			
-			if("true".equals(prop.getProperty("authEnabled"))) {
-				final String apiKey = prop.getProperty("apiKey");
-				final String apiSecret = prop.getProperty("apiSecret");
+			if(input != null) {
+				prop.load(input);
 				
-				if(apiKey == null || apiSecret == null) {
-					logger.warn("API key or secret are null");
-				} else {
-					logger.info("Building authenticated client");
-					return new BitfinexApiBroker(apiKey, apiSecret);
+				if("true".equals(prop.getProperty("authEnabled"))) {
+					final String apiKey = prop.getProperty("apiKey");
+					final String apiSecret = prop.getProperty("apiSecret");
+					
+					if(apiKey == null || apiSecret == null) {
+						logger.warn("API key or secret are null");
+					} else {
+						logger.info("Building authenticated client");
+						return new BitfinexApiBroker(apiKey, apiSecret);
+					}
 				}
 			}
 		} catch(Exception e) {
