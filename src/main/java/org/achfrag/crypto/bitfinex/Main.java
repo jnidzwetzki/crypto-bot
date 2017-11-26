@@ -1,6 +1,7 @@
 package org.achfrag.crypto.bitfinex;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
@@ -21,13 +23,12 @@ import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.BaseTimeSeries;
-import org.ta4j.core.BaseTradingRecord;
 import org.ta4j.core.Decimal;
-import org.ta4j.core.Order;
+import org.ta4j.core.Order.OrderType;
 import org.ta4j.core.Strategy;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
-import org.ta4j.core.TradingRecord;
+import org.ta4j.core.Trade;
 
 public class Main implements Runnable {
 
@@ -37,22 +38,25 @@ public class Main implements Runnable {
 	private final static Logger logger = LoggerFactory.getLogger(Main.class);
 
 	protected final Map<String, TickMerger> tickMerger;
+	
+	protected final Map<String, Tick> lastTick;
 
 	protected final Map<String, TimeSeries> timeSeries;
-
-	protected final Map<String, TradingRecord> tradingRecord;
 
 	protected final Map<String, Strategy> strategies;
 
 	protected final List<CurrencyPair> currencies; 
 	
+	protected final Map<String, List<Trade>> trades;
+	
 	protected static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
 
 	public Main() {
 		tickMerger = new HashMap<>();
+		lastTick = new HashMap<>();
 		timeSeries = new HashMap<>();
-		tradingRecord = new HashMap<>();
 		strategies = new HashMap<>();
+		this.trades = new HashMap<>();
 		currencies = Arrays.asList(CurrencyPair.BTC_USD, CurrencyPair.ETH_USD, CurrencyPair.LTC_USD);
 	}
 
@@ -113,7 +117,7 @@ public class Main implements Runnable {
 			timeSeries.put(bitfinexString, currencyTimeSeries);
 			final Strategy strategy = EMAStrategy03.getStrategy(currencyTimeSeries, 5, 12, 40);
 			strategies.put(bitfinexString, strategy);
-			tradingRecord.put(bitfinexString, new BaseTradingRecord());
+			trades.put(bitfinexString, new ArrayList<>());
 
 			// Add bars to timeseries
 			final BiConsumer<String, Tick> callback = (symbol, tick) -> timeSeries.get(symbol).addTick(tick);
@@ -159,9 +163,7 @@ public class Main implements Runnable {
 		}
 	}
 
-	private void barDoneCallback(final String symbol, final Tick tick) {
-		System.out.format("Symbol %s Bar %s\n", symbol, tick);
-		
+	private void barDoneCallback(final String symbol, final Tick tick) {		
 		try {
 			timeSeries.get(symbol).addTick(tick);
 		} catch(Throwable e) {
@@ -171,32 +173,85 @@ public class Main implements Runnable {
 		final int endIndex = timeSeries.get(symbol).getEndIndex();
 		
 		if (strategies.get(symbol).shouldEnter(endIndex)) {
-			// Our strategy should enter
-			System.out.println("Strategy should ENTER on " + endIndex + " / " + symbol);
-			boolean entered = tradingRecord.get(symbol).enter(endIndex, tick.getClosePrice(), Decimal.TEN);
-			if (entered) {
-				Order entry = tradingRecord.get(symbol).getLastEntry();
-				System.out.println("Entered on " + entry.getIndex() + " (price=" + entry.getPrice().toDouble()
-						+ ", amount=" + entry.getAmount().toDouble() + ")");
+			final Trade openTrade = getOpenTrade(symbol);
+			if(openTrade == null) {
+				final Trade trade = new Trade(OrderType.BUY);
+				trade.operate(endIndex, timeSeries.get(symbol).getLastTick().getClosePrice(), Decimal.valueOf(1));
+				trades.get(symbol).add(trade);
 			}
 		} else if (strategies.get(symbol).shouldExit(endIndex)) {
-			// Our strategy should exit
-			System.out.println("Strategy should EXIT on " + endIndex + " / " + symbol);
-			boolean exited = tradingRecord.get(symbol).exit(endIndex, tick.getClosePrice(), Decimal.TEN);
-			if (exited) {
-				Order exit = tradingRecord.get(symbol).getLastExit();
-				System.out.println("Exited on " + exit.getIndex() + " (price=" + exit.getPrice().toDouble()
-						+ ", amount=" + exit.getAmount().toDouble() + ")");
+			final Trade openTrade = getOpenTrade(symbol);
+			if(openTrade != null) {
+				openTrade.operate(endIndex, timeSeries.get(symbol).getLastTick().getClosePrice(), Decimal.valueOf(1));
 			}
 		}
+		
+		updateScreen();
 	}
 
-	private void handleTickCallback(final String symbol, final Tick c) {
-		tickMerger.get(symbol).addNewPrice(c.getEndTime().toEpochSecond(), c.getOpenPrice().toDouble(), c.getVolume().toDouble());
+	/**
+	 * Get the open trade for symbol or null
+	 * @param symbol
+	 * @return
+	 */
+	private Trade getOpenTrade(final String symbol) {
+		final List<Trade> tradeList = trades.get(symbol);
+
+		final List<Trade> openTrades = tradeList.stream().filter(t -> ! t.isClosed()).collect(Collectors.toList());
+		
+		if(openTrades.size() > 1) {
+			throw new IllegalArgumentException("More then one open trade for " + symbol + " / " + openTrades);
+		}
+		
+		if(openTrades.isEmpty()) {
+			return null;
+		}
+		
+		return openTrades.get(0);
+	}
+	
+	private void handleTickCallback(final String symbol, final Tick tick) {
+		lastTick.put(symbol, tick);
+		
+		tickMerger.get(symbol).addNewPrice(
+				tick.getEndTime().toEpochSecond(), 
+				tick.getOpenPrice().toDouble(), 
+				tick.getVolume().toDouble());
+		
+		updateScreen();
 	}
 
 	public static void main(final String[] args) {
 		final Main main = new Main();
 		main.run();
 	}
+	
+	public synchronized void updateScreen() {
+		clearScreen();
+		System.out.println("Last ticks");
+		System.out.println("==========");
+		for(final CurrencyPair currency : currencies) {
+			final String symbol = currency.toBitfinexString();
+			System.out.println(currency + " " + lastTick.get(symbol));
+		}
+		
+		System.out.println("Last bars");
+		System.out.println("==========");
+		for(final CurrencyPair currency : currencies) {
+			final String symbol = currency.toBitfinexString();
+			System.out.println(currency + " " + timeSeries.get(symbol).getLastTick());
+		}
+		
+		System.out.println("Trades");
+		System.out.println("==========");
+		for(final CurrencyPair currency : currencies) {
+			final String symbol = currency.toBitfinexString();
+			System.out.println(trades.get(symbol));
+		}
+	}
+	
+	public void clearScreen() {  
+	    System.out.print("\033[H\033[2J");  
+	    System.out.flush();  
+	}  
 }
