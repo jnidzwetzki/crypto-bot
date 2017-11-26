@@ -126,10 +126,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		authentificatedLatch = new CountDownLatch(1);
 		if(apiKey != null && apiSecret != null) {
 			sendCommand(new AuthCommand());
+			logger.info("Waiting for authentification");
+			authentificatedLatch.await(10, TimeUnit.SECONDS);
 		}
-		
-		logger.info("Waiting for authentification");
-		authentificatedLatch.await(10, TimeUnit.SECONDS);
 	}
 	
 	public void disconnect() {
