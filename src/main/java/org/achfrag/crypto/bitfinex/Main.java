@@ -242,6 +242,19 @@ public class Main implements Runnable {
 			System.out.println(symbol + " " + timeSeries.get(symbol).getLastTick());
 		}
 		
+		System.out.println("P/L");
+		System.out.println("==========");
+		for(final CurrencyPair currency : currencies) {
+			final String symbol = currency.toBitfinexString();
+			
+			final Trade trade = getOpenTrade(symbol);
+			if(trade != null) {
+				final double priceIn = trade.getEntry().getPrice().toDouble();
+				final double currentPrice = lastTick.get(symbol).getClosePrice().toDouble();
+				System.out.println("Price in " + priceIn + " / " + (currentPrice - priceIn));
+			}	
+		}
+		
 		System.out.println("Trades");
 		System.out.println("==========");
 		for(final CurrencyPair currency : currencies) {
