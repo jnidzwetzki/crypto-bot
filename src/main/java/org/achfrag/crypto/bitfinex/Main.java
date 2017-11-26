@@ -232,21 +232,21 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		for(final CurrencyPair currency : currencies) {
 			final String symbol = currency.toBitfinexString();
-			System.out.println(currency + " " + lastTick.get(symbol));
+			System.out.println(symbol + " " + lastTick.get(symbol));
 		}
 		
 		System.out.println("Last bars");
 		System.out.println("==========");
 		for(final CurrencyPair currency : currencies) {
 			final String symbol = currency.toBitfinexString();
-			System.out.println(currency + " " + timeSeries.get(symbol).getLastTick());
+			System.out.println(symbol + " " + timeSeries.get(symbol).getLastTick());
 		}
 		
 		System.out.println("Trades");
 		System.out.println("==========");
 		for(final CurrencyPair currency : currencies) {
 			final String symbol = currency.toBitfinexString();
-			System.out.println(trades.get(symbol));
+			System.out.println(symbol + " " + trades.get(symbol));
 		}
 	}
 	
