@@ -228,6 +228,8 @@ public class Main implements Runnable {
 	
 	public synchronized void updateScreen() {
 		clearScreen();
+		System.out.println("");
+		System.out.println("==========");
 		System.out.println("Last ticks");
 		System.out.println("==========");
 		for(final CurrencyPair currency : currencies) {
@@ -235,6 +237,8 @@ public class Main implements Runnable {
 			System.out.println(symbol + " " + lastTick.get(symbol));
 		}
 		
+		System.out.println("");
+		System.out.println("==========");
 		System.out.println("Last bars");
 		System.out.println("==========");
 		for(final CurrencyPair currency : currencies) {
@@ -242,6 +246,8 @@ public class Main implements Runnable {
 			System.out.println(symbol + " " + timeSeries.get(symbol).getLastTick());
 		}
 		
+		System.out.println("");
+		System.out.println("==========");
 		System.out.println("P/L");
 		System.out.println("==========");
 		for(final CurrencyPair currency : currencies) {
@@ -255,6 +261,8 @@ public class Main implements Runnable {
 			}	
 		}
 		
+		System.out.println("");
+		System.out.println("==========");
 		System.out.println("Trades");
 		System.out.println("==========");
 		for(final CurrencyPair currency : currencies) {
