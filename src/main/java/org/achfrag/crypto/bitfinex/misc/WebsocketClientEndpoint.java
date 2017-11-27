@@ -74,7 +74,7 @@ public class WebsocketClientEndpoint {
 	
 	@OnError
     public void onError(final Session session, final Throwable t) {
-        logger.error("OnError called", t);
+        logger.error("OnError called", t.toString());
     }
 
 	public void sendMessage(final String message) {
