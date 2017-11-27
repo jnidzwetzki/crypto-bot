@@ -16,7 +16,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 	/**
 	 * The ticker timeout
 	 */
-	private static final long TICKER_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
+	private static final long TICKER_TIMEOUT = TimeUnit.MINUTES.toMillis(5);
 	
 	/**
 	 * The API timeout
