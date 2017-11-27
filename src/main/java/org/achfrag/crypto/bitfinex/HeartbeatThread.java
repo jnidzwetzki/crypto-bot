@@ -14,9 +14,14 @@ import org.ta4j.core.Tick;
 class HeartbeatThread extends ExceptionSafeThread {
 
 	/**
+	 * The ticker timeout
+	 */
+	private static final long TICKER_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
+	
+	/**
 	 * The API timeout
 	 */
-	private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+	private static final long CPNNECTION_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 	
 	/**
 	 * The API timeout
@@ -103,7 +108,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 			final Tick lastTick = bitfinexApiBroker.getLastTick(symbol);
 			final long lastUpdate = lastTick.getEndTime().toInstant().getEpochSecond() * 1000;
 			
-			if(lastUpdate + HEARTBEAT < currentTime) {
+			if(lastUpdate + TICKER_TIMEOUT < currentTime) {
 				logger.error("Last update for symbol {} is {} current time is {}, the data is outdated",
 						symbol, lastUpdate, currentTime);
 				return false;
@@ -129,7 +134,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 	 * @return 
 	 */
 	private boolean checkConnectionTimeout() {
-		final long heartbeatTimeout = bitfinexApiBroker.getLastHeatbeat().get() + TIMEOUT;
+		final long heartbeatTimeout = bitfinexApiBroker.getLastHeatbeat().get() + CPNNECTION_TIMEOUT;
 		
 		if(heartbeatTimeout < System.currentTimeMillis()) {
 			logger.error("Heartbeat timeout reconnecting");
