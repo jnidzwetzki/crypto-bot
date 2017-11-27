@@ -61,21 +61,32 @@ class HeartbeatThread extends ExceptionSafeThread {
 	public void runThread() {
 		
 		while(! Thread.interrupted()) {
-			if(bitfinexApiBroker.websocketEndpoint != null) {
-				sendHeartbeatIfNeeded();
-
-				final boolean tickerUpToDate = checkTickerFreshness();
-				final boolean reconnectNeeded = checkConnectionTimeout();
-				
-				if(reconnectNeeded || ! tickerUpToDate) {
-					executeReconnect();
-				}
-			}
 			
 			try {
 				Thread.sleep(3000);
 			} catch (InterruptedException e) {
 				return;
+			}
+			
+			if(bitfinexApiBroker.websocketEndpoint != null) {
+				
+				sendHeartbeatIfNeeded();
+
+				final boolean tickerUpToDate = checkTickerFreshness();
+				
+				if(! tickerUpToDate) {
+					logger.error("Ticker are outdated, reconnecting");
+					executeReconnect();
+					continue;
+				}
+				
+				final boolean reconnectNeeded = checkConnectionTimeout();
+				
+				if(reconnectNeeded) {
+					logger.error("Global connection heartbeat time out, reconnecting");
+					executeReconnect();
+					continue;
+				}
 			}
 		}
 	}
