@@ -39,8 +39,6 @@ public class Main implements Runnable {
 
 	protected final Map<String, TickMerger> tickMerger;
 	
-	protected final Map<String, Tick> lastTick;
-
 	protected final Map<String, TimeSeries> timeSeries;
 
 	protected final Map<String, Strategy> strategies;
@@ -51,9 +49,13 @@ public class Main implements Runnable {
 	
 	protected static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
 
+	/**
+	 * The API broker
+	 */
+	private BitfinexApiBroker bitfinexApiBroker;
+
 	public Main() {
 		tickMerger = new HashMap<>();
-		lastTick = new HashMap<>();
 		timeSeries = new HashMap<>();
 		strategies = new HashMap<>();
 		this.trades = new HashMap<>();
@@ -63,7 +65,7 @@ public class Main implements Runnable {
 	@Override
 	public void run() {
 		try {
-			final BitfinexApiBroker bitfinexApiBroker = buildBifinexClient();
+			bitfinexApiBroker = buildBifinexClient();
 			
 			bitfinexApiBroker.connect();
 
@@ -210,9 +212,7 @@ public class Main implements Runnable {
 		return openTrades.get(0);
 	}
 	
-	private void handleTickCallback(final String symbol, final Tick tick) {
-		lastTick.put(symbol, tick);
-		
+	private void handleTickCallback(final String symbol, final Tick tick) {		
 		tickMerger.get(symbol).addNewPrice(
 				tick.getEndTime().toEpochSecond(), 
 				tick.getOpenPrice().toDouble(), 
@@ -234,7 +234,7 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		for(final CurrencyPair currency : currencies) {
 			final String symbol = currency.toBitfinexString();
-			System.out.println(symbol + " " + lastTick.get(symbol));
+			System.out.println(symbol + " " + bitfinexApiBroker.getLastTick(currency));
 		}
 		
 		System.out.println("");
@@ -256,7 +256,7 @@ public class Main implements Runnable {
 			final Trade trade = getOpenTrade(symbol);
 			if(trade != null) {
 				final double priceIn = trade.getEntry().getPrice().toDouble();
-				final double currentPrice = lastTick.get(symbol).getClosePrice().toDouble();
+				final double currentPrice = bitfinexApiBroker.getLastTick(currency).getClosePrice().toDouble();
 				System.out.println("Price in " + priceIn + " / " + (currentPrice - priceIn));
 			}	
 		}

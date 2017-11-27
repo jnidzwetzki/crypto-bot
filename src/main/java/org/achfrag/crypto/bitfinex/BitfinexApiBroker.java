@@ -58,6 +58,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	private final Map<String, List<BiConsumer<String, Tick>>> channelCallbacks;
 	
 	/**
+	 * The last ticks
+	 */
+	protected final Map<String, Tick> lastTick;
+
+	/**
 	 * The last heartbeat value
 	 */
 	protected final AtomicLong lastHeatbeat;
@@ -96,6 +101,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		this.channelIdSymbolMap = new HashMap<>();
 		this.channelCallbacks = new HashMap<>();
 		this.lastHeatbeat = new AtomicLong();
+		this.lastTick = new HashMap<>();
 	}
 	
 	public BitfinexApiBroker(final String apiKey, final String apiSecret) {
@@ -248,6 +254,13 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			if(message.contains("\"hb\"")) {
 				// Ignore channel heartbeat values
 			} else if(message.startsWith("[0,")) {
+				if(message.contains("\"ps\"")) {
+					// Positions
+				} else if(message.contains("\"ws\"")) {
+					// Wallets
+				} else if(message.contains("\"os\"")) {
+					// Orders
+				}
 				logger.info("Got info for channel 0: {}", message);
 			} else {
 				logger.error("No match found for message {}", message);
@@ -339,6 +352,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 		final String symbol = getFromChannelSymbolMap(channel);
 		
+		synchronized (lastTick) {
+			lastTick.put(symbol, tick);
+		}
+		
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
 
 		if(callbacks != null) {
@@ -367,7 +384,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		if(! channelCallbacks.containsKey(symbol)) {
 			throw new APIException("Unknown ticker string: " + symbol);
 		}
-		
+			
 		return channelCallbacks.get(symbol).remove(callback);
 	}
 	
@@ -478,4 +495,16 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	public String getApiSecret() {
 		return apiSecret;
 	}
+	
+	/**
+	 * Get the last tick for a given symbol
+	 * @param currencyPair
+	 * @return 
+	 */
+	public Tick getLastTick(final CurrencyPair currencyPair) {
+		synchronized (lastTick) {
+			return lastTick.get(currencyPair.toBitfinexString());
+		}
+	}
+
 }
