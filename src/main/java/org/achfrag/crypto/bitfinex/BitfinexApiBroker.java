@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -471,12 +472,30 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			}
 		}
 	}
+	
+	/**
+	 * Get a set with active symbols
+	 * @return
+	 */
+	public Set<String> getActiveSymbols() {
+		synchronized (lastTick) {
+			return lastTick.keySet();
+		}
+	}
 
+	/**
+	 * Is auto reconnecting enabled
+	 * @return
+	 */
 	public boolean isAutoReconnectEnabled() {
 		return autoReconnectEnabled;
 	}
 
-	public void setAutoReconnectEnabled(boolean autoReconnectEnabled) {
+	/**
+	 * Change auto reconnect status
+	 * @param autoReconnectEnabled
+	 */
+	public void setAutoReconnectEnabled(final boolean autoReconnectEnabled) {
 		this.autoReconnectEnabled = autoReconnectEnabled;
 	}
 	
@@ -502,9 +521,19 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @return 
 	 */
 	public Tick getLastTick(final CurrencyPair currencyPair) {
+		final String bitfinexString = currencyPair.toBitfinexString();
+		return getLastTick(bitfinexString);
+	}
+	
+	/**
+	 * Get the last tick for a given symbol
+	 * @param currencyPair
+	 * @return 
+	 */
+	public Tick getLastTick(final String bitfinexString) {
 		synchronized (lastTick) {
-			return lastTick.get(currencyPair.toBitfinexString());
+			return lastTick.get(bitfinexString);
 		}
 	}
-
+	
 }
