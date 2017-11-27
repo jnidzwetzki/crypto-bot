@@ -4,4 +4,3 @@ jdk:
 
 sudo: false
 dist: trusty
-
