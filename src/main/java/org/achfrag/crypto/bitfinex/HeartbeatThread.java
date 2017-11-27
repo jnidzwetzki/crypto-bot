@@ -104,7 +104,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 			final long lastUpdate = lastTick.getEndTime().toInstant().getEpochSecond() * 1000;
 			
 			if(lastUpdate + HEARTBEAT < currentTime) {
-				logger.debug("Last update for symbol {} is {} current time is {}, the data is outdated",
+				logger.error("Last update for symbol {} is {} current time is {}, the data is outdated",
 						symbol, lastUpdate, currentTime);
 				return false;
 			}
