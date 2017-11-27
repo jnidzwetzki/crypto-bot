@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.achfrag.crypto.bitfinex.commands.PingCommand;
 import org.achfrag.crypto.util.ExceptionSafeThread;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class HeartbeatThread extends ExceptionSafeThread {
 
@@ -38,6 +40,12 @@ class HeartbeatThread extends ExceptionSafeThread {
 	 * The reconnect times
 	 */
 	private final List<Long> reconnectTimes;
+	
+	/**
+	 * The Logger
+	 */
+	final static Logger logger = LoggerFactory.getLogger(HeartbeatThread.class);
+
 	
 	/**
 	 * @param bitfinexApiBroker
@@ -96,6 +104,8 @@ class HeartbeatThread extends ExceptionSafeThread {
 	 */
 	private void waitForReconnectTimeslot() {
 		
+		logger.debug("Waiting for reconnect timeslot");
+		
 		while(true) {
 			final long connectionsTimeframe 
 				= System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(MAX_RECONNECT_SECONDS);
@@ -110,9 +120,11 @@ class HeartbeatThread extends ExceptionSafeThread {
 					return;
 				}
 			} else {
+				logger.debug("Waiting for reconnect timeslot DONE");
 				return;
 			}
 		} 
+
 	}
 	
 }
