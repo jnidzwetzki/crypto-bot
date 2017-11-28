@@ -23,6 +23,8 @@ import org.achfrag.crypto.util.CloseableHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Throwables;
+
 @ClientEndpoint
 public class WebsocketClientEndpoint {
 
@@ -74,7 +76,7 @@ public class WebsocketClientEndpoint {
 	
 	@OnError
     public void onError(final Session session, final Throwable t) {
-        logger.error("OnError called {}", t.toString());
+        logger.error("OnError called {}", Throwables.getStackTraceAsString(t));
     }
 
 	public void sendMessage(final String message) {
