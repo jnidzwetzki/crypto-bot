@@ -35,24 +35,27 @@ public class TickMerger implements Closeable {
 	
 	public void addNewPrice(final long timestamp, final double price, final double volume)  {
 
-		final long periodEnd = timeframeBegin + timeframe.getSeconds();
-		
 		if (timeframeBegin == -1) {
 			timeframeBegin = timestamp;
-		} else if (timestamp > periodEnd) {
+		} 
+		
+		final long periodEnd = timeframeBegin + timeframe.getMilliSeconds();
 
+		if (timestamp >= periodEnd) {
+			
 			if (prices.isEmpty()) {
 				System.err.println("Error: prices for series are empty: " + timeframeBegin);
 			}
 
 			closeBar();
 			
-			while (timestamp >= timeframeBegin + timeframe.getSeconds()) {
-				timeframeBegin = timeframeBegin + timeframe.getSeconds();
+			while (timestamp >= timeframeBegin + timeframe.getMilliSeconds()) {
+				timeframeBegin = timeframeBegin + timeframe.getMilliSeconds();
 			}
 		}
-		
+
 		prices.add(price);
+		
 		totalVolume = totalVolume + volume;
 	}
 
@@ -62,7 +65,7 @@ public class TickMerger implements Closeable {
 		final double high = prices.stream().mapToDouble(e -> e).max().orElse(-1);
 		final double low = prices.stream().mapToDouble(e -> e).min().orElse(-1);
 
-		final Instant i = Instant.ofEpochMilli(timeframeBegin * 1000);
+		final Instant i = Instant.ofEpochMilli(timeframeBegin + timeframe.getMilliSeconds() - 1);
 		final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
 	
 		final Tick tick = new BaseTick(withTimezone, open, high, low, close, totalVolume);

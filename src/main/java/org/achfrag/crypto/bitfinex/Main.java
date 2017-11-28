@@ -214,7 +214,7 @@ public class Main implements Runnable {
 	
 	private void handleTickCallback(final String symbol, final Tick tick) {		
 		tickMerger.get(symbol).addNewPrice(
-				tick.getEndTime().toEpochSecond(), 
+				tick.getEndTime().toEpochSecond() * 1000, 
 				tick.getOpenPrice().toDouble(), 
 				tick.getVolume().toDouble());
 		

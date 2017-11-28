@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.achfrag.crypto.bitfinex.misc.TickMerger;
 import org.achfrag.crypto.bitfinex.misc.Timeframe;
@@ -160,7 +161,7 @@ public class Main implements Runnable {
 				continue;
 			}
 			
-			tickMerger.addNewPrice(timestamp, price, volume);
+			tickMerger.addNewPrice(TimeUnit.SECONDS.toMillis(timestamp), price, volume);
 		}
 
 		tickMerger.close();
