@@ -7,8 +7,8 @@ public class BitfinexOrderBuilder {
 	private final double amount;
 	private final double price;
 	
-	private double priceTrailing = 0;
-	private double priceAuxLimit = 0;
+	private double priceTrailing = Double.NaN;
+	private double priceAuxLimit = Double.NaN;
 	private boolean postOnly = false;
 	private boolean hidden = false;
 

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,6 +20,7 @@ import org.achfrag.crypto.Const;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.AuthCommand;
 import org.achfrag.crypto.bitfinex.commands.CommandException;
+import org.achfrag.crypto.bitfinex.commands.OrderCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.misc.APIException;
 import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
@@ -471,6 +473,17 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 				execution++;	
 			}
 		}
+	}
+	
+	/**
+	 * Place a new order, the order id is returned
+	 * @return The id of the order
+	 */
+	public String placeOrder(final BitfinexOrder order) {
+		final String uuid = UUID.randomUUID().toString();
+		final OrderCommand orderCommand = new OrderCommand(uuid, order);
+		sendCommand(orderCommand);
+		return uuid;
 	}
 	
 	/**
