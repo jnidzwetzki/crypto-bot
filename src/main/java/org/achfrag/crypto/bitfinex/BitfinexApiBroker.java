@@ -312,7 +312,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			} else {
 				logger.error("Unable to process: {}", jsonArray);
 			}
-		} else {				
+		} else {	
 			final JSONArray subarray = jsonArray.getJSONArray(1);			
 			final String channelSymbol = getFromChannelSymbolMap(channel);
 			
@@ -335,26 +335,15 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		final String symbol = (channelSymbol.split(":"))[2];
 
 		final List<Tick> ticksBuffer = new ArrayList<>();
-		for (int pos = 0; pos < subarray.length(); pos++) {
-			
-			if(! (subarray.get(pos) instanceof JSONArray)) {
-				logger.error("Pos {} is not a json array in {}", pos, subarray);
-			} else {
-				final JSONArray parts = subarray.getJSONArray(pos);
-				
-				// 0 = Timestamp, 1 = Open, 2 = Close, 3 = High, 4 = Low,  5 = Volume
-				final Instant i = Instant.ofEpochMilli(parts.getLong(0));
-				final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
-				
-				final Tick tick = new BaseTick(withTimezone, 
-						parts.getDouble(1), 
-						parts.getDouble(2), 
-						parts.getDouble(3), 
-						parts.getDouble(4), 
-						parts.getDouble(5));
-	
-				ticksBuffer.add(tick);
+		
+		// Snapshots contain multiple Bars, Updates only one
+		if(subarray.get(0) instanceof JSONArray) {
+			for (int pos = 0; pos < subarray.length(); pos++) {
+				final JSONArray parts = subarray.getJSONArray(pos);	
+				paseCandlestick(ticksBuffer, parts);
 			}
+		} else {
+			paseCandlestick(ticksBuffer, subarray);
 		}
 		
 		ticksBuffer.sort((t1, t2) -> t1.getEndTime().compareTo(t2.getEndTime()));
@@ -366,6 +355,24 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 				callbacks.forEach(c -> c.accept(symbol, tick));
 			}
 		}
+	}
+
+	/**
+	 * Parse a candlestick from JSON result
+	 */
+	private void paseCandlestick(final List<Tick> ticksBuffer, final JSONArray parts) {
+		// 0 = Timestamp, 1 = Open, 2 = Close, 3 = High, 4 = Low,  5 = Volume
+		final Instant i = Instant.ofEpochMilli(parts.getLong(0));
+		final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
+		
+		final Tick tick = new BaseTick(withTimezone, 
+				parts.getDouble(1), 
+				parts.getDouble(2), 
+				parts.getDouble(3), 
+				parts.getDouble(4), 
+				parts.getDouble(5));
+
+		ticksBuffer.add(tick);
 	}
 
 	/**
