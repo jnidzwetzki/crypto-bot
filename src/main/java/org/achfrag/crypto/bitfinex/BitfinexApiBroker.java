@@ -239,6 +239,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 
+	/**
+	 * Add channel to symbol map
+	 * @param channelId
+	 * @param symbol
+	 */
 	private void addToChannelSymbolMap(final int channelId, final String symbol) {
 		synchronized (channelIdSymbolMap) {
 			channelIdSymbolMap.put(channelId, symbol);
@@ -258,46 +263,63 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		final int channel = jsonArray.getInt(0);
 		
 		if(channel == 0) {
-			logger.info("Got info for channel 0: {}", message);
-
-			final String subchannel = jsonArray.getString(1);
-			logger.info("Subchannel is: " + subchannel);
-			switch (subchannel) {
-			case "hb":
-				// Ignore channel heartbeat values
-				break;
-				
-			case "ws":
-				// Wallets
-				break;
-				
-			case "os":
-				// Orders
-				break;
-
-			default:
-				//logger.error("No match found for message {}", message);
-				break;
-			}
-
+			handleSignalingChannelData(message, jsonArray);
 		} else {
+			handleChannelData(jsonArray, channel);
+		}
+	}
+
+	/**
+	 * Handle signaling channel data
+	 * @param message
+	 * @param jsonArray
+	 */
+	private void handleSignalingChannelData(final String message, final JSONArray jsonArray) {
+		logger.info("Got info for channel 0: {}", message);
+
+		final String subchannel = jsonArray.getString(1);
+		logger.info("Subchannel is: " + subchannel);
+		switch (subchannel) {
+		case "hb":
+			// Ignore channel heartbeat values
+			break;
 			
-			if(jsonArray.get(1) instanceof String) {
-				final String value = jsonArray.getString(1);
-				if("hb".equals(value)) {
-					// Ignore heartbeat
-				} else {
-					logger.error("Unable to process: {}", jsonArray);
-				}
-			} else {				
-				final JSONArray subarray = jsonArray.getJSONArray(1);			
-				final String channelSymbol = getFromChannelSymbolMap(channel);
-				
-				if(channelSymbol.contains("trade")) {
-					handleCandlestickCallback(channelSymbol, subarray);
-				} else {
-					handleTickCallback(channel, subarray);
-				}
+		case "ws":
+			// Wallets
+			break;
+			
+		case "os":
+			// Orders
+			break;
+
+		default:
+			//logger.error("No match found for message {}", message);
+			break;
+		}
+	}
+
+	/**
+	 * Handle normal channel data
+	 * @param jsonArray
+	 * @param channel
+	 */
+	private void handleChannelData(final JSONArray jsonArray, final int channel) {
+		if(jsonArray.get(1) instanceof String) {
+			final String value = jsonArray.getString(1);
+			
+			if("hb".equals(value)) {
+				// Ignore heartbeat
+			} else {
+				logger.error("Unable to process: {}", jsonArray);
+			}
+		} else {				
+			final JSONArray subarray = jsonArray.getJSONArray(1);			
+			final String channelSymbol = getFromChannelSymbolMap(channel);
+			
+			if(channelSymbol.contains("trade")) {
+				handleCandlestickCallback(channelSymbol, subarray);
+			} else {
+				handleTickCallback(channel, subarray);
 			}
 		}
 	}
@@ -399,6 +421,13 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		channelCallbacks.get(symbol).add(callback);	
 	}
 	
+	/**
+	 * Remove the a tick callback
+	 * @param symbol
+	 * @param callback
+	 * @return
+	 * @throws APIException
+	 */
 	public boolean removeTickCallback(final String symbol, final BiConsumer<String, Tick> callback) throws APIException {
 		
 		if(! channelCallbacks.containsKey(symbol)) {
@@ -547,10 +576,18 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		return lastHeatbeat;
 	}
 	
+	/**
+	 * Get the API key
+	 * @return
+	 */
 	public String getApiKey() {
 		return apiKey;
 	}
 	
+	/**
+	 * Get the API secret
+	 * @return
+	 */
 	public String getApiSecret() {
 		return apiSecret;
 	}
