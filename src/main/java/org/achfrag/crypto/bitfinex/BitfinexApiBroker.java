@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
 
 import org.achfrag.crypto.Const;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
@@ -26,6 +25,7 @@ import org.achfrag.crypto.bitfinex.misc.APIException;
 import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
 import org.achfrag.crypto.bitfinex.misc.WebsocketClientEndpoint;
 import org.achfrag.crypto.bitfinex.misc.WebsocketCloseHandler;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.slf4j.Logger;
@@ -251,33 +251,53 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		logger.debug("Channel callback");
 		handlePongCallback();
 
-		final Matcher matcher = BitfinexApiHelper.CHANNEL_PATTERN.matcher(message);
+		// JSON callback
+		final JSONTokener tokener = new JSONTokener(message);
+		final JSONArray jsonArray = new JSONArray(tokener);
+				
+		final int channel = jsonArray.getInt(0);
 		
-		if(! matcher.matches()) {
-			if(message.contains("\"hb\"")) {
+		if(channel == 0) {
+			logger.info("Got info for channel 0: {}", message);
+
+			final String subchannel = jsonArray.getString(1);
+			logger.info("Subchannel is: " + subchannel);
+			switch (subchannel) {
+			case "hb":
 				// Ignore channel heartbeat values
-			} else if(message.startsWith("[0,")) {
-				if(message.contains("\"ps\"")) {
-					// Positions
-				} else if(message.contains("\"ws\"")) {
-					// Wallets
-				} else if(message.contains("\"os\"")) {
-					// Orders
-				}
-				logger.info("Got info for channel 0: {}", message);
-			} else {
-				logger.error("No match found for message {}", message);
+				break;
+				
+			case "ws":
+				// Wallets
+				break;
+				
+			case "os":
+				// Orders
+				break;
+
+			default:
+				//logger.error("No match found for message {}", message);
+				break;
 			}
+
 		} else {
-			final int channel = Integer.parseInt(matcher.group(1));
-			final String content = matcher.group(2);
 			
-			final String channelSymbol = getFromChannelSymbolMap(channel);
-			
-			if(channelSymbol.contains("trade")) {
-				handleCandlestickCallback(channel, channelSymbol, content);
-			} else {
-				handleTickCallback(channel, content);
+			if(jsonArray.get(1) instanceof String) {
+				final String value = jsonArray.getString(1);
+				if("hb".equals(value)) {
+					// Ignore heartbeat
+				} else {
+					logger.error("Unable to process: {}", jsonArray);
+				}
+			} else {				
+				final JSONArray subarray = jsonArray.getJSONArray(1);			
+				final String channelSymbol = getFromChannelSymbolMap(channel);
+				
+				if(channelSymbol.contains("trade")) {
+					handleCandlestickCallback(channelSymbol, subarray);
+				} else {
+					handleTickCallback(channel, subarray);
+				}
 			}
 		}
 	}
@@ -285,21 +305,16 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	/**
 	 * Handle a candlestick callback
 	 * @param channel
-	 * @param content
+	 * @param subarray
 	 */
-	private void handleCandlestickCallback(final int channel, final String channelSymbol, final String content) {
-		// remove [[..], [...]] -> [..], [..]
-		final String ticks = content.substring(1, content.length()-1);
-		
+	private void handleCandlestickCallback(final String channelSymbol, final JSONArray subarray) {
+
 		// channel symbol trade:1m:tLTCUSD
 		final String symbol = (channelSymbol.split(":"))[2];
-		
-		final Matcher contentMatcher = BitfinexApiHelper.CHANNEL_ELEMENT_PATTERN.matcher(ticks);
-		
+
 		final List<Tick> ticksBuffer = new ArrayList<>();
-		while (contentMatcher.find()) {
-			final String element = contentMatcher.group(1);
-			final String[] parts = element.split(",");
+		for (int pos = 0; pos < subarray.length(); pos++) {
+			final JSONArray parts = subarray.getJSONArray(pos);
 			
 			// 0 = Timestamp
 			// 1 = Open
@@ -307,15 +322,15 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			// 3 = High 
 			// 4 = Low
 			// 5 = Volume
-			final Instant i = Instant.ofEpochMilli(Long.parseLong(parts[0]));
+			final Instant i = Instant.ofEpochMilli(parts.getLong(0));
 			final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
 			
 			final Tick tick = new BaseTick(withTimezone, 
-					Double.parseDouble(parts[1]), 
-					Double.parseDouble(parts[2]), 
-					Double.parseDouble(parts[3]), 
-					Double.parseDouble(parts[4]), 
-					Double.parseDouble(parts[5]));
+					parts.getDouble(1), 
+					parts.getDouble(2), 
+					parts.getDouble(3), 
+					parts.getDouble(4), 
+					parts.getDouble(5));
 
 			ticksBuffer.add(tick);
 		}
@@ -334,23 +349,14 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	/**
 	 * Handle a tick callback
 	 * @param channel
-	 * @param content
+	 * @param subarray
 	 */
-	protected void handleTickCallback(final int channel, final String content) {
-		final Matcher contentMatcher = BitfinexApiHelper.CHANNEL_ELEMENT_PATTERN.matcher(content);
-		
-		while (contentMatcher.find()) {
-			final String element = contentMatcher.group(1);
-			handleTickElement(channel, element);
-		}
-	}
-
-	protected void handleTickElement(final int channel, final String element) {
-		final String[] elements = element.split(",");
+	protected void handleTickCallback(final int channel, final JSONArray subarray) {
+				
 		// 0 = BID
 		// 2 = ASK
 		// 6 = Price
-		final double price = Double.parseDouble(elements[6]);
+		final double price = subarray.getDouble(6);
 		final Tick tick = new BaseTick(ZonedDateTime.now(Const.BITFINEX_TIMEZONE), price, price, price, price, price);
 
 		final String symbol = getFromChannelSymbolMap(channel);
@@ -364,15 +370,26 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		if(callbacks != null) {
 			callbacks.forEach(c -> c.accept(symbol, tick));
 		}
+		
 	}
 
+	/**
+	 * Get the channel from the symbol map - thread safe
+	 * @param channel
+	 * @return
+	 */
 	private String getFromChannelSymbolMap(final int channel) {
 		synchronized (channelIdSymbolMap) {
 			return channelIdSymbolMap.get(channel);
 		}
 	}
 
-	
+	/**
+	 * Register a new tick callback
+	 * @param symbol
+	 * @param callback
+	 * @throws APIException
+	 */
 	public void registerTickCallback(final String symbol, final BiConsumer<String, Tick> callback) throws APIException {
 		
 		if(! channelCallbacks.containsKey(symbol)) {
@@ -391,12 +408,22 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		return channelCallbacks.get(symbol).remove(callback);
 	}
 	
+	/**
+	 * Test whether the ticker is active or not 
+	 * @param currencyPair
+	 * @return
+	 */
 	public boolean isTickerActive(final CurrencyPair currencyPair) {
 		final String currencyString = currencyPair.toBitfinexString();
 		
 		return getChannelForSymbol(currencyString) != -1;
 	}
 
+	/**
+	 * Find the channel for the given symol
+	 * @param currencyString
+	 * @return
+	 */
 	public Integer getChannelForSymbol(final String currencyString) {
 		synchronized (channelIdSymbolMap) {
 			return channelIdSymbolMap.entrySet()
