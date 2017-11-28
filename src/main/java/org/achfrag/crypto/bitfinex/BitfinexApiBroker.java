@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -175,6 +174,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	}
 
 	protected void handleAPICallback(final String message) {
+		
+		System.out.println(message);
+		
 		// JSON callback
 		final JSONTokener tokener = new JSONTokener(message);
 		final JSONObject jsonObject = new JSONObject(tokener);
@@ -289,7 +291,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			break;
 			
 		case "os":
-			// Orders
+			// Open Orders
+			break;
+			
+		case "on":
+			// Order notification
 			break;
 
 		default:
@@ -543,10 +549,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @return The id of the order
 	 */
 	public String placeOrder(final BitfinexOrder order) {
-		final String uuid = UUID.randomUUID().toString();
-		final OrderCommand orderCommand = new OrderCommand(uuid, order);
+		final long ctid = System.currentTimeMillis();
+		final OrderCommand orderCommand = new OrderCommand(ctid, order);
 		sendCommand(orderCommand);
-		return uuid;
+		return Long.toString(ctid);
 	}
 	
 	/**

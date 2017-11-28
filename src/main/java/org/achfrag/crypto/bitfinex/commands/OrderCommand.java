@@ -6,11 +6,11 @@ import org.json.JSONObject;
 
 public class OrderCommand extends AbstractAPICommand {
 
-	private String uuid;
+	private long cid;
 	private BitfinexOrder bitfinexOrder;
 
-	public OrderCommand(final String uuid, final BitfinexOrder bitfinexOrder) {
-		this.uuid = uuid;
+	public OrderCommand(final long cid, final BitfinexOrder bitfinexOrder) {
+		this.cid = cid;
 		this.bitfinexOrder = bitfinexOrder;
 	}
 
@@ -18,32 +18,34 @@ public class OrderCommand extends AbstractAPICommand {
 	public String getCommand(final BitfinexApiBroker bitfinexApiBroker) throws CommandException {
 		
 		final JSONObject orderJson = new JSONObject();
-		orderJson.put("cid", uuid);
+		orderJson.put("cid", cid);
 		orderJson.put("type", bitfinexOrder.getType().getBifinexString());
 		orderJson.put("symbol", bitfinexOrder.getSymbol());
-		orderJson.put("amount", bitfinexOrder.getAmount());
-		orderJson.put("price", bitfinexOrder.getPrice());
+		orderJson.put("amount", Double.toString(bitfinexOrder.getAmount()));
+		orderJson.put("price", Double.toString(bitfinexOrder.getPrice()));
 
-		if(bitfinexOrder.getPriceTrailing() != Double.NaN) {
+		if(bitfinexOrder.getPriceTrailing() != -1) {
 			orderJson.put("price_trailing", bitfinexOrder.getPriceTrailing());
 		}
 		
-		if(bitfinexOrder.getPriceAuxLimit() != Double.NaN) {
+		if(bitfinexOrder.getPriceAuxLimit() != -1) {
 			orderJson.put("price_aux_limit", bitfinexOrder.getPriceAuxLimit());
 		}
 		
 		if(bitfinexOrder.isHidden()) {
-			orderJson.put("hidden", "1");
+			orderJson.put("hidden", 1);
 		}
 		
 		if(bitfinexOrder.isPostOnly()) {
-			orderJson.put("postonly", "1");
+			orderJson.put("postonly", 1);
 		}
 		
 		final StringBuilder sb = new StringBuilder();
-		sb.append("[0,\"on\", null, {");
-		sb.append(bitfinexOrder.toString());
-		sb.append("}]\n");
+		sb.append("[0,\"on\", null, ");
+		sb.append(orderJson.toString());
+		sb.append("]\n");
+		
+		System.out.println(sb);
 		
 		return sb.toString();
 	}

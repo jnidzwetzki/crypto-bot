@@ -68,7 +68,15 @@ public class Main implements Runnable {
 			bitfinexApiBroker = buildBifinexClient();
 			
 			bitfinexApiBroker.connect();
+			
+			/*
+			final BitfinexOrder bitfinexOrder = BitfinexOrderBuilder
+					.create(CurrencyPair.BTC_USD, BitfinexOrderType.EXCHANGE_LIMIT, -0.002, 15000)
+					.setPostOnly()
+					.build();
 
+			bitfinexApiBroker.placeOrder(bitfinexOrder);*/
+			
 			requestHistoricalData(bitfinexApiBroker);			
 			registerTicker(bitfinexApiBroker);
 
@@ -267,7 +275,7 @@ public class Main implements Runnable {
 			if(trade != null) {
 				final double priceIn = trade.getEntry().getPrice().toDouble();
 				final double currentPrice = bitfinexApiBroker.getLastTick(currency).getClosePrice().toDouble();
-				System.out.println("Price in " + priceIn + " / " + (currentPrice - priceIn));
+				System.out.println(symbol + ": price in " + priceIn + " / " + (currentPrice - priceIn));
 			}	
 		}
 		
