@@ -336,25 +336,25 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 		final List<Tick> ticksBuffer = new ArrayList<>();
 		for (int pos = 0; pos < subarray.length(); pos++) {
-			final JSONArray parts = subarray.getJSONArray(pos);
 			
-			// 0 = Timestamp
-			// 1 = Open
-			// 2 = Close
-			// 3 = High 
-			// 4 = Low
-			// 5 = Volume
-			final Instant i = Instant.ofEpochMilli(parts.getLong(0));
-			final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
-			
-			final Tick tick = new BaseTick(withTimezone, 
-					parts.getDouble(1), 
-					parts.getDouble(2), 
-					parts.getDouble(3), 
-					parts.getDouble(4), 
-					parts.getDouble(5));
-
-			ticksBuffer.add(tick);
+			if(! (subarray.get(pos) instanceof JSONArray)) {
+				logger.error("Pos {} is not a json array in {}", pos, subarray);
+			} else {
+				final JSONArray parts = subarray.getJSONArray(pos);
+				
+				// 0 = Timestamp, 1 = Open, 2 = Close, 3 = High, 4 = Low,  5 = Volume
+				final Instant i = Instant.ofEpochMilli(parts.getLong(0));
+				final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
+				
+				final Tick tick = new BaseTick(withTimezone, 
+						parts.getDouble(1), 
+						parts.getDouble(2), 
+						parts.getDouble(3), 
+						parts.getDouble(4), 
+						parts.getDouble(5));
+	
+				ticksBuffer.add(tick);
+			}
 		}
 		
 		ticksBuffer.sort((t1, t2) -> t1.getEndTime().compareTo(t2.getEndTime()));
