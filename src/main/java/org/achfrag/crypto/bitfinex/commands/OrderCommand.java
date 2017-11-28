@@ -2,6 +2,7 @@ package org.achfrag.crypto.bitfinex.commands;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.BitfinexOrder;
+import org.json.JSONObject;
 
 public class OrderCommand extends AbstractAPICommand {
 
@@ -15,31 +16,33 @@ public class OrderCommand extends AbstractAPICommand {
 
 	@Override
 	public String getCommand(final BitfinexApiBroker bitfinexApiBroker) throws CommandException {
-		final StringBuilder sb = new StringBuilder();
 		
-		sb.append("[0,\"on\", null, {");
-		sb.append("\"cid:\"" + uuid + ",");
-		sb.append("\"type:\"" + bitfinexOrder.getType().getBifinexString() + ",");
-		sb.append("\"symbol:\"" + bitfinexOrder.getSymbol() + ",");
-		sb.append("\"amount:\"" + bitfinexOrder.getAmount() + ",");
-		sb.append("\"price:\"" + bitfinexOrder.getPrice() + ",");
+		final JSONObject orderJson = new JSONObject();
+		orderJson.put("cid", uuid);
+		orderJson.put("type", bitfinexOrder.getType().getBifinexString());
+		orderJson.put("symbol", bitfinexOrder.getSymbol());
+		orderJson.put("amount", bitfinexOrder.getAmount());
+		orderJson.put("price", bitfinexOrder.getPrice());
 
 		if(bitfinexOrder.getPriceTrailing() != Double.NaN) {
-			sb.append("\"price_trailing:\"" + bitfinexOrder.getPriceTrailing() + ",");
+			orderJson.put("price_trailing", bitfinexOrder.getPriceTrailing());
 		}
 		
 		if(bitfinexOrder.getPriceAuxLimit() != Double.NaN) {
-			sb.append("\"price_aux_limit:\"" + bitfinexOrder.getPriceAuxLimit() + ",");
+			orderJson.put("price_aux_limit", bitfinexOrder.getPriceAuxLimit());
 		}
 		
 		if(bitfinexOrder.isHidden()) {
-			sb.append("\"hidden\": 1");
+			orderJson.put("hidden", "1");
 		}
 		
 		if(bitfinexOrder.isPostOnly()) {
-			sb.append("\"postonly\": 1");
+			orderJson.put("postonly", "1");
 		}
 		
+		final StringBuilder sb = new StringBuilder();
+		sb.append("[0,\"on\", null, {");
+		sb.append(bitfinexOrder.toString());
 		sb.append("}]\n");
 		
 		return sb.toString();
