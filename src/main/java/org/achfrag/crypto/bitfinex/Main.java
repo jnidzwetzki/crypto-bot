@@ -121,8 +121,18 @@ public class Main implements Runnable {
 			strategies.put(bitfinexString, strategy);
 			trades.put(bitfinexString, new ArrayList<>());
 
-			// Add bars to timeseries
-			final BiConsumer<String, Tick> callback = (symbol, tick) -> timeSeries.get(symbol).addTick(tick);
+			// Add bars to timeseries callback
+			final BiConsumer<String, Tick> callback = (symbol, tick) -> {
+				final TimeSeries timeSeriesToAdd = timeSeries.get(symbol);
+				
+				try { 
+					timeSeriesToAdd.addTick(tick);
+				} catch(IllegalArgumentException e) {
+					logger.error("Unable to add tick {} to time series, last tick is {}", 
+							tick, 
+							timeSeriesToAdd.getLastTick());
+				}
+			};
 			
 			final String barSymbol = currency.toBifinexCandlestickString(TIMEFRAME);
 			
