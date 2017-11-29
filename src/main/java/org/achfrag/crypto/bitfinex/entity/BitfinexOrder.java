@@ -1,4 +1,4 @@
-package org.achfrag.crypto.bitfinex;
+package org.achfrag.crypto.bitfinex.entity;
 
 public class BitfinexOrder {
 

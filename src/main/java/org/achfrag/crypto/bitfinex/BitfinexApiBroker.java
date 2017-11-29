@@ -23,6 +23,9 @@ import org.achfrag.crypto.bitfinex.commands.CommandException;
 import org.achfrag.crypto.bitfinex.commands.OrderCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
+import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
+import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
+import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.Wallet;
 import org.achfrag.crypto.bitfinex.util.MicroSecondTimestampProvider;
@@ -109,6 +112,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	private final Table<String, String, Wallet> walletTable;
 	
 	/**
+	 * The orders
+	 */
+	private final List<ExchangeOrder> orders;
+	
+	/**
 	 * The Logger
 	 */
 	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
@@ -119,6 +127,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		this.lastHeatbeat = new AtomicLong();
 		this.lastTick = new HashMap<>();
 		this.walletTable = HashBasedTable.create();
+		this.orders = new ArrayList<>();
 	}
 	
 	public BitfinexApiBroker(final String apiKey, final String apiSecret) {
@@ -304,7 +313,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			break;
 			
 		case "os":
-			// Open Orders
+			handleOrdersCallback(jsonArray);
 			break;
 			
 		case "on":
@@ -318,6 +327,56 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	}
 
 	/**
+	 * Handle the orders callback
+	 * @param jsonArray
+	 */
+	private void handleOrdersCallback(final JSONArray jsonArray) {
+		final JSONArray orders = jsonArray.getJSONArray(2);
+		
+		// Snapshot or update
+		if(! (orders.get(0) instanceof JSONArray)) {
+			handleOrderCallback(orders);
+		} else {
+			for(int walletPos = 0; walletPos < orders.length(); walletPos++) {
+				final JSONArray orderArray = orders.getJSONArray(walletPos);
+				handleOrderCallback(orderArray);
+			}
+		}
+	}
+
+	/**
+	 * Handle a single order callback
+	 * @param orderArray
+	 */
+	private void handleOrderCallback(final JSONArray order) {		
+		final ExchangeOrder exchangeOrder = new ExchangeOrder();
+		exchangeOrder.setOrderId(order.getInt(0));
+		exchangeOrder.setGroupId(order.optInt(1, -1));
+		exchangeOrder.setCid(order.getLong(2));
+		exchangeOrder.setSymbol(order.getString(3));
+		exchangeOrder.setCreated(order.getLong(4));
+		exchangeOrder.setUpdated(order.getLong(5));
+		exchangeOrder.setAmount(order.getDouble(6));
+		exchangeOrder.setAmountAtCreation(order.getDouble(7));
+		exchangeOrder.setOrderType(BitfinexOrderType.fromString(order.getString(8)));
+		exchangeOrder.setState(order.getString(13));
+		exchangeOrder.setPrice(order.getDouble(16));
+		exchangeOrder.setPriceAvg(order.optDouble(17, -1));
+		exchangeOrder.setPriceTrailing(order.optDouble(18, -1));
+		exchangeOrder.setPriceAuxLimit(order.optDouble(19, -1));
+		exchangeOrder.setNotify(order.getInt(23) == 1 ? true : false);
+		exchangeOrder.setHidden(order.getInt(24) == 1 ? true : false);
+
+		synchronized (orders) {
+			// Replace order 
+			orders.removeIf(o -> o.getCid() == exchangeOrder.getCid());
+			orders.add(exchangeOrder);
+			
+			orders.notifyAll();
+		}
+	}
+
+	/**
 	 * Handle the wallets callback
 	 * @param jsonArray
 	 */
@@ -325,28 +384,33 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		
 		final JSONArray wallets = jsonArray.getJSONArray(2);
 		
-		for(int walletPos = 0; walletPos < wallets.length(); walletPos++) {
-			final JSONArray walletArray = wallets.getJSONArray(walletPos);
-			
-			float balanceAvailable = -1;
+		// Snapshot or update
+		if(! (wallets.get(0) instanceof JSONArray)) {
+			handleWalletcallback(wallets);
+		} else {
+			for(int walletPos = 0; walletPos < wallets.length(); walletPos++) {
+				final JSONArray walletArray = wallets.getJSONArray(walletPos);
+				handleWalletcallback(walletArray);
+			}
+		}
+	}
 
-			if(walletArray.length() >= 5) {
-				if(! walletArray.isNull(4)) {
-					balanceAvailable = walletArray.getFloat(4);
-				}
-			}
-			
-			final String walletType = walletArray.getString(0);
-			final String currency = walletArray.getString(1);
-			final double balance = walletArray.getDouble(2);
-			float unsettledInterest = walletArray.getFloat(3);
-			
-			final Wallet wallet = new Wallet(walletType, currency, balance, unsettledInterest, balanceAvailable);
+	/**
+	 * Handle the callback for a single wallet
+	 * @param walletArray
+	 */
+	private void handleWalletcallback(final JSONArray walletArray) {
+		final String walletType = walletArray.getString(0);
+		final String currency = walletArray.getString(1);
+		final double balance = walletArray.getDouble(2);
+		final float unsettledInterest = walletArray.getFloat(3);
+		final float balanceAvailable = walletArray.optFloat(4, -1);
 		
-			synchronized (walletTable) {
-				walletTable.put(walletType, currency, wallet);
-				walletTable.notifyAll();
-			}
+		final Wallet wallet = new Wallet(walletType, currency, balance, unsettledInterest, balanceAvailable);
+
+		synchronized (walletTable) {
+			walletTable.put(walletType, currency, wallet);
+			walletTable.notifyAll();
 		}
 	}
 
@@ -679,6 +743,16 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	public Collection<Wallet> getWallets() {
 		synchronized (walletTable) {
 			return Collections.unmodifiableCollection(walletTable.values());
+		}
+	}
+	
+	/**
+	 * Get the list with exchange orders
+	 * @return
+	 */
+	public List<ExchangeOrder> getOrders() {
+		synchronized (orders) {
+			return Collections.unmodifiableList(orders);
 		}
 	}
 	

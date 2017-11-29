@@ -1,7 +1,7 @@
 package org.achfrag.crypto.bitfinex.commands;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
-import org.achfrag.crypto.bitfinex.BitfinexOrder;
+import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.json.JSONObject;
 
 public class OrderCommand extends AbstractAPICommand {

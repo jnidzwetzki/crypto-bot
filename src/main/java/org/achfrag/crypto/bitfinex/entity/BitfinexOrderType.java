@@ -1,7 +1,7 @@
-package org.achfrag.crypto.bitfinex;
+package org.achfrag.crypto.bitfinex.entity;
 
 public enum BitfinexOrderType {
-	
+
 	MARKET("MARKER"), 
 	EXCHANGE_MARKET("EXCHANGE MARKET"), 
 	LIMIT("LIMIT"), 
@@ -14,14 +14,23 @@ public enum BitfinexOrderType {
 	EXCHANGE_FOK("EXCHANGE FOK"), 
 	STOP_LIMIT("STOP LIMIT"), 
 	EXCHANGE_STOP_LIMIT("EXCHANGE STOP LIMIT");
-	
+
 	private final String bifinexString;
-	
+
 	private BitfinexOrderType(final String bifinexString) {
 		this.bifinexString = bifinexString;
 	}
-	
+
 	public String getBifinexString() {
 		return bifinexString;
+	}
+
+	public static BitfinexOrderType fromString(String orderTypeText) {
+		for (BitfinexOrderType orderType : BitfinexOrderType.values()) {
+			if (orderType.getBifinexString().equalsIgnoreCase(orderTypeText)) {
+				return orderType;
+			}
+		}
+		throw new IllegalArgumentException("Unable to find order type for: " + orderTypeText);
 	}
 }
