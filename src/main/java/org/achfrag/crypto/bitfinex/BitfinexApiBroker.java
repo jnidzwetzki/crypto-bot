@@ -22,6 +22,7 @@ import org.achfrag.crypto.bitfinex.commands.OrderCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.misc.APIException;
 import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
+import org.achfrag.crypto.bitfinex.misc.MicroSecondTimestampProvider;
 import org.achfrag.crypto.bitfinex.misc.WebsocketClientEndpoint;
 import org.achfrag.crypto.bitfinex.misc.WebsocketCloseHandler;
 import org.json.JSONArray;
@@ -174,9 +175,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	}
 
 	protected void handleAPICallback(final String message) {
-		
-		System.out.println(message);
-		
+				
 		// JSON callback
 		final JSONTokener tokener = new JSONTokener(message);
 		final JSONObject jsonObject = new JSONObject(tokener);
@@ -297,7 +296,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		case "on":
 			// Order notification
 			break;
-
+			
 		default:
 			//logger.error("No match found for message {}", message);
 			break;
@@ -535,7 +534,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			while(channelIdSymbolMap.size() != oldChannelIdSymbolMap.size()) {
 				
 				if(execution > 10) {
-					throw new APIException("Subscription of tiker failed");
+					throw new APIException("Subscription of ticker failed");
 				}
 				
 				channelIdSymbolMap.wait(500);
@@ -549,7 +548,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @return The id of the order
 	 */
 	public String placeOrder(final BitfinexOrder order) {
-		final long ctid = System.currentTimeMillis();
+		final long ctid = MicroSecondTimestampProvider.getNewTimestamp();
 		final OrderCommand orderCommand = new OrderCommand(ctid, order);
 		sendCommand(orderCommand);
 		return Long.toString(ctid);
