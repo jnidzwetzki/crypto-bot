@@ -42,9 +42,7 @@ public class OrderCommand extends AbstractAPICommand {
 		sb.append("[0,\"on\", null, ");
 		sb.append(orderJson.toString());
 		sb.append("]\n");
-		
-		System.out.println(sb);
-		
+				
 		return sb.toString();
 	}
 
