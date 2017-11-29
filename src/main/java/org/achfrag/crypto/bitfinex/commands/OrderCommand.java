@@ -6,11 +6,9 @@ import org.json.JSONObject;
 
 public class OrderCommand extends AbstractAPICommand {
 
-	private long cid;
 	private BitfinexOrder bitfinexOrder;
 
-	public OrderCommand(final long cid, final BitfinexOrder bitfinexOrder) {
-		this.cid = cid;
+	public OrderCommand(final BitfinexOrder bitfinexOrder) {
 		this.bitfinexOrder = bitfinexOrder;
 	}
 
@@ -18,7 +16,7 @@ public class OrderCommand extends AbstractAPICommand {
 	public String getCommand(final BitfinexApiBroker bitfinexApiBroker) throws CommandException {
 		
 		final JSONObject orderJson = new JSONObject();
-		orderJson.put("cid", cid);
+		orderJson.put("cid", bitfinexOrder.getCid());
 		orderJson.put("type", bitfinexOrder.getType().getBifinexString());
 		orderJson.put("symbol", bitfinexOrder.getSymbol());
 		orderJson.put("amount", Double.toString(bitfinexOrder.getAmount()));

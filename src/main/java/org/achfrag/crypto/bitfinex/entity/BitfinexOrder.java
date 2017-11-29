@@ -1,7 +1,10 @@
 package org.achfrag.crypto.bitfinex.entity;
 
+import org.achfrag.crypto.bitfinex.util.MicroSecondTimestampProvider;
+
 public class BitfinexOrder {
 
+	private final long cid;
 	private final String symbol; 
 	private final BitfinexOrderType type;
 	private final double price;
@@ -13,6 +16,10 @@ public class BitfinexOrder {
 	
 	public BitfinexOrder(final String symbol, final BitfinexOrderType type, final double price, final double amount,
 			final double priceTrailing, final double priceAuxLimit, final boolean postOnly, final boolean hidden) {
+		
+		// The client ID
+		this.cid = MicroSecondTimestampProvider.getNewTimestamp();
+
 		this.symbol = symbol;
 		this.type = type;
 		this.price = price;
@@ -25,9 +32,9 @@ public class BitfinexOrder {
 
 	@Override
 	public String toString() {
-		return "BitfinexOrder [symbol=" + symbol + ", type=" + type + ", price=" + price + ", priceTrailing="
-				+ priceTrailing + ", priceAuxLimit=" + priceAuxLimit + ", amount=" + amount + ", postOnly=" + postOnly
-				+ ", hidden=" + hidden + "]";
+		return "BitfinexOrder [cid=" + cid + ", symbol=" + symbol + ", type=" + type + ", price=" + price
+				+ ", priceTrailing=" + priceTrailing + ", priceAuxLimit=" + priceAuxLimit + ", amount=" + amount
+				+ ", postOnly=" + postOnly + ", hidden=" + hidden + "]";
 	}
 
 	public String getSymbol() {
@@ -62,4 +69,7 @@ public class BitfinexOrder {
 		return hidden;
 	}
 
+	public long getCid() {
+		return cid;
+	}
 }

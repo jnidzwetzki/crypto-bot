@@ -23,12 +23,11 @@ import org.achfrag.crypto.bitfinex.commands.CommandException;
 import org.achfrag.crypto.bitfinex.commands.OrderCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
-import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Wallet;
-import org.achfrag.crypto.bitfinex.util.MicroSecondTimestampProvider;
 import org.achfrag.crypto.bitfinex.websocket.WebsocketClientEndpoint;
 import org.achfrag.crypto.bitfinex.websocket.WebsocketCloseHandler;
 import org.json.JSONArray;
@@ -690,14 +689,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	}
 	
 	/**
-	 * Place a new order, the order id is returned
-	 * @return The id of the order
+	 * Place a new order
 	 */
-	public String placeOrder(final BitfinexOrder order) {
-		final long ctid = MicroSecondTimestampProvider.getNewTimestamp();
-		final OrderCommand orderCommand = new OrderCommand(ctid, order);
+	public void placeOrder(final BitfinexOrder order) {
+		final OrderCommand orderCommand = new OrderCommand(order);
 		sendCommand(orderCommand);
-		return Long.toString(ctid);
 	}
 	
 	/**
@@ -791,4 +787,20 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 	
+	/**
+	 * Add a order callback
+	 * @param callback
+	 */
+	public void addOrderCallback(final Consumer<ExchangeOrder> callback) {
+		orderCallbacks.add(callback);
+	}
+	
+	/**
+	 * Remove a order callback
+	 * @param callback
+	 * @return
+	 */
+	public boolean removeOrderCallback(final Consumer<ExchangeOrder> callback) {
+		return orderCallbacks.remove(callback);
+	}
 }
