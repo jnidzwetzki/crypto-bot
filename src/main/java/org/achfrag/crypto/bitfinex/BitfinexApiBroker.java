@@ -19,7 +19,8 @@ import java.util.function.Consumer;
 import org.achfrag.crypto.Const;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.AuthCommand;
-import org.achfrag.crypto.bitfinex.commands.CancelOrder;
+import org.achfrag.crypto.bitfinex.commands.CancelOrderCommand;
+import org.achfrag.crypto.bitfinex.commands.CancelOrderGroupCommand;
 import org.achfrag.crypto.bitfinex.commands.CommandException;
 import org.achfrag.crypto.bitfinex.commands.OrderCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
@@ -703,9 +704,21 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @param date
 	 */
 	public void cancelOrder(final String id) {
-		final CancelOrder cancelOrder = new CancelOrder(id);
+		final CancelOrderCommand cancelOrder = new CancelOrderCommand(id);
 		sendCommand(cancelOrder);
 	}
+	
+	/**
+	 * Cancel the given order group
+	 * @param cid
+	 * @param date
+	 */
+	public void cancelOrderGroup(final int id) {
+		final CancelOrderGroupCommand cancelOrder = new CancelOrderGroupCommand(id);
+		sendCommand(cancelOrder);
+	}
+	
+	
 	
 	/**
 	 * Get a set with active symbols

@@ -3,14 +3,14 @@ package org.achfrag.crypto.bitfinex.commands;
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.json.JSONObject;
 
-public class CancelOrder extends AbstractAPICommand {
+public class CancelOrderCommand extends AbstractAPICommand {
 
 	/**
 	 * The cid
 	 */
 	private String id;
 
-	public CancelOrder(final String id) {
+	public CancelOrderCommand(final String id) {
 		this.id = id;
 	}
 
@@ -21,7 +21,7 @@ public class CancelOrder extends AbstractAPICommand {
 		cancelJson.put("id", id);
 		
 		final StringBuilder sb = new StringBuilder();
-		sb.append("[0,\"on\", null, ");
+		sb.append("[0,\"oc\", null, ");
 		sb.append(cancelJson.toString());
 		sb.append("]\n");
 				
