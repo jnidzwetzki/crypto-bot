@@ -15,6 +15,7 @@ public class BitfinexOrderBuilder {
 	private double priceAuxLimit = -1;
 	private boolean postOnly = false;
 	private boolean hidden = false;
+	private int groupid = -1;
 
 	private BitfinexOrderBuilder(final CurrencyPair symbol, final BitfinexOrderType type, 
 			final double amount, final double price) {
@@ -41,20 +42,24 @@ public class BitfinexOrderBuilder {
 		return this;
 	}
 	
-	public BitfinexOrderBuilder setPriceTrailing(final double price) {
+	public BitfinexOrderBuilder withPriceTrailing(final double price) {
 		this.priceTrailing = price;
 		return this;
 	}
 	
-	public BitfinexOrderBuilder setPriceAuxLimit(final double price) {
+	public BitfinexOrderBuilder withPriceAuxLimit(final double price) {
 		this.priceAuxLimit = price;
+		return this;
+	}
+	
+	public BitfinexOrderBuilder withGroupId(final int groupId) {
+		this.groupid = groupId;
 		return this;
 	}
 	
 	public BitfinexOrder build() {
 		return new BitfinexOrder(symbol.toBitfinexString(), type, price, 
-				amount, priceTrailing, priceAuxLimit, postOnly, hidden);
+				amount, priceTrailing, priceAuxLimit, postOnly, hidden, groupid);
 	}
-	
 
 }

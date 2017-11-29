@@ -38,6 +38,10 @@ public class OrderCommand extends AbstractAPICommand {
 			orderJson.put("postonly", 1);
 		}
 		
+		if(bitfinexOrder.getGroupId() > 0) {
+			orderJson.put("gid", bitfinexOrder.getGroupId());
+		}
+		
 		final StringBuilder sb = new StringBuilder();
 		sb.append("[0,\"on\", null, ");
 		sb.append(orderJson.toString());
