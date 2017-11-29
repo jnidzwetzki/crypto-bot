@@ -69,17 +69,17 @@ public class Main implements Runnable {
 			
 			bitfinexApiBroker.connect();
 			
-			
+			/*
 			final BitfinexOrder bitfinexOrder = BitfinexOrderBuilder
 					.create(CurrencyPair.BTC_USD, BitfinexOrderType.EXCHANGE_LIMIT, -0.002, 15000)
 					.setPostOnly()
 					.build();
 
-			bitfinexApiBroker.placeOrder(bitfinexOrder);
+			bitfinexApiBroker.placeOrder(bitfinexOrder);*/
 			
-			/*requestHistoricalData(bitfinexApiBroker);			
-			registerTicker(bitfinexApiBroker);*/
-
+			requestHistoricalData(bitfinexApiBroker);			
+			registerTicker(bitfinexApiBroker);
+			
 			while (true) {
 				Thread.sleep(TimeUnit.MINUTES.toMillis(5));
 			}

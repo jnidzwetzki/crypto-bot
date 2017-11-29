@@ -4,6 +4,8 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,7 @@ import org.achfrag.crypto.bitfinex.commands.OrderCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
 import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.Wallet;
 import org.achfrag.crypto.bitfinex.util.MicroSecondTimestampProvider;
 import org.achfrag.crypto.bitfinex.websocket.WebsocketClientEndpoint;
 import org.achfrag.crypto.bitfinex.websocket.WebsocketCloseHandler;
@@ -32,6 +35,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
+
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 
 public class BitfinexApiBroker implements WebsocketCloseHandler {
 
@@ -96,6 +102,13 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	private CountDownLatch authentificatedLatch;
 	
 	/**
+	 * Wallets
+	 * 
+	 *  Currency, Wallet-Type, Wallet
+	 */
+	private final Table<String, String, Wallet> walletTable;
+	
+	/**
 	 * The Logger
 	 */
 	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
@@ -105,6 +118,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		this.channelCallbacks = new HashMap<>();
 		this.lastHeatbeat = new AtomicLong();
 		this.lastTick = new HashMap<>();
+		this.walletTable = HashBasedTable.create();
 	}
 	
 	public BitfinexApiBroker(final String apiKey, final String apiSecret) {
@@ -286,7 +300,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			break;
 			
 		case "ws":
-			// Wallets
+			handleWalletsCallback(jsonArray);
 			break;
 			
 		case "os":
@@ -300,6 +314,39 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		default:
 			//logger.error("No match found for message {}", message);
 			break;
+		}
+	}
+
+	/**
+	 * Handle the wallets callback
+	 * @param jsonArray
+	 */
+	private void handleWalletsCallback(final JSONArray jsonArray) {
+		
+		final JSONArray wallets = jsonArray.getJSONArray(2);
+		
+		for(int walletPos = 0; walletPos < wallets.length(); walletPos++) {
+			final JSONArray walletArray = wallets.getJSONArray(walletPos);
+			
+			float balanceAvailable = -1;
+
+			if(walletArray.length() >= 5) {
+				if(! walletArray.isNull(4)) {
+					balanceAvailable = walletArray.getFloat(4);
+				}
+			}
+			
+			final String walletType = walletArray.getString(0);
+			final String currency = walletArray.getString(1);
+			final double balance = walletArray.getDouble(2);
+			float unsettledInterest = walletArray.getFloat(3);
+			
+			final Wallet wallet = new Wallet(walletType, currency, balance, unsettledInterest, balanceAvailable);
+		
+			synchronized (walletTable) {
+				walletTable.put(walletType, currency, wallet);
+				walletTable.notifyAll();
+			}
 		}
 	}
 
@@ -622,6 +669,16 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	public Tick getLastTick(final String bitfinexString) {
 		synchronized (lastTick) {
 			return lastTick.get(bitfinexString);
+		}
+	}
+	
+	/**
+	 * Get all wallets
+	 * @return 
+	 */
+	public Collection<Wallet> getWallets() {
+		synchronized (walletTable) {
+			return Collections.unmodifiableCollection(walletTable.values());
 		}
 	}
 	
