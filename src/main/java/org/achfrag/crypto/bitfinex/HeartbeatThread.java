@@ -73,7 +73,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 				return;
 			}
 			
-			if(bitfinexApiBroker.websocketEndpoint != null) {
+			if(bitfinexApiBroker.getWebsocketEndpoint() != null) {
 				
 				sendHeartbeatIfNeeded();
 

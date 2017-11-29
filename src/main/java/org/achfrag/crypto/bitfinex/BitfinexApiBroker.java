@@ -52,12 +52,12 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	/**
 	 * The API callback
 	 */
-	final Consumer<String> apiCallback = ((c) -> websocketCallback(c));
+	private final Consumer<String> apiCallback = ((c) -> websocketCallback(c));
 	
 	/**
 	 * The websocket endpoint
 	 */
-	WebsocketClientEndpoint websocketEndpoint;
+	private WebsocketClientEndpoint websocketEndpoint;
 	
 	/**
 	 * The channel map
@@ -68,6 +68,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * The channel callbacks
 	 */
 	private final Map<String, List<BiConsumer<String, Tick>>> channelCallbacks;
+	
+	/**
+	 * The order callbacks
+	 */
+	private final List<Consumer<ExchangeOrder>> orderCallbacks;
 	
 	/**
 	 * The last ticks
@@ -124,6 +129,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	public BitfinexApiBroker() {
 		this.channelIdSymbolMap = new HashMap<>();
 		this.channelCallbacks = new HashMap<>();
+		this.orderCallbacks = new ArrayList<>();
 		this.lastHeatbeat = new AtomicLong();
 		this.lastTick = new HashMap<>();
 		this.walletTable = HashBasedTable.create();
@@ -185,7 +191,19 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 	
-	public void websocketCallback(final String message) {
+	/**
+	 * Get the websocket endpoint
+	 * @return
+	 */
+	public WebsocketClientEndpoint getWebsocketEndpoint() {
+		return websocketEndpoint;
+	}
+	
+	/**
+	 * We received a websocket callback
+	 * @param message
+	 */
+	private void websocketCallback(final String message) {
 		logger.debug("Got message: {}", message);
 		
 		if(message.startsWith("{")) {
@@ -197,6 +215,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 
+	/**
+	 * Handle a API callback
+	 */
 	protected void handleAPICallback(final String message) {
 				
 		// JSON callback
@@ -318,6 +339,12 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			
 		case "on":
 			// Order notification
+			handleOrdersCallback(jsonArray);
+			break;
+			
+		case "oc":
+			// Order cancel
+			handleOrdersCallback(jsonArray);
 			break;
 			
 		default:
@@ -332,6 +359,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 */
 	private void handleOrdersCallback(final JSONArray jsonArray) {
 		final JSONArray orders = jsonArray.getJSONArray(2);
+		
+		// No orders active
+		if(orders.length() == 0) {
+			return;
+		}
 		
 		// Snapshot or update
 		if(! (orders.get(0) instanceof JSONArray)) {
@@ -374,6 +406,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			
 			orders.notifyAll();
 		}
+		
+		// Notify callbacks
+		orderCallbacks.forEach(c -> c.accept(exchangeOrder));
 	}
 
 	/**
