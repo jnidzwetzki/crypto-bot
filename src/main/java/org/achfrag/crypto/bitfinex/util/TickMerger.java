@@ -1,4 +1,4 @@
-package org.achfrag.crypto.bitfinex.misc;
+package org.achfrag.crypto.bitfinex.util;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 import org.achfrag.crypto.Const;
+import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.ta4j.core.BaseTick;
 import org.ta4j.core.Tick;
 

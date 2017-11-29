@@ -15,10 +15,10 @@ import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.commands.UnsubscribeCandlesCommand;
-import org.achfrag.crypto.bitfinex.misc.APIException;
-import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
-import org.achfrag.crypto.bitfinex.misc.TickMerger;
-import org.achfrag.crypto.bitfinex.misc.Timeframe;
+import org.achfrag.crypto.bitfinex.entity.APIException;
+import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.Timeframe;
+import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,16 +69,16 @@ public class Main implements Runnable {
 			
 			bitfinexApiBroker.connect();
 			
-			/*
+			
 			final BitfinexOrder bitfinexOrder = BitfinexOrderBuilder
 					.create(CurrencyPair.BTC_USD, BitfinexOrderType.EXCHANGE_LIMIT, -0.002, 15000)
 					.setPostOnly()
 					.build();
 
-			bitfinexApiBroker.placeOrder(bitfinexOrder);*/
+			bitfinexApiBroker.placeOrder(bitfinexOrder);
 			
-			requestHistoricalData(bitfinexApiBroker);			
-			registerTicker(bitfinexApiBroker);
+			/*requestHistoricalData(bitfinexApiBroker);			
+			registerTicker(bitfinexApiBroker);*/
 
 			while (true) {
 				Thread.sleep(TimeUnit.MINUTES.toMillis(5));

@@ -1,4 +1,4 @@
-package org.achfrag.crypto.bitfinex.misc;
+package org.achfrag.crypto.bitfinex.util;
 
 public class MicroSecondTimestampProvider {
 

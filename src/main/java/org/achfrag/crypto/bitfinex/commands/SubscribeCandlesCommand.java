@@ -1,8 +1,8 @@
 package org.achfrag.crypto.bitfinex.commands;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
-import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
-import org.achfrag.crypto.bitfinex.misc.Timeframe;
+import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.json.JSONObject;
 
 public class SubscribeCandlesCommand extends AbstractAPICommand {

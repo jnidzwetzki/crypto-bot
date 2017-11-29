@@ -1,6 +1,6 @@
 package org.achfrag.crypto.bitfinex;
 
-import org.achfrag.crypto.bitfinex.misc.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
 
 public class BitfinexOrderBuilder {
 

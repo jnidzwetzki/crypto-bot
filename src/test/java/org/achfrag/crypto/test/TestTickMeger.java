@@ -6,8 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.BiConsumer;
 
-import org.achfrag.crypto.bitfinex.misc.TickMerger;
-import org.achfrag.crypto.bitfinex.misc.Timeframe;
+import org.achfrag.crypto.bitfinex.entity.Timeframe;
+import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.junit.Assert;
 import org.junit.Test;
 import org.ta4j.core.Tick;

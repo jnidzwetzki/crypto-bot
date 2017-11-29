@@ -9,8 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.achfrag.crypto.bitfinex.misc.TickMerger;
-import org.achfrag.crypto.bitfinex.misc.Timeframe;
+import org.achfrag.crypto.bitfinex.entity.Timeframe;
+import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Decimal;
