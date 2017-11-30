@@ -1,14 +1,14 @@
 package org.achfrag.crypto.bitfinex.commands;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
-import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.json.JSONObject;
 
 public class SubscribeTickerCommand extends AbstractAPICommand {
 
 	private String currencyPair;
 
-	public SubscribeTickerCommand(final CurrencyPair currencyPair) {
+	public SubscribeTickerCommand(final BitfinexCurrencyPair currencyPair) {
 		this.currencyPair = currencyPair.toBitfinexString();
 	}
 	

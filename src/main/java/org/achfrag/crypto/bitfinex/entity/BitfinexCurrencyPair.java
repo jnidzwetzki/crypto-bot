@@ -1,18 +1,15 @@
 package org.achfrag.crypto.bitfinex.entity;
 
-public class CurrencyPair {
-	
+public enum BitfinexCurrencyPair {
+
 	// Ethereum
-	//public final static CurrencyPair ETH_BTC = new CurrencyPair("ETH", "BTC");
-	
-	// Ethereum
-	public final static CurrencyPair ETH_USD = new CurrencyPair("ETH", "USD", 0.04);
+	ETH_USD("ETH", "USD", 0.04),
 	
 	// Bitcoin
-	public final static CurrencyPair BTC_USD = new CurrencyPair("BTC", "USD", 0.002);
+	BTC_USD("BTC", "USD", 0.002),
 	
 	// Litecoin
-	public final static CurrencyPair LTC_USD = new CurrencyPair("LTC", "USD", 0.2);
+	LTC_USD("LTC", "USD", 0.2);
 
 	/**
 	 * The name of the first curreny 
@@ -29,7 +26,7 @@ public class CurrencyPair {
 	 */
 	protected final double minimalOrderSize;
 
-	public CurrencyPair(final String pair1, final String pair2, final double minimalOrderSize) {
+	private BitfinexCurrencyPair(final String pair1, final String pair2, final double minimalOrderSize) {
 		this.pair1 = pair1;
 		this.pair2 = pair2;
 		this.minimalOrderSize = minimalOrderSize;
@@ -45,6 +42,15 @@ public class CurrencyPair {
 	
 	public double getMinimalOrderSize() {
 		return minimalOrderSize;
+	}
+	
+	public static BitfinexCurrencyPair fromSymbolString(final String symbolString) {
+		for (BitfinexCurrencyPair curency : BitfinexCurrencyPair.values()) {
+			if (curency.toBitfinexString().equalsIgnoreCase(symbolString)) {
+				return curency;
+			}
+		}
+		throw new IllegalArgumentException("Unable to find order type for: " + symbolString);
 	}
 
 }

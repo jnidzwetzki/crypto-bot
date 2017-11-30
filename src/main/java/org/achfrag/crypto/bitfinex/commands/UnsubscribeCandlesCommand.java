@@ -1,18 +1,18 @@
 package org.achfrag.crypto.bitfinex.commands;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
-import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.json.JSONObject;
 
 public class UnsubscribeCandlesCommand extends AbstractAPICommand {
 
 
-	private CurrencyPair currencyPair;
+	private BitfinexCurrencyPair currencyPair;
 	
 	private Timeframe timeframe;
 
-	public UnsubscribeCandlesCommand(final CurrencyPair currencyPair, final Timeframe timeframe) {
+	public UnsubscribeCandlesCommand(final BitfinexCurrencyPair currencyPair, final Timeframe timeframe) {
 		this.currencyPair = currencyPair;
 		this.timeframe = timeframe;
 	}

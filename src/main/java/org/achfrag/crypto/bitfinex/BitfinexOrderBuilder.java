@@ -2,11 +2,11 @@ package org.achfrag.crypto.bitfinex;
 
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
-import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 
 public class BitfinexOrderBuilder {
 
-	private final CurrencyPair symbol; 
+	private final BitfinexCurrencyPair symbol; 
 	private final BitfinexOrderType type;
 	private final double amount;
 	private final double price;
@@ -17,7 +17,7 @@ public class BitfinexOrderBuilder {
 	private boolean hidden = false;
 	private int groupid = -1;
 
-	private BitfinexOrderBuilder(final CurrencyPair symbol, final BitfinexOrderType type, 
+	private BitfinexOrderBuilder(final BitfinexCurrencyPair symbol, final BitfinexOrderType type, 
 			final double amount, final double price) {
 		
 		this.symbol = symbol;
@@ -26,7 +26,7 @@ public class BitfinexOrderBuilder {
 		this.price = price;
 	}
 	
-	public static BitfinexOrderBuilder create(final CurrencyPair symbol, final BitfinexOrderType type, 
+	public static BitfinexOrderBuilder create(final BitfinexCurrencyPair symbol, final BitfinexOrderType type, 
 			final double amount, final double price) {
 		
 		return new BitfinexOrderBuilder(symbol, type, amount, price);

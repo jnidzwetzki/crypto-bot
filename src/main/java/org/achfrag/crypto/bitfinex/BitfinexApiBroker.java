@@ -27,7 +27,7 @@ import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
-import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Wallet;
 import org.achfrag.crypto.bitfinex.websocket.WebsocketClientEndpoint;
@@ -614,7 +614,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @param currencyPair
 	 * @return
 	 */
-	public boolean isTickerActive(final CurrencyPair currencyPair) {
+	public boolean isTickerActive(final BitfinexCurrencyPair currencyPair) {
 		final String currencyString = currencyPair.toBitfinexString();
 		
 		return getChannelForSymbol(currencyString) != -1;
@@ -807,7 +807,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @param currencyPair
 	 * @return 
 	 */
-	public Tick getLastTick(final CurrencyPair currencyPair) {
+	public Tick getLastTick(final BitfinexCurrencyPair currencyPair) {
 		final String bitfinexString = currencyPair.toBitfinexString();
 		return getLastTick(bitfinexString);
 	}

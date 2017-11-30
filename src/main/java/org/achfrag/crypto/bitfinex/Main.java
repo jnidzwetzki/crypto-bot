@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
@@ -16,7 +17,10 @@ import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.commands.UnsubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
-import org.achfrag.crypto.bitfinex.entity.CurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
+import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
+import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
+import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.EMAStrategy03;
@@ -43,7 +47,7 @@ public class Main implements Runnable {
 
 	protected final Map<String, Strategy> strategies;
 
-	protected final List<CurrencyPair> currencies; 
+	protected final List<BitfinexCurrencyPair> currencies; 
 	
 	protected final Map<String, List<Trade>> trades;
 	
@@ -59,7 +63,7 @@ public class Main implements Runnable {
 		timeSeries = new HashMap<>();
 		strategies = new HashMap<>();
 		this.trades = new HashMap<>();
-		currencies = Arrays.asList(CurrencyPair.BTC_USD, CurrencyPair.ETH_USD, CurrencyPair.LTC_USD);
+		currencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD, BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD);
 	}
 
 	@Override
@@ -68,14 +72,6 @@ public class Main implements Runnable {
 			bitfinexApiBroker = buildBifinexClient();
 			
 			bitfinexApiBroker.connect();
-			
-			/*
-			final BitfinexOrder bitfinexOrder = BitfinexOrderBuilder
-					.create(CurrencyPair.BTC_USD, BitfinexOrderType.EXCHANGE_LIMIT, -0.002, 15000)
-					.setPostOnly()
-					.build();
-
-			bitfinexApiBroker.placeOrder(bitfinexOrder);*/
 			
 			requestHistoricalData(bitfinexApiBroker);			
 			registerTicker(bitfinexApiBroker);
@@ -120,7 +116,7 @@ public class Main implements Runnable {
 
 	private void requestHistoricalData(final BitfinexApiBroker bitfinexApiBroker) throws InterruptedException, APIException {
 		logger.info("Request historical candles");
-		for(final CurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : currencies) {
 			
 			final String bitfinexString = currency.toBitfinexString();
 			final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
@@ -164,7 +160,7 @@ public class Main implements Runnable {
 		
 		logger.info("Register ticker");
 		
-		for(final CurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : currencies) {
 			
 			final String bitfinexString = currency.toBitfinexString();
 
@@ -245,12 +241,13 @@ public class Main implements Runnable {
 	}
 	
 	public synchronized void updateScreen() {
+				
 		clearScreen();
 		System.out.println("");
 		System.out.println("==========");
 		System.out.println("Last ticks");
 		System.out.println("==========");
-		for(final CurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : currencies) {
 			final String symbol = currency.toBitfinexString();
 			System.out.println(symbol + " " + bitfinexApiBroker.getLastTick(currency));
 		}
@@ -259,7 +256,7 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		System.out.println("Last bars");
 		System.out.println("==========");
-		for(final CurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : currencies) {
 			final String symbol = currency.toBitfinexString();
 			System.out.println(symbol + " " + timeSeries.get(symbol).getLastTick());
 		}
@@ -268,7 +265,7 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		System.out.println("P/L");
 		System.out.println("==========");
-		for(final CurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : currencies) {
 			final String symbol = currency.toBitfinexString();
 			
 			final Trade trade = getOpenTrade(symbol);
@@ -283,7 +280,7 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		System.out.println("Trades");
 		System.out.println("==========");
-		for(final CurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : currencies) {
 			final String symbol = currency.toBitfinexString();
 			System.out.println(symbol + " " + trades.get(symbol));
 		}
