@@ -25,9 +25,9 @@ import org.achfrag.crypto.bitfinex.commands.CommandException;
 import org.achfrag.crypto.bitfinex.commands.OrderCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
+import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
-import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Wallet;
 import org.achfrag.crypto.bitfinex.websocket.WebsocketClientEndpoint;
@@ -108,7 +108,12 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	/**
 	 * The authentification latch
 	 */
-	private CountDownLatch authentificatedLatch;
+	private CountDownLatch authenticatedLatch;
+	
+	/**
+	 * Is the connection authenticated?
+	 */
+	private boolean authenticated;
 	
 	/**
 	 * Wallets
@@ -135,6 +140,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		this.lastTick = new HashMap<>();
 		this.walletTable = HashBasedTable.create();
 		this.orders = new ArrayList<>();
+		this.authenticated = false;
 	}
 	
 	public BitfinexApiBroker(final String apiKey, final String apiSecret) {
@@ -164,25 +170,41 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	/**
 	 * Execute the authentification and wait until the socket is ready
 	 * @throws InterruptedException
+	 * @throws APIException 
 	 */
-	private void executeAuthentification() throws InterruptedException {
-		authentificatedLatch = new CountDownLatch(1);
+	private void executeAuthentification() throws InterruptedException, APIException {
+		authenticatedLatch = new CountDownLatch(1);
 		
-		if(isAuthentificatedConnection()) {
+		if(isAuthenticatedConnection()) {
 			sendCommand(new AuthCommand());
 			logger.info("Waiting for authentification");
-			authentificatedLatch.await(10, TimeUnit.SECONDS);
+			authenticatedLatch.await(10, TimeUnit.SECONDS);
+			
+			if(! authenticated) {
+				throw new APIException("Unable to perform authentification");
+			}
 		}
 	}
 
 	/**
-	 * Is the connection authentificated
+	 * Is the connection to be authentificated
 	 * @return
 	 */
-	public boolean isAuthentificatedConnection() {
+	private boolean isAuthenticatedConnection() {
 		return apiKey != null && apiSecret != null;
 	}
 	
+	/**
+	 * Was after the connect the authentification successfully?
+	 * @return
+	 */
+	public boolean isAuthenticated() {
+		return authenticated;
+	}
+	
+	/**
+	 * Disconnect the websocket
+	 */
 	public void disconnect() {
 		
 		if(heartbeatThread != null) {
@@ -197,6 +219,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 
+	/**
+	 * Send a new API command
+	 * @param apiCommand
+	 */
 	public void sendCommand(final AbstractAPICommand apiCommand) {
 		try {
 			websocketEndpoint.sendMessage(apiCommand.getCommand(this));
@@ -260,9 +286,24 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 
+	/**
+	 * Handle the authentification callback
+	 * @param jsonObject
+	 */
 	private void handleAuthCallback(final JSONObject jsonObject) {
-		authentificatedLatch.countDown();
-		logger.info("Authentification successfully {}", jsonObject.getString("status"));
+		
+		final String status = jsonObject.getString("status");
+		
+		logger.info("Authentification callback state {}", status);
+		
+		if(status.equals("OK")) {
+			authenticated = true;
+		} else {
+			authenticated = false;
+			logger.error("Unable to authenticate: {}", jsonObject.toString());
+		}
+		
+		authenticatedLatch.countDown();
 	}
 
 	private void handleUnsubscribedCallback(final JSONObject jsonObject) {
@@ -655,6 +696,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	protected synchronized boolean reconnect() {
 		try {
 			logger.info("Performing reconnect");
+			authenticated = false;
 			
 			websocketEndpoint.close();
 			websocketEndpoint.connect();
@@ -709,7 +751,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 */
 	public void placeOrder(final BitfinexOrder order) throws APIException {
 		
-		if(! isAuthentificatedConnection()) {
+		if(! authenticated) {
 			throw new APIException("Unable to place order, this is not a authentificated connection");
 		}
 		
@@ -726,7 +768,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 */
 	public void cancelOrder(final String id) throws APIException {
 		
-		if(! isAuthentificatedConnection()) {
+		if(! authenticated) {
 			throw new APIException("Unable to cancel order, this is not a authentificated connection");
 		}
 		
@@ -743,7 +785,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 */
 	public void cancelOrderGroup(final int id) throws APIException {
 		
-		if(! isAuthentificatedConnection()) {
+		if(! authenticated) {
 			throw new APIException("Unable to cancel order, this is not a authentificated connection");
 		}
 		

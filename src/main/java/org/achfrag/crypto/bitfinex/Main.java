@@ -211,7 +211,7 @@ public class Main implements Runnable {
 		if(openTrade != null) {
 			openTrade.operate(endIndex, lastClosePrice, orderSize);
 			
-			if(bitfinexApiBroker.isAuthentificatedConnection()) {
+			if(bitfinexApiBroker.isAuthenticated()) {
 				final BitfinexOrder order = BitfinexOrderBuilder
 						.create(currency, BitfinexOrderType.MARKET, currency.getMinimalOrderSize() * -1.0)
 						.build();
@@ -243,7 +243,7 @@ public class Main implements Runnable {
 			trade.operate(endIndex, lastClosePrice, orderSize);
 			trades.get(symbol).add(trade);
 			
-			if(bitfinexApiBroker.isAuthentificatedConnection()) {
+			if(bitfinexApiBroker.isAuthenticated()) {
 				final BitfinexOrder order = BitfinexOrderBuilder
 						.create(currency, BitfinexOrderType.MARKET, currency.getMinimalOrderSize())
 						.build();
