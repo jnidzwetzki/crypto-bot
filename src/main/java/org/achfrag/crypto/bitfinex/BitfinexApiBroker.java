@@ -179,7 +179,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * Is the connection authentificated
 	 * @return
 	 */
-	private boolean isAuthentificatedConnection() {
+	public boolean isAuthentificatedConnection() {
 		return apiKey != null && apiSecret != null;
 	}
 	

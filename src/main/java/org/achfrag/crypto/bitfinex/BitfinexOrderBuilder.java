@@ -9,8 +9,8 @@ public class BitfinexOrderBuilder {
 	private final BitfinexCurrencyPair symbol; 
 	private final BitfinexOrderType type;
 	private final double amount;
-	private final double price;
 	
+	private double price = -1;
 	private double priceTrailing = -1;
 	private double priceAuxLimit = -1;
 	private boolean postOnly = false;
@@ -18,18 +18,17 @@ public class BitfinexOrderBuilder {
 	private int groupid = -1;
 
 	private BitfinexOrderBuilder(final BitfinexCurrencyPair symbol, final BitfinexOrderType type, 
-			final double amount, final double price) {
+			final double amount) {
 		
 		this.symbol = symbol;
 		this.type = type;
 		this.amount = amount;
-		this.price = price;
 	}
 	
 	public static BitfinexOrderBuilder create(final BitfinexCurrencyPair symbol, final BitfinexOrderType type, 
-			final double amount, final double price) {
+			final double amount) {
 		
-		return new BitfinexOrderBuilder(symbol, type, amount, price);
+		return new BitfinexOrderBuilder(symbol, type, amount);
 	}
 	
 	public BitfinexOrderBuilder setHidden() {
@@ -39,6 +38,11 @@ public class BitfinexOrderBuilder {
 	
 	public BitfinexOrderBuilder setPostOnly() {
 		postOnly = true;
+		return this;
+	}
+	
+	public BitfinexOrderBuilder withPrice(final double price) {
+		this.price = price;
 		return this;
 	}
 	
