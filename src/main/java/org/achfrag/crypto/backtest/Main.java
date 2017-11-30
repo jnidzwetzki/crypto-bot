@@ -39,7 +39,7 @@ public class Main implements Runnable {
 			System.out.println("Executing trading on ticks: " + timeSeries.getEndIndex());
 			
 			final Strategy strategy = EMAStrategy03.getStrategy(timeSeries, 5, 12, 40);
-			processTrade("Strategy 5-12-40" ,  strategy);	
+			processTrade("Strategy 5-12-40", strategy);	
 
 			//findEma();
 

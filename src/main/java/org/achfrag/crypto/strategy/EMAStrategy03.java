@@ -10,6 +10,7 @@ import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.trading.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.trading.rules.OverIndicatorRule;
+import org.ta4j.core.trading.rules.StopLossRule;
 
 public class EMAStrategy03 {
 
@@ -26,8 +27,9 @@ public class EMAStrategy03 {
 				.and(new OverIndicatorRule(sma2, sma3))
 				.and(new OverIndicatorRule(rsi, Decimal.valueOf(50)));
 
-		Rule sellingRule = new CrossedDownIndicatorRule(sma1, sma3);
-		//		.or(new CrossedDownIndicatorRule(sma2, sma3));
+		Rule sellingRule = new CrossedDownIndicatorRule(sma1, sma3)
+				.or(new CrossedDownIndicatorRule(sma2, sma3))
+				.or(new StopLossRule(closePrice, Decimal.valueOf("3")));
 
 		final BaseStrategy strategy = new BaseStrategy(buyingRule, sellingRule);
 		
