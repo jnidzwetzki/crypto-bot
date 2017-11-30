@@ -694,6 +694,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * Place a new order
 	 */
 	public void placeOrder(final BitfinexOrder order) {
+		logger.info("Executing new order {}", order);
 		final OrderCommand orderCommand = new OrderCommand(order);
 		sendCommand(orderCommand);
 	}
@@ -704,6 +705,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @param date
 	 */
 	public void cancelOrder(final String id) {
+		logger.info("Cancel order with id {}", id);
 		final CancelOrderCommand cancelOrder = new CancelOrderCommand(id);
 		sendCommand(cancelOrder);
 	}
