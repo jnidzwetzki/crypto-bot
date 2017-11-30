@@ -170,17 +170,17 @@ class HeartbeatThread extends ExceptionSafeThread {
 	 */
 	private void waitForReconnectTimeslot() {
 		
-		logger.debug("Waiting for reconnect timeslot");
+		logger.info("Waiting for reconnect timeslot");
 		
 		while(true) {
 			final long connectionsTimeframe 
 				= System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(MAX_RECONNECT_SECONDS);
 			
 			final long connectionsInTimeframe = reconnectTimes.stream().filter(t -> t > connectionsTimeframe).count();
-	
+			logger.info("Thre are {} reconnects in the timeframe", connectionsInTimeframe);
+
 			if(connectionsInTimeframe > MAX_RECONNECTS_IN_TIME) {
-				logger.debug("Thre are {} reconnects in the timeframe", connectionsInTimeframe);
-				
+				logger.info("Performing sleep");
 				try {
 					Thread.sleep(TimeUnit.SECONDS.toMillis(10));
 				} catch (InterruptedException e) {
@@ -188,7 +188,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 					return;
 				}
 			} else {
-				logger.debug("Waiting for reconnect timeslot DONE");
+				logger.info("Waiting for reconnect timeslot DONE");
 				return;
 			}
 		}
