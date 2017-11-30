@@ -5,3 +5,41 @@
 </a>
 
 A crypto currency trading bot
+
+# Examples
+## Order group
+
+```java
+final CurrencyPair currencyPair = CurrencyPair.BTC_USD;
+final Tick lastValue = bitfinexApiBroker.getLastTick(currencyPair);
+
+final int orderGroup = 4711;
+
+final BitfinexOrder bitfinexOrder1 = BitfinexOrderBuilder
+		.create(currencyPair, BitfinexOrderType.EXCHANGE_LIMIT, 0.002, lastValue.getClosePrice().toDouble() / 100.0 * 100.1)
+		.setPostOnly()
+		.withGroupId(orderGroup)
+		.build();
+
+final BitfinexOrder bitfinexOrder2 = BitfinexOrderBuilder
+		.create(currencyPair, BitfinexOrderType.EXCHANGE_LIMIT, -0.002, lastValue.getClosePrice().toDouble() / 100.0 * 101)
+		.setPostOnly()
+		.withGroupId(orderGroup)
+		.build();
+
+// Cancel sell order when buy order failes
+final Consumer<ExchangeOrder> ordercallback = (e) -> {
+		
+	if(e.getCid() == bitfinexOrder1.getCid()) {
+		if(e.getState().equals(ExchangeOrder.STATE_CANCELED) 
+				|| e.getState().equals(ExchangeOrder.STATE_POSTONLY_CANCELED)) {
+			bitfinexApiBroker.cancelOrderGroup(orderGroup);
+		}
+	}
+};
+
+bitfinexApiBroker.addOrderCallback(ordercallback);
+
+bitfinexApiBroker.placeOrder(bitfinexOrder1);
+bitfinexApiBroker.placeOrder(bitfinexOrder2);
+```
