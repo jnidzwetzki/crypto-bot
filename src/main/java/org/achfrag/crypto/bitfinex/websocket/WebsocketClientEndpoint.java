@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
+import javax.websocket.CloseReason.CloseCodes;
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.OnClose;
@@ -19,7 +20,6 @@ import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
-import org.achfrag.crypto.util.CloseableHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,8 +107,16 @@ public class WebsocketClientEndpoint {
 	}
 
 	public void close() {
-		CloseableHelper.closeWithoutException(userSession);
+		if(userSession == null) {
+			return;
+		}
+		
+		try {
+			userSession.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Socket closed"));
+		} catch (IOException e) {
+			logger.error("Got exception while closing socket");
+		}
+		
 		userSession = null;
 	}
-
 }
