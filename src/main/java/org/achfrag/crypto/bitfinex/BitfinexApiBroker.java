@@ -161,13 +161,26 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 
+	/**
+	 * Execute the authentification and wait until the socket is ready
+	 * @throws InterruptedException
+	 */
 	private void executeAuthentification() throws InterruptedException {
 		authentificatedLatch = new CountDownLatch(1);
-		if(apiKey != null && apiSecret != null) {
+		
+		if(isAuthentificatedConnection()) {
 			sendCommand(new AuthCommand());
 			logger.info("Waiting for authentification");
 			authentificatedLatch.await(10, TimeUnit.SECONDS);
 		}
+	}
+
+	/**
+	 * Is the connection authentificated
+	 * @return
+	 */
+	private boolean isAuthentificatedConnection() {
+		return apiKey != null && apiSecret != null;
 	}
 	
 	public void disconnect() {
@@ -692,8 +705,14 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	
 	/**
 	 * Place a new order
+	 * @throws APIException 
 	 */
-	public void placeOrder(final BitfinexOrder order) {
+	public void placeOrder(final BitfinexOrder order) throws APIException {
+		
+		if(! isAuthentificatedConnection()) {
+			throw new APIException("Unable to place order, this is not a authentificated connection");
+		}
+		
 		logger.info("Executing new order {}", order);
 		final OrderCommand orderCommand = new OrderCommand(order);
 		sendCommand(orderCommand);
@@ -703,8 +722,14 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * Cancel the given order
 	 * @param cid
 	 * @param date
+	 * @throws APIException 
 	 */
-	public void cancelOrder(final String id) {
+	public void cancelOrder(final String id) throws APIException {
+		
+		if(! isAuthentificatedConnection()) {
+			throw new APIException("Unable to cancel order, this is not a authentificated connection");
+		}
+		
 		logger.info("Cancel order with id {}", id);
 		final CancelOrderCommand cancelOrder = new CancelOrderCommand(id);
 		sendCommand(cancelOrder);
@@ -714,13 +739,18 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * Cancel the given order group
 	 * @param cid
 	 * @param date
+	 * @throws APIException 
 	 */
-	public void cancelOrderGroup(final int id) {
+	public void cancelOrderGroup(final int id) throws APIException {
+		
+		if(! isAuthentificatedConnection()) {
+			throw new APIException("Unable to cancel order, this is not a authentificated connection");
+		}
+		
+		logger.info("Cancel order group {}", id);
 		final CancelOrderGroupCommand cancelOrder = new CancelOrderGroupCommand(id);
 		sendCommand(cancelOrder);
 	}
-	
-	
 	
 	/**
 	 * Get a set with active symbols
