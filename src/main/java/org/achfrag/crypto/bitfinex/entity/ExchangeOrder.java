@@ -18,6 +18,16 @@ public class ExchangeOrder {
 	private double priceAuxLimit;
 	private boolean notify;
 	private boolean hidden;
+	
+	public final static String STATE_ACTIVE = "ACTIVE";
+	
+	public final static String STATE_EXECUTED = "EXECUTED";
+
+	public final static String STATE_PARTIALLY_FILLED = "PARTIALLY FILLED";
+
+	public final static String STATE_CANCELED = "CANCELED";
+
+	public final static String STATE_POSTONLY_CANCELED = "POSTONLY CANCELED";
 
 	public int getOrderId() {
 		return orderId;
