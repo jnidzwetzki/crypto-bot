@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
@@ -17,10 +16,9 @@ import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.commands.UnsubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
+import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
-import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
-import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.EMAStrategy03;
@@ -187,22 +185,77 @@ public class Main implements Runnable {
 		}
 		
 		final int endIndex = timeSeries.get(symbol).getEndIndex();
-		
+
 		if (strategies.get(symbol).shouldEnter(endIndex)) {
-			final Trade openTrade = getOpenTrade(symbol);
-			if(openTrade == null) {
-				final Trade trade = new Trade(OrderType.BUY);
-				trade.operate(endIndex, timeSeries.get(symbol).getLastTick().getClosePrice(), Decimal.valueOf(1));
-				trades.get(symbol).add(trade);
-			}
+			longOrder(symbol, endIndex);
 		} else if (strategies.get(symbol).shouldExit(endIndex)) {
-			final Trade openTrade = getOpenTrade(symbol);
-			if(openTrade != null) {
-				openTrade.operate(endIndex, timeSeries.get(symbol).getLastTick().getClosePrice(), Decimal.valueOf(1));
-			}
+			shortOrder(symbol, endIndex);
 		}
 		
 		updateScreen();
+	}
+
+	/**
+	 * Execute a new long order
+	 * @param symbol
+	 * @param endIndex
+	 * @throws APIException
+	 */
+	private void shortOrder(final String symbol, final int endIndex) {
+		
+		final BitfinexCurrencyPair currency = BitfinexCurrencyPair.fromSymbolString(symbol);
+		final Decimal orderSize = Decimal.valueOf(currency.getMinimalOrderSize());
+		final Decimal lastClosePrice = timeSeries.get(symbol).getLastTick().getClosePrice();
+		
+		final Trade openTrade = getOpenTrade(symbol);
+		if(openTrade != null) {
+			openTrade.operate(endIndex, lastClosePrice, orderSize);
+			
+			if(bitfinexApiBroker.isAuthentificatedConnection()) {
+				final BitfinexOrder order = BitfinexOrderBuilder
+						.create(currency, BitfinexOrderType.MARKET, currency.getMinimalOrderSize() * -1.0)
+						.build();
+				
+				try {
+					bitfinexApiBroker.placeOrder(order);
+				} catch (APIException e) {
+					// FIXME: Handle the exception
+					logger.error("Got an exception while order execution", e);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Execute a new short order
+	 * @param symbol
+	 * @param endIndex
+	 * @throws APIException
+	 */
+	private void longOrder(final String symbol, final int endIndex) {
+		final BitfinexCurrencyPair currency = BitfinexCurrencyPair.fromSymbolString(symbol);
+		final Decimal orderSize = Decimal.valueOf(currency.getMinimalOrderSize());
+		final Decimal lastClosePrice = timeSeries.get(symbol).getLastTick().getClosePrice();
+		
+		final Trade openTrade = getOpenTrade(symbol);
+		if(openTrade == null) {
+			final Trade trade = new Trade(OrderType.BUY);
+			trade.operate(endIndex, lastClosePrice, orderSize);
+			trades.get(symbol).add(trade);
+			
+			if(bitfinexApiBroker.isAuthentificatedConnection()) {
+				final BitfinexOrder order = BitfinexOrderBuilder
+						.create(currency, BitfinexOrderType.MARKET, currency.getMinimalOrderSize())
+						.build();
+				
+				try {
+					bitfinexApiBroker.placeOrder(order);
+				} catch (APIException e) {
+					// FIXME: Handle the exception
+					logger.error("Got an exception while order execution", e);
+				}
+			}
+		}
 	}
 
 	/**
