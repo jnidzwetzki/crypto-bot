@@ -375,8 +375,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @param jsonArray
 	 */
 	private void handleSignalingChannelData(final String message, final JSONArray jsonArray) {
-		logger.debug("Got info for channel 0: {}", message);
-
+		
+		if(message.contains("ERROR")) {
+			logger.error("Got Error message: {}", message);
+		}
+		
 		final String subchannel = jsonArray.getString(1);
 
 		switch (subchannel) {
