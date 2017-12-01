@@ -29,6 +29,8 @@ bitfinexApiBroker.connect();
 final BitfinexOrder order = BitfinexOrderBuilder
 		.create(currency, BitfinexOrderType.MARKET, 0.002)
 		.build();
+		
+bitfinexApiBroker.placeOrder(order);
 ```
 
 ## Order group
