@@ -7,6 +7,30 @@
 A crypto currency trading bot
 
 # Examples
+
+## Connecting and authorizing
+
+```java 
+final String apiKey = "....";
+final String apiSecret = "....";
+
+// For public operations (subscribe ticker, bars)
+BitfinexApiBroker bitfinexApiBroker = BitfinexApiBroker();
+bitfinexApiBroker.connect();
+
+// For public and private operations (executing orders, read wallets)
+BitfinexApiBroker bitfinexApiBroker = BitfinexApiBroker(apiKey, apiSecret);
+bitfinexApiBroker.connect();
+``` 
+
+## Market order
+
+```java
+final BitfinexOrder order = BitfinexOrderBuilder
+		.create(currency, BitfinexOrderType.EXCHANGE_MARKET, 0.002)
+		.build();
+```
+
 ## Order group
 
 ```java
