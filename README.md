@@ -27,7 +27,7 @@ bitfinexApiBroker.connect();
 
 ```java
 final BitfinexOrder order = BitfinexOrderBuilder
-		.create(currency, BitfinexOrderType.EXCHANGE_MARKET, 0.002)
+		.create(currency, BitfinexOrderType.MARKET, 0.002)
 		.build();
 ```
 
