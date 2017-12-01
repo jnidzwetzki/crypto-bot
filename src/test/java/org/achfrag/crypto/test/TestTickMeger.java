@@ -21,7 +21,7 @@ public class TestTickMeger {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	@Test(timeout=600)
+	@Test(timeout=5000)
 	public void testTickMerger1() throws InterruptedException, IOException {
 		
 		final CountDownLatch latch = new CountDownLatch(1);
@@ -43,7 +43,7 @@ public class TestTickMeger {
 	 * @throws IOException
 	 * @throws ParseException
 	 */
-	@Test(timeout=600)
+	@Test(timeout=5000)
 	public void testTickMerger2() throws InterruptedException, IOException, ParseException {
 		
         final SimpleDateFormat parser = new SimpleDateFormat("HH:mm:ss");
