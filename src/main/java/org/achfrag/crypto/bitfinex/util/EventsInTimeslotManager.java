@@ -66,11 +66,7 @@ public class EventsInTimeslotManager {
 		boolean hasWaited = false;
 		
 		while(true) {
-			final double thresholdTime = System.currentTimeMillis() - (timeslotInMilliseconds);
-
-			final long numberOfEventsInTimeSlot = events.stream()
-					.filter(e -> e >= thresholdTime)
-					.count();
+			final long numberOfEventsInTimeSlot = getNumberOfEventsInTimeslot();
 			
 			if(numberOfEventsInTimeSlot > numberOfEvents) {
 				hasWaited = true;
@@ -79,5 +75,19 @@ public class EventsInTimeslotManager {
 				return hasWaited;
 			}
 		}
+	}
+
+	/**
+	 * Get the number of events in the timeslot
+	 * @param thresholdTime
+	 * @return
+	 */
+	public long getNumberOfEventsInTimeslot() {
+
+		final double thresholdTime = System.currentTimeMillis() - (timeslotInMilliseconds);
+		
+		return events.stream()
+				.filter(e -> e >= thresholdTime)
+				.count();
 	}
 }
