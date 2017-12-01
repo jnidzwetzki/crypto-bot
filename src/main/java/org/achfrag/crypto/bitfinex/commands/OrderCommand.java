@@ -35,6 +35,8 @@ public class OrderCommand extends AbstractAPICommand {
 		
 		if(bitfinexOrder.isHidden()) {
 			orderJson.put("hidden", 1);
+		} else {
+			orderJson.put("hidden", 0);
 		}
 		
 		if(bitfinexOrder.isPostOnly()) {
@@ -49,7 +51,7 @@ public class OrderCommand extends AbstractAPICommand {
 		sb.append("[0,\"on\", null, ");
 		sb.append(orderJson.toString());
 		sb.append("]\n");
-				
+						
 		return sb.toString();
 	}
 
