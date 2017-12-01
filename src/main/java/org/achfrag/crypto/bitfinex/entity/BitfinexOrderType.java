@@ -2,7 +2,7 @@ package org.achfrag.crypto.bitfinex.entity;
 
 public enum BitfinexOrderType {
 
-	MARKET("MARKER"), 
+	MARKET("MARKET"), 
 	EXCHANGE_MARKET("EXCHANGE MARKET"), 
 	LIMIT("LIMIT"), 
 	EXCHANGE_LIMIT("EXCHANGE LIMIT"), 
