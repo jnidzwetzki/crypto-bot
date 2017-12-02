@@ -311,7 +311,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			final int channelId = jsonObject.getInt("chanId");
 			final String symbol = getFromChannelSymbolMap(channelId);
 			logger.info("Channel {} ({}) is unsubscribed", channelId, symbol);
-			channelCallbacks.remove(symbol);
+			channelCallbacks.remove(symbol);	
 			channelIdSymbolMap.remove(channelId);
 			channelIdSymbolMap.notifyAll();
 		}
@@ -571,10 +571,13 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(channelSymbol);
 
 		if(callbacks != null) {
-			for(final Tick tick : ticksBuffer) {
-				callbacks.forEach(c -> c.accept(symbol, tick));
+			synchronized (callbacks) {
+				for(final Tick tick : ticksBuffer) {
+					callbacks.forEach(c -> c.accept(symbol, tick));
+				}
 			}
 		}
+		
 	}
 
 	/**
@@ -617,9 +620,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
 
 		if(callbacks != null) {
-			callbacks.forEach(c -> c.accept(symbol, tick));
+			synchronized (callbacks) {
+				callbacks.forEach(c -> c.accept(symbol, tick));
+			}
 		}
-		
 	}
 
 	/**
@@ -645,7 +649,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			channelCallbacks.put(symbol, new ArrayList<>());
 		}
 		
-		channelCallbacks.get(symbol).add(callback);	
+		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
+		
+		synchronized (callbacks) {
+			callbacks.add(callback);	
+		}
 	}
 	
 	/**
@@ -661,7 +669,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			throw new APIException("Unknown ticker string: " + symbol);
 		}
 			
-		return channelCallbacks.get(symbol).remove(callback);
+		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
+		
+		synchronized (callbacks) {
+			return callbacks.remove(callback);
+		}
 	}
 	
 	/**

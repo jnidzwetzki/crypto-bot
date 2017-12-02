@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class Main implements Runnable {
 
 	protected final Map<String, Strategy> strategies;
 
-	protected final List<BitfinexCurrencyPair> currencies; 
+	protected final List<BitfinexCurrencyPair> tradedCurrencies; 
 	
 	protected final Map<String, List<Trade>> trades;
 	
@@ -61,11 +62,13 @@ public class Main implements Runnable {
 
 	
 	public Main() {
-		tickMerger = new HashMap<>();
-		timeSeries = new HashMap<>();
-		strategies = new HashMap<>();
+		this.tickMerger = new HashMap<>();
+		this.timeSeries = new HashMap<>();
+		this.strategies = new HashMap<>();
 		this.trades = new HashMap<>();
-		currencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD, BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD);
+		
+		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD, 
+				BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD);
 	}
 
 	@Override
@@ -118,7 +121,7 @@ public class Main implements Runnable {
 
 	private void requestHistoricalData(final BitfinexApiBroker bitfinexApiBroker) throws InterruptedException, APIException {
 		logger.info("Request historical candles");
-		for(final BitfinexCurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			
 			final String bitfinexString = currency.toBitfinexString();
 			final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
@@ -127,12 +130,15 @@ public class Main implements Runnable {
 			strategies.put(bitfinexString, strategy);
 			trades.put(bitfinexString, new ArrayList<>());
 
+			final CountDownLatch tickCountdown = new CountDownLatch(100);
+			
 			// Add bars to timeseries callback
 			final BiConsumer<String, Tick> callback = (symbol, tick) -> {
 				final TimeSeries timeSeriesToAdd = timeSeries.get(symbol);
 				
 				try { 
 					timeSeriesToAdd.addTick(tick);
+					tickCountdown.countDown();
 				} catch(IllegalArgumentException e) {
 					logger.error("Unable to add tick {} to time series, last tick is {}", 
 							tick, 
@@ -144,7 +150,10 @@ public class Main implements Runnable {
 			
 			bitfinexApiBroker.registerTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new SubscribeCandlesCommand(currency, TIMEFRAME));
-			Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+
+			// Wait for 100 tics or 10 seconds. Aall snapshot ticks are handled in a syncronized
+			// block, so we receive the full snapsot even if we call removeTickCallback.
+			tickCountdown.await(10, TimeUnit.SECONDS);
 			
 			bitfinexApiBroker.removeTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new UnsubscribeCandlesCommand(currency, TIMEFRAME));
@@ -162,7 +171,7 @@ public class Main implements Runnable {
 		
 		logger.info("Register ticker");
 		
-		for(final BitfinexCurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			
 			final String bitfinexString = currency.toBitfinexString();
 
@@ -173,7 +182,7 @@ public class Main implements Runnable {
 
 			System.out.println("Wait for ticker");
 
-			while (!bitfinexApiBroker.isTickerActive(currency)) {
+			while (! bitfinexApiBroker.isTickerActive(currency)) {
 				Thread.sleep(100);
 			}
 
@@ -297,14 +306,14 @@ public class Main implements Runnable {
 		main.run();
 	}
 	
-	public synchronized void updateScreen() {
-				
+public synchronized void updateScreen() {
+		
 		clearScreen();
 		System.out.println("");
 		System.out.println("==========");
 		System.out.println("Last ticks");
 		System.out.println("==========");
-		for(final BitfinexCurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			final String symbol = currency.toBitfinexString();
 			System.out.println(symbol + " " + bitfinexApiBroker.getLastTick(currency));
 		}
@@ -313,7 +322,7 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		System.out.println("Last bars");
 		System.out.println("==========");
-		for(final BitfinexCurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			final String symbol = currency.toBitfinexString();
 			System.out.println(symbol + " " + timeSeries.get(symbol).getLastTick());
 		}
@@ -322,7 +331,7 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		System.out.println("P/L");
 		System.out.println("==========");
-		for(final BitfinexCurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			final String symbol = currency.toBitfinexString();
 			
 			final Trade trade = getOpenTrade(symbol);
@@ -337,7 +346,7 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		System.out.println("Trades");
 		System.out.println("==========");
-		for(final BitfinexCurrencyPair currency : currencies) {
+		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			final String symbol = currency.toBitfinexString();
 			System.out.println(symbol + " " + trades.get(symbol));
 		}
