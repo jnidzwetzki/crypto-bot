@@ -19,6 +19,7 @@ import org.achfrag.crypto.bitfinex.entity.APIException;
 import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
+import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.EMAStrategy03;
@@ -33,11 +34,6 @@ import org.ta4j.core.TimeSeries;
 import org.ta4j.core.Trade;
 
 public class Main implements Runnable {
-
-	/**
-	 * The Logger
-	 */
-	private final static Logger logger = LoggerFactory.getLogger(Main.class);
 
 	protected final Map<String, TickMerger> tickMerger;
 	
@@ -56,6 +52,12 @@ public class Main implements Runnable {
 	 */
 	private BitfinexApiBroker bitfinexApiBroker;
 
+	/**
+	 * The Logger
+	 */
+	private final static Logger logger = LoggerFactory.getLogger(Main.class);
+
+	
 	public Main() {
 		tickMerger = new HashMap<>();
 		timeSeries = new HashMap<>();
@@ -73,7 +75,7 @@ public class Main implements Runnable {
 			
 			requestHistoricalData(bitfinexApiBroker);			
 			registerTicker(bitfinexApiBroker);
-			
+						
 			while (true) {
 				Thread.sleep(TimeUnit.MINUTES.toMillis(5));
 			}
@@ -213,7 +215,7 @@ public class Main implements Runnable {
 			
 			if(bitfinexApiBroker.isAuthenticated()) {
 				final BitfinexOrder order = BitfinexOrderBuilder
-						.create(currency, BitfinexOrderType.MARKET, currency.getMinimalOrderSize() * -1.0)
+						.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize() * -1.0)
 						.build();
 				
 				try {
@@ -245,7 +247,7 @@ public class Main implements Runnable {
 			
 			if(bitfinexApiBroker.isAuthenticated()) {
 				final BitfinexOrder order = BitfinexOrderBuilder
-						.create(currency, BitfinexOrderType.MARKET, currency.getMinimalOrderSize())
+						.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize())
 						.build();
 				
 				try {
@@ -336,6 +338,14 @@ public class Main implements Runnable {
 		for(final BitfinexCurrencyPair currency : currencies) {
 			final String symbol = currency.toBitfinexString();
 			System.out.println(symbol + " " + trades.get(symbol));
+		}
+		
+		System.out.println("");
+		System.out.println("==========");
+		System.out.println("Orders");
+		System.out.println("==========");
+		for(final ExchangeOrder order : bitfinexApiBroker.getOrders()) {
+			System.out.println(order);
 		}
 	}
 	
