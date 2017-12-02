@@ -151,8 +151,9 @@ public class Main implements Runnable {
 			bitfinexApiBroker.registerTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new SubscribeCandlesCommand(currency, TIMEFRAME));
 
-			// Wait for 100 tics or 10 seconds. Aall snapshot ticks are handled in a syncronized
-			// block, so we receive the full snapsot even if we call removeTickCallback.
+			// Wait for 100 tics or 10 seconds. All snapshot ticks are handled in 
+			// a syncronized block, so we receive the full snapshot even if we 
+			// call removeTickCallback.
 			tickCountdown.await(10, TimeUnit.SECONDS);
 			
 			bitfinexApiBroker.removeTickCallback(barSymbol, callback);
