@@ -379,7 +379,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		if(message.contains("ERROR")) {
 			logger.error("Got Error message: {}", message);
 		}
-		
+				
 		final String subchannel = jsonArray.getString(1);
 
 		switch (subchannel) {
@@ -406,7 +406,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			break;
 			
 		default:
-			//logger.error("No match found for message {}", message);
+			logger.error("No match found for message {}", message);
 			break;
 		}
 	}
@@ -416,6 +416,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @param jsonArray
 	 */
 	private void handleOrdersCallback(final JSONArray jsonArray) {
+		
+		logger.info("Got order callback {}", jsonArray.toString());
+		
 		final JSONArray orders = jsonArray.getJSONArray(2);
 		
 		// No orders active
