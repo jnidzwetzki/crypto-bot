@@ -1,12 +1,20 @@
 package org.achfrag.crypto.bitfinex.commands;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
+import org.achfrag.crypto.bitfinex.Main;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OrderCommand extends AbstractAPICommand {
 
-	private BitfinexOrder bitfinexOrder;
+	private final BitfinexOrder bitfinexOrder;
+	
+	/**
+	 * The Logger
+	 */
+	private final static Logger logger = LoggerFactory.getLogger(Main.class);
 
 	public OrderCommand(final BitfinexOrder bitfinexOrder) {
 		this.bitfinexOrder = bitfinexOrder;
@@ -51,7 +59,9 @@ public class OrderCommand extends AbstractAPICommand {
 		sb.append("[0,\"on\", null, ");
 		sb.append(orderJson.toString());
 		sb.append("]\n");
-						
+		
+		logger.debug(sb.toString());
+		
 		return sb.toString();
 	}
 
