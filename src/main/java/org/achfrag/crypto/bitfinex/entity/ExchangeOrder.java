@@ -159,7 +159,7 @@ public class ExchangeOrder {
 
 	@Override
 	public String toString() {
-		return "ActiveOrder [orderId=" + orderId + ", groupId=" + groupId + ", cid=" + cid + ", symbol=" + symbol
+		return "ExchangeOrder [orderId=" + orderId + ", groupId=" + groupId + ", cid=" + cid + ", symbol=" + symbol
 				+ ", created=" + created + ", updated=" + updated + ", amount=" + amount + ", amountAtCreation="
 				+ amountAtCreation + ", orderType=" + orderType + ", state=" + state + ", price=" + price
 				+ ", priceAvg=" + priceAvg + ", priceTrailing=" + priceTrailing + ", priceAuxLimit=" + priceAuxLimit
