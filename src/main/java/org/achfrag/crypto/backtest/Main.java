@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.EMAStrategy03;
+import org.achfrag.crypto.strategy.ForexStrategy01;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Strategy;
@@ -38,7 +39,8 @@ public class Main implements Runnable {
 
 			System.out.println("Executing trading on ticks: " + timeSeries.getEndIndex());
 			
-			final Strategy strategy = EMAStrategy03.getStrategy(timeSeries, 5, 12, 40);
+		//	final Strategy strategy = EMAStrategy03.getStrategy(timeSeries, 5, 12, 40);
+			final Strategy strategy = ForexStrategy01.getStrategy(timeSeries);
 			processTrade("Strategy 5-12-40", strategy);	
 
 			//findEma();

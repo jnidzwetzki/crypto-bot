@@ -1,4 +1,4 @@
-package org.achfrag.crypto.bitfinex;
+package org.achfrag.crypto.bot;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
+import org.achfrag.crypto.bitfinex.BitfinexOrderBuilder;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
