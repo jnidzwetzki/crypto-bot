@@ -383,25 +383,33 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		final String subchannel = jsonArray.getString(1);
 
 		switch (subchannel) {
+		// Heartbeat 
 		case "hb":
 			// Ignore channel heartbeat values
 			break;
 			
+		// Wallet snapshot
 		case "ws":
 			handleWalletsCallback(jsonArray);
 			break;
 			
+		// Wallet update
+		case "wu":
+			handleWalletsCallback(jsonArray);
+			break;
+			
+		// Order snapshot
 		case "os":
 			handleOrdersCallback(jsonArray);
 			break;
 			
+		// Order notification
 		case "on":
-			// Order notification
 			handleOrdersCallback(jsonArray);
 			break;
 			
+		// Order cancelation
 		case "oc":
-			// Order cancel
 			handleOrdersCallback(jsonArray);
 			break;
 			
