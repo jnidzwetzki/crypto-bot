@@ -201,7 +201,7 @@ public class Main implements Runnable {
 		final int endIndex = timeSeries.get(symbol).getEndIndex();
 
 		if (strategies.get(symbol).shouldEnter(endIndex)) {
-			longOrder(symbol, endIndex);
+			openOrder(symbol, endIndex);
 		} else if (strategies.get(symbol).shouldExit(endIndex)) {
 			closeOrder(symbol, endIndex);
 		}
@@ -223,46 +223,52 @@ public class Main implements Runnable {
 		
 		final Trade openTrade = getOpenTrade(currency);
 		
-		if(openTrade != null) {
-			openTrade.operate(endIndex, lastClosePrice, orderSize);
-			
-			final BitfinexOrder order = BitfinexOrderBuilder
-					.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize() * -1.0)
-					.build();
-			
-			orderManager.executeOrder(order);
+		if(openTrade == null) {
+			logger.error("Unable to close a trade, there is no trade open");
+			return;
 		}
+		
+		openTrade.operate(endIndex, lastClosePrice, orderSize);
+		
+		final BitfinexOrder order = BitfinexOrderBuilder
+				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize() * -1.0)
+				.build();
+		
+		orderManager.executeOrder(order);
 	}
 
 	/**
-	 * Execute a new short order
+	 * Execute a new open position order
 	 * @param symbol
 	 * @param endIndex
 	 * @throws APIException
 	 */
-	private void longOrder(final String symbol, final int endIndex) {
+	private void openOrder(final String symbol, final int endIndex) {
 		final BitfinexCurrencyPair currency = BitfinexCurrencyPair.fromSymbolString(symbol);
 		final Decimal orderSize = Decimal.valueOf(currency.getMinimalOrderSize());
 		final Decimal lastClosePrice = timeSeries.get(symbol).getLastTick().getClosePrice();
 		
 		final Trade openTrade = getOpenTrade(currency);
 		
-		if(openTrade == null) {
-			final Trade trade = new Trade(OrderType.BUY);
-			trade.operate(endIndex, lastClosePrice, orderSize);
-
-			if(trades.get(currency) == null) {
-				trades.put(currency, new ArrayList<>());
-			}
-			
-			trades.get(currency).add(trade);
-			
-			final BitfinexOrder order = BitfinexOrderBuilder
-					.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize())
-					.build();
-			
-			orderManager.executeOrder(order);			
+		if(openTrade != null) {
+			logger.error("Unable to open new trade, there is one active {}", openTrade);
+			return;
 		}
+		
+		final Trade trade = new Trade(OrderType.BUY);
+		trade.operate(endIndex, lastClosePrice, orderSize);
+
+		if(trades.get(currency) == null) {
+			trades.put(currency, new ArrayList<>());
+		}
+		
+		trades.get(currency).add(trade);
+		
+		final BitfinexOrder order = BitfinexOrderBuilder
+				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize())
+				.build();
+		
+		orderManager.executeOrder(order);
 	}
 	
 	private void handleTickCallback(final String symbol, final Tick tick) {		
@@ -319,7 +325,11 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		System.out.println("Orders");
 		System.out.println("==========");
-		for(final ExchangeOrder order : bitfinexApiBroker.getOrders()) {
+		
+		final List<ExchangeOrder> orders = bitfinexApiBroker.getOrders();
+		orders.sort((o1, o2) -> Long.compare(o2.getCid(), o1.getCid()));
+		
+		for(final ExchangeOrder order : orders) {
 			System.out.println(order);
 		}
 	}
