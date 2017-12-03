@@ -62,7 +62,7 @@ public class BitfinexOrderBuilder {
 	}
 	
 	public BitfinexOrder build() {
-		return new BitfinexOrder(symbol.toBitfinexString(), type, price, 
+		return new BitfinexOrder(symbol, type, price, 
 				amount, priceTrailing, priceAuxLimit, postOnly, hidden, groupid);
 	}
 

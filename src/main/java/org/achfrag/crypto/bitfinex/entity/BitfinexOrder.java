@@ -5,7 +5,7 @@ import org.achfrag.crypto.bitfinex.util.MicroSecondTimestampProvider;
 public class BitfinexOrder {
 
 	private final long cid;
-	private final String symbol; 
+	private final BitfinexCurrencyPair symbol; 
 	private final BitfinexOrderType type;
 	private final double price;
 	private final double priceTrailing;
@@ -15,7 +15,7 @@ public class BitfinexOrder {
 	private final boolean hidden;
 	private final int groupId;
 	
-	public BitfinexOrder(final String symbol, final BitfinexOrderType type, final double price, final double amount,
+	public BitfinexOrder(final BitfinexCurrencyPair symbol, final BitfinexOrderType type, final double price, final double amount,
 			final double priceTrailing, final double priceAuxLimit, final boolean postOnly, final boolean hidden,
 			final int groupId) {
 		
@@ -40,7 +40,7 @@ public class BitfinexOrder {
 				+ ", postOnly=" + postOnly + ", hidden=" + hidden + ", groupId=" + groupId + "]";
 	}
 
-	public String getSymbol() {
+	public BitfinexCurrencyPair getSymbol() {
 		return symbol;
 	}
 

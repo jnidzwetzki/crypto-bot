@@ -45,15 +45,18 @@ public class Main implements Runnable {
 	protected final Map<String, Strategy> strategies;
 
 	protected final List<BitfinexCurrencyPair> tradedCurrencies; 
+		
+	protected final OrderManager orderManager;
 	
-	protected final Map<String, List<Trade>> trades;
+	private final Map<BitfinexCurrencyPair, List<Trade>> trades;
+	
 	
 	protected static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
 
 	/**
 	 * The API broker
 	 */
-	private BitfinexApiBroker bitfinexApiBroker;
+	private final BitfinexApiBroker bitfinexApiBroker;
 
 	/**
 	 * The Logger
@@ -65,17 +68,15 @@ public class Main implements Runnable {
 		this.tickMerger = new HashMap<>();
 		this.timeSeries = new HashMap<>();
 		this.strategies = new HashMap<>();
+		this.bitfinexApiBroker = buildBifinexClient();
+		this.orderManager = new OrderManager(bitfinexApiBroker);
 		this.trades = new HashMap<>();
-		
-		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD, 
-				BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD);
+		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD);
 	}
 
 	@Override
 	public void run() {
-		try {
-			bitfinexApiBroker = buildBifinexClient();
-			
+		try {			
 			bitfinexApiBroker.connect();
 			
 			requestHistoricalData(bitfinexApiBroker);			
@@ -128,7 +129,6 @@ public class Main implements Runnable {
 			timeSeries.put(bitfinexString, currencyTimeSeries);
 			final Strategy strategy = EMAStrategy03.getStrategy(currencyTimeSeries, 5, 12, 40);
 			strategies.put(bitfinexString, strategy);
-			trades.put(bitfinexString, new ArrayList<>());
 
 			final CountDownLatch tickCountdown = new CountDownLatch(100);
 			
@@ -203,40 +203,34 @@ public class Main implements Runnable {
 		if (strategies.get(symbol).shouldEnter(endIndex)) {
 			longOrder(symbol, endIndex);
 		} else if (strategies.get(symbol).shouldExit(endIndex)) {
-			shortOrder(symbol, endIndex);
+			closeOrder(symbol, endIndex);
 		}
 		
 		updateScreen();
 	}
 
 	/**
-	 * Execute a new long order
+	 * Execute a new close order
 	 * @param symbol
 	 * @param endIndex
 	 * @throws APIException
 	 */
-	private void shortOrder(final String symbol, final int endIndex) {
+	private void closeOrder(final String symbol, final int endIndex) {
 		
 		final BitfinexCurrencyPair currency = BitfinexCurrencyPair.fromSymbolString(symbol);
 		final Decimal orderSize = Decimal.valueOf(currency.getMinimalOrderSize());
 		final Decimal lastClosePrice = timeSeries.get(symbol).getLastTick().getClosePrice();
 		
-		final Trade openTrade = getOpenTrade(symbol);
+		final Trade openTrade = getOpenTrade(currency);
+		
 		if(openTrade != null) {
 			openTrade.operate(endIndex, lastClosePrice, orderSize);
 			
-			if(bitfinexApiBroker.isAuthenticated()) {
-				final BitfinexOrder order = BitfinexOrderBuilder
-						.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize() * -1.0)
-						.build();
-				
-				try {
-					bitfinexApiBroker.placeOrder(order);
-				} catch (APIException e) {
-					// FIXME: Handle the exception
-					logger.error("Got an exception while order execution", e);
-				}
-			}
+			final BitfinexOrder order = BitfinexOrderBuilder
+					.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize() * -1.0)
+					.build();
+			
+			orderManager.executeOrder(order);
 		}
 	}
 
@@ -251,46 +245,24 @@ public class Main implements Runnable {
 		final Decimal orderSize = Decimal.valueOf(currency.getMinimalOrderSize());
 		final Decimal lastClosePrice = timeSeries.get(symbol).getLastTick().getClosePrice();
 		
-		final Trade openTrade = getOpenTrade(symbol);
+		final Trade openTrade = getOpenTrade(currency);
+		
 		if(openTrade == null) {
 			final Trade trade = new Trade(OrderType.BUY);
 			trade.operate(endIndex, lastClosePrice, orderSize);
-			trades.get(symbol).add(trade);
-			
-			if(bitfinexApiBroker.isAuthenticated()) {
-				final BitfinexOrder order = BitfinexOrderBuilder
-						.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize())
-						.build();
-				
-				try {
-					bitfinexApiBroker.placeOrder(order);
-				} catch (APIException e) {
-					// FIXME: Handle the exception
-					logger.error("Got an exception while order execution", e);
-				}
+
+			if(trades.get(currency) == null) {
+				trades.put(currency, new ArrayList<>());
 			}
+			
+			trades.get(currency).add(trade);
+			
+			final BitfinexOrder order = BitfinexOrderBuilder
+					.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize())
+					.build();
+			
+			orderManager.executeOrder(order);			
 		}
-	}
-
-	/**
-	 * Get the open trade for symbol or null
-	 * @param symbol
-	 * @return
-	 */
-	private Trade getOpenTrade(final String symbol) {
-		final List<Trade> tradeList = trades.get(symbol);
-
-		final List<Trade> openTrades = tradeList.stream().filter(t -> ! t.isClosed()).collect(Collectors.toList());
-		
-		if(openTrades.size() > 1) {
-			throw new IllegalArgumentException("More then one open trade for " + symbol + " / " + openTrades);
-		}
-		
-		if(openTrades.isEmpty()) {
-			return null;
-		}
-		
-		return openTrades.get(0);
 	}
 	
 	private void handleTickCallback(final String symbol, final Tick tick) {		
@@ -307,7 +279,7 @@ public class Main implements Runnable {
 		main.run();
 	}
 	
-public synchronized void updateScreen() {
+	public synchronized void updateScreen() {
 		
 		clearScreen();
 		System.out.println("");
@@ -335,21 +307,12 @@ public synchronized void updateScreen() {
 		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			final String symbol = currency.toBitfinexString();
 			
-			final Trade trade = getOpenTrade(symbol);
+			final Trade trade = getOpenTrade(currency);
 			if(trade != null) {
 				final double priceIn = trade.getEntry().getPrice().toDouble();
 				final double currentPrice = bitfinexApiBroker.getLastTick(currency).getClosePrice().toDouble();
 				System.out.println(symbol + ": price in " + priceIn + " / " + (currentPrice - priceIn));
 			}	
-		}
-		
-		System.out.println("");
-		System.out.println("==========");
-		System.out.println("Trades");
-		System.out.println("==========");
-		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
-			final String symbol = currency.toBitfinexString();
-			System.out.println(symbol + " " + trades.get(symbol));
 		}
 		
 		System.out.println("");
@@ -365,4 +328,30 @@ public synchronized void updateScreen() {
 	    System.out.print("\033[H\033[2J");  
 	    System.out.flush();  
 	}  
+	
+	/**
+	 * Get the open trade for symbol or null
+	 * @param symbol
+	 * @return
+	 */
+	public Trade getOpenTrade(final BitfinexCurrencyPair symbol) {
+		final List<Trade> tradeList = trades.get(symbol);
+		
+		if(tradeList == null) {
+			return null;
+		}
+
+		final List<Trade> openTrades = tradeList.stream().filter(t -> ! t.isClosed()).collect(Collectors.toList());
+		
+		if(openTrades.size() > 1) {
+			throw new IllegalArgumentException("More then one open trade for " + symbol + " / " + openTrades);
+		}
+		
+		if(openTrades.isEmpty()) {
+			return null;
+		}
+		
+		return openTrades.get(0);
+	}
+	
 }

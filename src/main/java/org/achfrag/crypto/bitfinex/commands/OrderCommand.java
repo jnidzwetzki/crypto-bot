@@ -25,7 +25,7 @@ public class OrderCommand extends AbstractAPICommand {
 		final JSONObject orderJson = new JSONObject();
 		orderJson.put("cid", bitfinexOrder.getCid());
 		orderJson.put("type", bitfinexOrder.getType().getBifinexString());
-		orderJson.put("symbol", bitfinexOrder.getSymbol());
+		orderJson.put("symbol", bitfinexOrder.getSymbol().toBitfinexString());
 		orderJson.put("amount", Double.toString(bitfinexOrder.getAmount()));
 		
 		if(bitfinexOrder.getPrice() != -1) {
