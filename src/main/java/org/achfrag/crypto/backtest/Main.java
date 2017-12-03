@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +21,7 @@ import org.ta4j.core.TimeSeries;
 import org.ta4j.core.TimeSeriesManager;
 import org.ta4j.core.Trade;
 import org.ta4j.core.TradingRecord;
+import org.ta4j.core.analysis.criteria.RewardRiskRatioCriterion;
 import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
@@ -80,6 +82,8 @@ public class Main implements Runnable {
 		int looser = 0;
 		double maxWin = 0;
 		double maxLoose = 0;
+		double looserInARow = 0;
+		final List<Double> looserInARowList = new ArrayList<>();
 		
 		List<Trade> trades = tradingRecord.getTrades();
 		for (final Trade trade : trades) {
@@ -97,21 +101,27 @@ public class Main implements Runnable {
 			if(pl < 0) {
 				maxLoose = Math.min(maxLoose, pl);
 				looser++;
+				looserInARow++;
 			} else {
 				maxWin = Math.max(maxWin, pl);
 				winner++;
+				looserInARowList.add(looserInARow);
+				looserInARow = 0;
 			}
 			
 		//	System.out.println("P/L: " + pl + " In " + priceIn + " Out " + priceOut);
 			totalPl = totalPl + (pl * (priceIn.toDouble() / USD_AMOUNT));
 		}
+		
+		looserInARowList.add(looserInARow);
 
 		System.out.println("Strategy: " + strategyName);
 		System.out.println("Total P/L: " + totalPl);
 		System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
 		System.out.format("Winner %d, looser %d\n", winner, looser);
 		System.out.format("Max win %f, max loose %f\n", maxWin, maxLoose);
-
+		System.out.format("Looser in a row %f\n", looserInARowList.stream().mapToDouble(e -> e).max().orElse(-1));
+		
 		/*
 		final Chart chart = new Chart(strategy, timeSeries);
 		chart.showChart();
