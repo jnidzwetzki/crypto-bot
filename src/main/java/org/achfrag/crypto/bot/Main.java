@@ -1,18 +1,17 @@
 package org.achfrag.crypto.bot;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
+import org.achfrag.crypto.bitfinex.BitfinexClientFactory;
 import org.achfrag.crypto.bitfinex.BitfinexOrderBuilder;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
@@ -68,7 +67,7 @@ public class Main implements Runnable {
 		this.tickMerger = new HashMap<>();
 		this.timeSeries = new HashMap<>();
 		this.strategies = new HashMap<>();
-		this.bitfinexApiBroker = buildBifinexClient();
+		this.bitfinexApiBroker = BitfinexClientFactory.buildBifinexClient();
 		this.orderManager = new OrderManager(bitfinexApiBroker);
 		this.trades = new HashMap<>();
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD);
@@ -88,36 +87,6 @@ public class Main implements Runnable {
 		} catch (Exception e) {
 			logger.error("Got exception", e);
 		}
-	}
-
-	private BitfinexApiBroker buildBifinexClient() {
-		final Properties prop = new Properties();
-		
-		try {
-			final InputStream input = Main.class.getClassLoader().getResourceAsStream("auth.properties");
-			
-			if(input != null) {
-				prop.load(input);
-				
-				if("true".equals(prop.getProperty("authEnabled"))) {
-					final String apiKey = prop.getProperty("apiKey");
-					final String apiSecret = prop.getProperty("apiSecret");
-					
-					if(apiKey == null || apiSecret == null) {
-						logger.warn("API key or secret are null");
-					} else {
-						logger.info("Building authenticated client");
-						return new BitfinexApiBroker(apiKey, apiSecret);
-					}
-				}
-			}
-		} catch(Exception e) {
-			logger.error("Unable to load properties", e);
-		}
-		
-		// Unauthenticated client
-		logger.info("Building unauthenticated client");
-		return new BitfinexApiBroker();
 	}
 
 	private void requestHistoricalData(final BitfinexApiBroker bitfinexApiBroker) throws InterruptedException, APIException {
