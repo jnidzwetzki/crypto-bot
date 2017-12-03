@@ -10,7 +10,6 @@ public class OrderManager {
 
 	private BitfinexApiBroker bitfinexApiBroker;
 	
-
 	/**
 	 * The Logger
 	 */
@@ -36,8 +35,4 @@ public class OrderManager {
 		}
 	
 	}
-	
-
-	
-
 }

@@ -251,7 +251,7 @@ public class Main implements Runnable {
 		final Trade openTrade = getOpenTrade(currency);
 		
 		if(openTrade != null) {
-			logger.error("Unable to open new trade, there is one active {}", openTrade);
+			logger.debug("Unable to open new trade, there is already one active {}", openTrade);
 			return;
 		}
 		
