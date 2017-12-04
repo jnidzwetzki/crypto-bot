@@ -296,7 +296,12 @@ public class Main implements Runnable {
         System.out.println("==========");
         for(final BitfinexCurrencyPair currency : tradedCurrencies) {
                 final String symbol = currency.toBitfinexString();
-                List<Trade> lastTrades = trades.get(currency);
+                final List<Trade> lastTrades = trades.get(currency);
+                
+                if(lastTrades == null) {
+                		continue;
+                }
+                
                 lastTrades.sort((t1, t2) -> Integer.compare(t2.getExit().getIndex(), t1.getExit().getIndex()));
                 
                 final List<Trade> lastTwoTrades = lastTrades.subList(Math.max(lastTrades.size() - 2, 0), lastTrades.size());
