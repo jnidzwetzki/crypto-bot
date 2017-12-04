@@ -130,8 +130,7 @@ public class Main implements Runnable {
 			bitfinexApiBroker.removeTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new UnsubscribeCandlesCommand(currency, TIMEFRAME));
 			
-			System.out.println("Loaded ticks for symbol " 
-					+ bitfinexString + " " 
+			logger.info("Loaded ticks for symbol {} {}", bitfinexString,
 					+ timeSeries.get(bitfinexString).getEndIndex());
 			
 		/*	final Chart chart = new Chart(bitfinexString, strategy, currencyTimeSeries);
