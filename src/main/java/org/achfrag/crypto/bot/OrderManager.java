@@ -43,12 +43,12 @@ public class OrderManager {
 	 * @return
 	 */
 	private void handleOrderCallback(final ExchangeOrder order) {
-		final Session session = sessionFactory.openSession();
-
-		session.beginTransaction();
-		session.save(order);
-		session.getTransaction().commit();
-		session.close();
+		
+		try(final Session session = sessionFactory.openSession()) {
+			session.beginTransaction();
+			session.save(order);
+			session.getTransaction().commit();
+		}
 	}
 
 	/**
