@@ -1,9 +1,20 @@
 package org.achfrag.crypto.bitfinex.entity;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
 import org.achfrag.crypto.bitfinex.util.MicroSecondTimestampProvider;
 
+@Entity
+@Table(name = "orders_executed")
 public class BitfinexOrder {
 
+	@Id
+	@GeneratedValue
+	private long id;
+	
 	private final long cid;
 	private final BitfinexCurrencyPair symbol; 
 	private final BitfinexOrderType type;
@@ -14,6 +25,24 @@ public class BitfinexOrder {
 	private final boolean postOnly;
 	private final boolean hidden;
 	private final int groupId;
+	
+	/**
+	 * Needed for hibernate
+	 */
+	public BitfinexOrder() {
+		// The client ID
+		this.cid = MicroSecondTimestampProvider.getNewTimestamp();
+
+		this.symbol = null;
+		this.type = null;
+		this.price = -1;
+		this.priceTrailing = -1;
+		this.priceAuxLimit = -1;
+		this.amount = -1;
+		this.postOnly = false;
+		this.hidden = false;
+		this.groupId = -1;
+	}
 	
 	public BitfinexOrder(final BitfinexCurrencyPair symbol, final BitfinexOrderType type, final double price, final double amount,
 			final double priceTrailing, final double priceAuxLimit, final boolean postOnly, final boolean hidden,
@@ -79,4 +108,14 @@ public class BitfinexOrder {
 	public int getGroupId() {
 		return groupId;
 	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+	
+	
 }

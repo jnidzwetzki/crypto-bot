@@ -1,7 +1,18 @@
 package org.achfrag.crypto.bitfinex.entity;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "orders")
 public class ExchangeOrder {
 
+	@Id
+	@GeneratedValue
+	private long id;
+	
 	private int orderId;
 	private int groupId;
 	private long cid;
@@ -29,6 +40,13 @@ public class ExchangeOrder {
 
 	public final static String STATE_POSTONLY_CANCELED = "POSTONLY CANCELED";
 
+	/**
+	 * Needed for hibernate
+	 */
+	public ExchangeOrder() {
+
+	}
+	
 	public int getOrderId() {
 		return orderId;
 	}
@@ -159,11 +177,13 @@ public class ExchangeOrder {
 
 	@Override
 	public String toString() {
-		return "ExchangeOrder [orderId=" + orderId + ", groupId=" + groupId + ", cid=" + cid + ", symbol=" + symbol
-				+ ", created=" + created + ", updated=" + updated + ", amount=" + amount + ", amountAtCreation="
-				+ amountAtCreation + ", orderType=" + orderType + ", state=" + state + ", price=" + price
-				+ ", priceAvg=" + priceAvg + ", priceTrailing=" + priceTrailing + ", priceAuxLimit=" + priceAuxLimit
-				+ ", notify=" + notify + ", hidden=" + hidden + "]";
+		return "ExchangeOrder [id=" + id + ", orderId=" + orderId + ", groupId=" + groupId + ", cid=" + cid
+				+ ", symbol=" + symbol + ", created=" + created + ", updated=" + updated + ", amount=" + amount
+				+ ", amountAtCreation=" + amountAtCreation + ", orderType=" + orderType + ", state=" + state
+				+ ", price=" + price + ", priceAvg=" + priceAvg + ", priceTrailing=" + priceTrailing
+				+ ", priceAuxLimit=" + priceAuxLimit + ", notify=" + notify + ", hidden=" + hidden + "]";
 	}
+
+
 
 }
