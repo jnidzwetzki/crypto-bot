@@ -79,6 +79,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * The last ticks
 	 */
 	protected final Map<String, Tick> lastTick;
+	
+	/**
+	 * The last tick timestamp
+	 */
+	protected final Map<String, Long> lastTickTimestamp;
 
 	/**
 	 * The last heartbeat value
@@ -138,6 +143,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		this.orderCallbacks = new ArrayList<>();
 		this.lastHeatbeat = new AtomicLong();
 		this.lastTick = new HashMap<>();
+		this.lastTickTimestamp = new HashMap<>();
 		this.walletTable = HashBasedTable.create();
 		this.orders = new ArrayList<>();
 		this.authenticated = false;
@@ -531,7 +537,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			final String value = jsonArray.getString(1);
 			
 			if("hb".equals(value)) {
-				// Ignore heartbeat
+				updateChannelHeartbeat(channel);		
 			} else {
 				logger.error("Unable to process: {}", jsonArray);
 			}
@@ -544,6 +550,34 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			} else {
 				handleTickCallback(channel, subarray);
 			}
+		}
+	}
+
+	/**
+	 * Update the channel heartbeat
+	 * @param channel
+	 */
+	private void updateChannelHeartbeat(final int channel) {
+		final String symbol = channelIdSymbolMap.get(channel);
+		synchronized (lastTick) {
+			lastTickTimestamp.put(symbol, System.currentTimeMillis());
+		}
+	}
+	
+	/**
+	 * Get the last heartbeat for the symbol
+	 * @param symbol
+	 * @return
+	 */
+	public long getHeartbeatForSymbol(final String symbol) {
+		synchronized (lastTick) {
+			final Long heartbeat = lastTickTimestamp.get(symbol);
+			
+			if(heartbeat == null) {
+				return -1;
+			}
+			
+			return heartbeat;
 		}
 	}
 
@@ -618,6 +652,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		
 		synchronized (lastTick) {
 			lastTick.put(symbol, tick);
+			lastTickTimestamp.put(symbol, System.currentTimeMillis());
 		}
 		
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
@@ -726,6 +761,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		try {
 			logger.info("Performing reconnect");
 			authenticated = false;
+			
+			// Invalidate last tick timetamps
+			synchronized (lastTick) {
+				lastTickTimestamp.clear();	
+			}
 			
 			websocketEndpoint.close();
 			websocketEndpoint.connect();

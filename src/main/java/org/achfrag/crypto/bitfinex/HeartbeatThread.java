@@ -8,7 +8,6 @@ import org.achfrag.crypto.bitfinex.util.EventsInTimeslotManager;
 import org.achfrag.crypto.util.ExceptionSafeThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ta4j.core.Tick;
 
 class HeartbeatThread extends ExceptionSafeThread {
 
@@ -91,21 +90,20 @@ class HeartbeatThread extends ExceptionSafeThread {
 	 * @return
 	 */
 	private boolean checkTickerFreshness() {
+		
 		final long currentTime = System.currentTimeMillis();
-
 		final Set<String> activeSymbols = bitfinexApiBroker.getActiveSymbols();
+		
 		for(final String symbol : activeSymbols) {
-			final Tick lastTick = bitfinexApiBroker.getLastTick(symbol);
+			final long lastHeatbeat = bitfinexApiBroker.getHeartbeatForSymbol(symbol);
 			
-			if(lastTick == null) {
+			if(lastHeatbeat == -1) {
 				continue;
 			}
-			
-			final long lastUpdate = lastTick.getEndTime().toInstant().getEpochSecond() * 1000;
-			
-			if(lastUpdate + TICKER_TIMEOUT < currentTime) {
+						
+			if(lastHeatbeat + TICKER_TIMEOUT < currentTime) {
 				logger.error("Last update for symbol {} is {} current time is {}, the data is outdated",
-						symbol, lastUpdate, currentTime);
+						symbol, lastHeatbeat, currentTime);
 				return false;
 			}
 		}
@@ -160,8 +158,5 @@ class HeartbeatThread extends ExceptionSafeThread {
 		bitfinexApiBroker.setAutoReconnectEnabled(false);
 		bitfinexApiBroker.reconnect();
 		bitfinexApiBroker.setAutoReconnectEnabled(true);
-		
-		// Wait some time to let the ticker timestamps update
-		Thread.sleep(TimeUnit.SECONDS.toMillis(30));
 	}
 }
