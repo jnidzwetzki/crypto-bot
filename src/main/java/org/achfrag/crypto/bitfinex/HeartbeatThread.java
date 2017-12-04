@@ -96,6 +96,11 @@ class HeartbeatThread extends ExceptionSafeThread {
 		final Set<String> activeSymbols = bitfinexApiBroker.getActiveSymbols();
 		for(final String symbol : activeSymbols) {
 			final Tick lastTick = bitfinexApiBroker.getLastTick(symbol);
+			
+			if(lastTick == null) {
+				continue;
+			}
+			
 			final long lastUpdate = lastTick.getEndTime().toInstant().getEpochSecond() * 1000;
 			
 			if(lastUpdate + TICKER_TIMEOUT < currentTime) {
