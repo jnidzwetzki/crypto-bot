@@ -48,6 +48,7 @@ public class OrderManager {
 		session.beginTransaction();
 		session.save(order);
 		session.getTransaction().commit();
+		session.close();
 	}
 
 	/**
