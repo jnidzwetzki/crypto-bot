@@ -61,11 +61,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 		
 		while(! Thread.interrupted()) {
 			
-			try {
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
-				return;
-			}
+			Thread.sleep(TimeUnit.SECONDS.toMillis(3));
 			
 			if(bitfinexApiBroker.getWebsocketEndpoint() != null) {
 				
@@ -159,5 +155,8 @@ class HeartbeatThread extends ExceptionSafeThread {
 		bitfinexApiBroker.setAutoReconnectEnabled(false);
 		bitfinexApiBroker.reconnect();
 		bitfinexApiBroker.setAutoReconnectEnabled(true);
+		
+		// Wait some time to let the ticker timestamps update
+		Thread.sleep(TimeUnit.SECONDS.toMillis(30));
 	}
 }

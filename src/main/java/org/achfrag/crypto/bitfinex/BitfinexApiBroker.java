@@ -156,7 +156,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			websocketEndpoint.addConsumer(apiCallback);
 			websocketEndpoint.addCloseHandler(this);
 			websocketEndpoint.connect();
-			handlePongCallback();
+			updateConnectionHeartbeat();
 			
 			executeAuthentification();
 			
@@ -273,7 +273,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			handleSubscribedCallback(message, jsonObject);
 			break;
 		case "pong":
-			handlePongCallback();
+			updateConnectionHeartbeat();
 			break;
 		case "unsubscribed":
 			handleUnsubscribedCallback(jsonObject);
@@ -317,7 +317,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 
-	private void handlePongCallback() {
+	/**
+	 * Update the connection heartbeat
+	 */
+	private void updateConnectionHeartbeat() {
 		lastHeatbeat.set(System.currentTimeMillis());
 	}
 
@@ -354,7 +357,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	protected void handleChannelCallback(final String message) {
 		// Channel callback
 		logger.debug("Channel callback");
-		handlePongCallback();
+		updateConnectionHeartbeat();
 
 		// JSON callback
 		final JSONTokener tokener = new JSONTokener(message);
@@ -730,7 +733,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			executeAuthentification();
 			resubscribeChannels();
 
-			handlePongCallback();
+			updateConnectionHeartbeat();
 			
 			return true;
 		} catch (Exception e) {
