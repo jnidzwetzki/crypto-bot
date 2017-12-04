@@ -200,8 +200,11 @@ public class Main implements Runnable {
 		
 		openTrade.operate(endIndex, lastClosePrice, orderSize);
 		
+		final double amount = PositionSizeManager.getPositionSize(currency, OrderType.SELL, 
+				bitfinexApiBroker.getWallets()) * -1.0;
+		
 		final BitfinexOrder order = BitfinexOrderBuilder
-				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize() * -1.0)
+				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, amount)
 				.build();
 		
 		orderManager.executeOrder(order);
@@ -234,8 +237,11 @@ public class Main implements Runnable {
 		
 		trades.get(currency).add(trade);
 		
+		final double amount = PositionSizeManager.getPositionSize(currency, OrderType.BUY, 
+				bitfinexApiBroker.getWallets());
+		
 		final BitfinexOrder order = BitfinexOrderBuilder
-				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, currency.getMinimalOrderSize())
+				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, amount)
 				.build();
 		
 		orderManager.executeOrder(order);
