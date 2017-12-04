@@ -552,8 +552,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	private void handleCandlestickCallback(final String channelSymbol, final JSONArray subarray) {
 
 		// channel symbol trade:1m:tLTCUSD
-		final String symbol = (channelSymbol.split(":"))[2];
-
 		final List<Tick> ticksBuffer = new ArrayList<>();
 		
 		// Snapshots contain multiple Bars, Updates only one
@@ -568,7 +566,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		
 		ticksBuffer.sort((t1, t2) -> t1.getEndTime().compareTo(t2.getEndTime()));
 
-		tickerManager.handleTicksList(symbol, ticksBuffer);
+		tickerManager.handleTicksList(channelSymbol, ticksBuffer);
 	}
 
 	/**

@@ -113,7 +113,7 @@ public class TickerManager {
 		if(! channelCallbacks.containsKey(symbol)) {
 			channelCallbacks.put(symbol, new ArrayList<>());
 		}
-		
+				
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
 		
 		synchronized (callbacks) {
@@ -147,6 +147,7 @@ public class TickerManager {
 	 * @param ticksArray
 	 */
 	public void handleTicksList(final String symbol, final List<Tick> ticksBuffer) {
+				
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
 
 		if(callbacks != null) {

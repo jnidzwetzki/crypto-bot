@@ -104,7 +104,11 @@ public class Main implements Runnable {
 			final CountDownLatch tickCountdown = new CountDownLatch(100);
 			
 			// Add bars to timeseries callback
-			final BiConsumer<String, Tick> callback = (symbol, tick) -> {
+			final BiConsumer<String, Tick> callback = (channelSymbol, tick) -> {
+				
+				// channel symbol trade:1m:tLTCUSD
+				final String symbol = (channelSymbol.split(":"))[2];
+
 				final TimeSeries timeSeriesToAdd = timeSeries.get(symbol);
 				
 				try { 
