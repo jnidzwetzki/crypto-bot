@@ -319,7 +319,7 @@ public class Main implements Runnable {
                 		continue;
                 }
                 
-                lastTrades.sort((t1, t2) -> Integer.compare(t2.getExit().getIndex(), t1.getExit().getIndex()));
+                lastTrades.sort((t1, t2) -> Integer.compare(t2.getEntry().getIndex(), t1.getEntry().getIndex()));
                 
                 final List<Trade> lastTwoTrades = lastTrades.subList(Math.max(lastTrades.size() - 2, 0), lastTrades.size());
 
