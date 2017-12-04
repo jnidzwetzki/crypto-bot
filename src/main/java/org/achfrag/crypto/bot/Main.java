@@ -289,6 +289,22 @@ public class Main implements Runnable {
 				System.out.println(symbol + ": price in " + priceIn + " / " + (currentPrice - priceIn));
 			}	
 		}
+
+        System.out.println("");
+        System.out.println("==========");
+        System.out.println("Trades");
+        System.out.println("==========");
+        for(final BitfinexCurrencyPair currency : tradedCurrencies) {
+                final String symbol = currency.toBitfinexString();
+                List<Trade> lastTrades = trades.get(currency);
+                lastTrades.sort((t1, t2) -> Integer.compare(t2.getExit().getIndex(), t1.getExit().getIndex()));
+                
+                final List<Trade> lastTwoTrades = lastTrades.subList(Math.max(lastTrades.size() - 2, 0), lastTrades.size());
+
+                for(final Trade trade : lastTwoTrades) {
+                		System.out.println(symbol + " " + trade);
+                }
+        }  
 		
 		System.out.println("");
 		System.out.println("==========");
@@ -297,8 +313,9 @@ public class Main implements Runnable {
 		
 		final List<ExchangeOrder> orders = bitfinexApiBroker.getOrders();
 		orders.sort((o1, o2) -> Long.compare(o2.getCid(), o1.getCid()));
-		
-		for(final ExchangeOrder order : orders) {
+		final List<ExchangeOrder> lastOrders = orders.subList(Math.max(orders.size() - 3, 0), orders.size());
+
+		for(final ExchangeOrder order : lastOrders) {
 			System.out.println(order);
 		}
 	}
