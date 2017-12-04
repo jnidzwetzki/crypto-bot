@@ -50,6 +50,7 @@ public class Main implements Runnable {
 	
 	private final Map<BitfinexCurrencyPair, List<Trade>> trades;
 	
+	public static boolean UPDATE_SCREEN = true;
 	
 	protected static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
 
@@ -262,6 +263,10 @@ public class Main implements Runnable {
 	}
 	
 	public synchronized void updateScreen() {
+		
+		if(! UPDATE_SCREEN) {
+			return;
+		}
 		
 		final TickerManager tickerManager = bitfinexApiBroker.getTickerManager();
 
