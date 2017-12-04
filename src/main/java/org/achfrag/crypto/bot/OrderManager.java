@@ -68,6 +68,13 @@ public class OrderManager {
 			// FIXME: Handle the exception
 			logger.error("Got an exception while order execution", e);
 		}
+		
+		// Store order in database
+		try(final Session session = sessionFactory.openSession()) {
+			session.beginTransaction();
+			session.save(order);
+			session.getTransaction().commit();
+		}
 	
 	}
 }
