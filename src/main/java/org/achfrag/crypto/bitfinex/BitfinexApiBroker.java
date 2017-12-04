@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -64,27 +63,17 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * The channel map
 	 */
 	private final Map<Integer, String> channelIdSymbolMap;
-	
-	/**
-	 * The channel callbacks
-	 */
-	private final Map<String, List<BiConsumer<String, Tick>>> channelCallbacks;
-	
+
 	/**
 	 * The order callbacks
 	 */
 	private final List<Consumer<ExchangeOrder>> orderCallbacks;
-	
-	/**
-	 * The last ticks
-	 */
-	protected final Map<String, Tick> lastTick;
-	
-	/**
-	 * The last tick timestamp
-	 */
-	protected final Map<String, Long> lastTickTimestamp;
 
+	/**
+	 * The tick manager
+	 */
+	private TickerManager tickerManager;
+	
 	/**
 	 * The last heartbeat value
 	 */
@@ -139,11 +128,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 	public BitfinexApiBroker() {
 		this.channelIdSymbolMap = new HashMap<>();
-		this.channelCallbacks = new HashMap<>();
 		this.orderCallbacks = new ArrayList<>();
 		this.lastHeatbeat = new AtomicLong();
-		this.lastTick = new HashMap<>();
-		this.lastTickTimestamp = new HashMap<>();
+		this.tickerManager = new TickerManager();
 		this.walletTable = HashBasedTable.create();
 		this.orders = new ArrayList<>();
 		this.authenticated = false;
@@ -312,12 +299,15 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		authenticatedLatch.countDown();
 	}
 
+	/**
+	 * Handle new channel unsubscribed callbacks
+	 * @param jsonObject
+	 */
 	private void handleUnsubscribedCallback(final JSONObject jsonObject) {
 		synchronized (channelIdSymbolMap) {
 			final int channelId = jsonObject.getInt("chanId");
 			final String symbol = getFromChannelSymbolMap(channelId);
 			logger.info("Channel {} ({}) is unsubscribed", channelId, symbol);
-			channelCallbacks.remove(symbol);	
 			channelIdSymbolMap.remove(channelId);
 			channelIdSymbolMap.notifyAll();
 		}
@@ -537,7 +527,8 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			final String value = jsonArray.getString(1);
 			
 			if("hb".equals(value)) {
-				updateChannelHeartbeat(channel);		
+				final String symbol = channelIdSymbolMap.get(channel);
+				tickerManager.updateChannelHeartbeat(symbol);		
 			} else {
 				logger.error("Unable to process: {}", jsonArray);
 			}
@@ -550,34 +541,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			} else {
 				handleTickCallback(channel, subarray);
 			}
-		}
-	}
-
-	/**
-	 * Update the channel heartbeat
-	 * @param channel
-	 */
-	private void updateChannelHeartbeat(final int channel) {
-		final String symbol = channelIdSymbolMap.get(channel);
-		synchronized (lastTick) {
-			lastTickTimestamp.put(symbol, System.currentTimeMillis());
-		}
-	}
-	
-	/**
-	 * Get the last heartbeat for the symbol
-	 * @param symbol
-	 * @return
-	 */
-	public long getHeartbeatForSymbol(final String symbol) {
-		synchronized (lastTick) {
-			final Long heartbeat = lastTickTimestamp.get(symbol);
-			
-			if(heartbeat == null) {
-				return -1;
-			}
-			
-			return heartbeat;
 		}
 	}
 
@@ -605,16 +568,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		
 		ticksBuffer.sort((t1, t2) -> t1.getEndTime().compareTo(t2.getEndTime()));
 
-		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(channelSymbol);
-
-		if(callbacks != null) {
-			synchronized (callbacks) {
-				for(final Tick tick : ticksBuffer) {
-					callbacks.forEach(c -> c.accept(symbol, tick));
-				}
-			}
-		}
-		
+		tickerManager.handleTicksList(symbol, ticksBuffer);
 	}
 
 	/**
@@ -650,18 +604,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 		final String symbol = getFromChannelSymbolMap(channel);
 		
-		synchronized (lastTick) {
-			lastTick.put(symbol, tick);
-			lastTickTimestamp.put(symbol, System.currentTimeMillis());
-		}
-		
-		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
-
-		if(callbacks != null) {
-			synchronized (callbacks) {
-				callbacks.forEach(c -> c.accept(symbol, tick));
-			}
-		}
+		tickerManager.handleNewTick(symbol, tick);
 	}
 
 	/**
@@ -672,45 +615,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	private String getFromChannelSymbolMap(final int channel) {
 		synchronized (channelIdSymbolMap) {
 			return channelIdSymbolMap.get(channel);
-		}
-	}
-
-	/**
-	 * Register a new tick callback
-	 * @param symbol
-	 * @param callback
-	 * @throws APIException
-	 */
-	public void registerTickCallback(final String symbol, final BiConsumer<String, Tick> callback) throws APIException {
-		
-		if(! channelCallbacks.containsKey(symbol)) {
-			channelCallbacks.put(symbol, new ArrayList<>());
-		}
-		
-		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
-		
-		synchronized (callbacks) {
-			callbacks.add(callback);	
-		}
-	}
-	
-	/**
-	 * Remove the a tick callback
-	 * @param symbol
-	 * @param callback
-	 * @return
-	 * @throws APIException
-	 */
-	public boolean removeTickCallback(final String symbol, final BiConsumer<String, Tick> callback) throws APIException {
-		
-		if(! channelCallbacks.containsKey(symbol)) {
-			throw new APIException("Unknown ticker string: " + symbol);
-		}
-			
-		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
-		
-		synchronized (callbacks) {
-			return callbacks.remove(callback);
 		}
 	}
 	
@@ -762,10 +666,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			logger.info("Performing reconnect");
 			authenticated = false;
 			
-			// Invalidate last tick timetamps
-			synchronized (lastTick) {
-				lastTickTimestamp.clear();	
-			}
+			tickerManager.invalidateTickerHeartbeat();
 			
 			websocketEndpoint.close();
 			websocketEndpoint.connect();
@@ -862,16 +763,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		final CancelOrderGroupCommand cancelOrder = new CancelOrderGroupCommand(id);
 		sendCommand(cancelOrder);
 	}
-	
-	/**
-	 * Get a set with active symbols
-	 * @return
-	 */
-	public Set<String> getActiveSymbols() {
-		synchronized (lastTick) {
-			return lastTick.keySet();
-		}
-	}
 
 	/**
 	 * Is auto reconnecting enabled
@@ -914,27 +805,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	}
 	
 	/**
-	 * Get the last tick for a given symbol
-	 * @param currencyPair
-	 * @return 
-	 */
-	public Tick getLastTick(final BitfinexCurrencyPair currencyPair) {
-		final String bitfinexString = currencyPair.toBitfinexString();
-		return getLastTick(bitfinexString);
-	}
-	
-	/**
-	 * Get the last tick for a given symbol
-	 * @param currencyPair
-	 * @return 
-	 */
-	public Tick getLastTick(final String bitfinexString) {
-		synchronized (lastTick) {
-			return lastTick.get(bitfinexString);
-		}
-	}
-	
-	/**
 	 * Get all wallets
 	 * @return 
 	 */
@@ -970,4 +840,35 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	public boolean removeOrderCallback(final Consumer<ExchangeOrder> callback) {
 		return orderCallbacks.remove(callback);
 	}
+
+	/**
+	 * Get the ticker manager
+	 * @return
+	 */
+	public TickerManager getTickerManager() {
+		return tickerManager;
+	}
+
+	/**
+	 * Register a tick callback
+	 * @param symbol
+	 * @param callback
+	 * @return
+	 * @throws APIException
+	 */
+	public void registerTickCallback(String symbol, BiConsumer<String, Tick> callback) throws APIException {
+		tickerManager.registerTickCallback(symbol, callback);
+	}
+
+	/**
+	 * Remove a tick callback
+	 * @param symbol
+	 * @param callback
+	 * @return
+	 * @throws APIException
+	 */
+	public boolean removeTickCallback(String symbol, BiConsumer<String, Tick> callback) throws APIException {
+		return tickerManager.removeTickCallback(symbol, callback);
+	}
+
 }

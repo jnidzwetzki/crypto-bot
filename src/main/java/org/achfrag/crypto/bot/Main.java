@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.BitfinexClientFactory;
 import org.achfrag.crypto.bitfinex.BitfinexOrderBuilder;
+import org.achfrag.crypto.bitfinex.TickerManager;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
@@ -256,6 +257,8 @@ public class Main implements Runnable {
 	
 	public synchronized void updateScreen() {
 		
+		final TickerManager tickerManager = bitfinexApiBroker.getTickerManager();
+
 		clearScreen();
 		System.out.println("");
 		System.out.println("==========");
@@ -263,7 +266,7 @@ public class Main implements Runnable {
 		System.out.println("==========");
 		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			final String symbol = currency.toBitfinexString();
-			System.out.println(symbol + " " + bitfinexApiBroker.getLastTick(currency));
+			System.out.println(symbol + " " + tickerManager.getLastTick(currency));
 		}
 		
 		System.out.println("");
@@ -285,7 +288,7 @@ public class Main implements Runnable {
 			final Trade trade = getOpenTrade(currency);
 			if(trade != null) {
 				final double priceIn = trade.getEntry().getPrice().toDouble();
-				final double currentPrice = bitfinexApiBroker.getLastTick(currency).getClosePrice().toDouble();
+				final double currentPrice = tickerManager.getLastTick(currency).getClosePrice().toDouble();
 				System.out.println(symbol + ": price in " + priceIn + " / " + (currentPrice - priceIn));
 			}	
 		}

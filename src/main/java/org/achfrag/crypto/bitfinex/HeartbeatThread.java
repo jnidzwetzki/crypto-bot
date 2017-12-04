@@ -92,10 +92,11 @@ class HeartbeatThread extends ExceptionSafeThread {
 	private boolean checkTickerFreshness() {
 		
 		final long currentTime = System.currentTimeMillis();
-		final Set<String> activeSymbols = bitfinexApiBroker.getActiveSymbols();
+		final TickerManager tickerManager = bitfinexApiBroker.getTickerManager();
+		final Set<String> activeSymbols = tickerManager.getActiveSymbols();
 		
 		for(final String symbol : activeSymbols) {
-			final long lastHeatbeat = bitfinexApiBroker.getHeartbeatForSymbol(symbol);
+			final long lastHeatbeat = tickerManager.getHeartbeatForSymbol(symbol);
 			
 			if(lastHeatbeat == -1) {
 				continue;
