@@ -155,7 +155,7 @@ public class Main implements Runnable {
 			final AbstractAPICommand subscribeCommandTicker = new SubscribeTickerCommand(currency);
 			bitfinexApiBroker.sendCommand(subscribeCommandTicker);
 
-			System.out.println("Wait for ticker");
+			logger.info("Wait for ticker");
 
 			while (! bitfinexApiBroker.isTickerActive(currency)) {
 				Thread.sleep(100);
