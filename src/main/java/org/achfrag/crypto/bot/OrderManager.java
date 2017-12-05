@@ -1,9 +1,13 @@
 package org.achfrag.crypto.bot;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
+import org.achfrag.crypto.bitfinex.BitfinexOrderBuilder;
 import org.achfrag.crypto.bitfinex.entity.APIException;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
+import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
+import org.achfrag.crypto.bitfinex.entity.Trade;
+import org.achfrag.crypto.bitfinex.entity.TradeState;
 import org.achfrag.crypto.bitfinex.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -52,29 +56,75 @@ public class OrderManager {
 	}
 
 	/**
-	 * Execute a new order
-	 * @param order
+	 * Open a new trade
+	 * @param trade
 	 */
-	public void executeOrder(final BitfinexOrder order) {
-
+	public void openTrade(final Trade trade) {
+		
 		if(! bitfinexApiBroker.isAuthenticated()) {
-			logger.error("Unable to execute order {} on marketplace, conecction is not authenticated", order);
+			logger.error("Unable to execute trade {} on marketplace, conecction is not authenticated", trade);
 			return;
 		}
-			
+		
+		final double amount = trade.getAmount();
+		
+		final BitfinexOrder order = BitfinexOrderBuilder
+				.create(trade.getSymbol(), BitfinexOrderType.EXCHANGE_MARKET, amount)
+				.build();
+		
 		try {
+			trade.setTradeState(TradeState.OPENING);
+			trade.addOpenOrder(order);
 			bitfinexApiBroker.placeOrder(order);
+			trade.setTradeState(TradeState.OPEN);
 		} catch (APIException e) {
-			// FIXME: Handle the exception
-			logger.error("Got an exception while order execution", e);
+			logger.error("Got an exception while opening trade {}", trade);
+			trade.setTradeState(TradeState.ERROR);
+		} finally {
+			persistTrade(trade);
+		}
+	}
+
+	/**
+	 * Close a trade
+	 * @param trade
+	 */
+	public void closeTrade(final Trade trade) {
+		
+		if(! bitfinexApiBroker.isAuthenticated()) {
+			logger.error("Unable to execute trade {} on marketplace, conecction is not authenticated", trade);
+			return;
 		}
 		
+		final double amount = trade.getAmount() * -1.0;
+		
+		final BitfinexOrder order = BitfinexOrderBuilder
+				.create(trade.getSymbol(), BitfinexOrderType.EXCHANGE_MARKET, amount)
+				.build();
+		
+		try {
+			trade.setTradeState(TradeState.CLOSING);
+			trade.addCloseOrder(order);
+			bitfinexApiBroker.placeOrder(order);
+			trade.setTradeState(TradeState.CLOSED);
+		} catch (APIException e) {
+			logger.error("Got an exception while closing trade {}", trade);
+			trade.setTradeState(TradeState.ERROR);
+		} finally {
+			persistTrade(trade);
+		}
+	}
+
+	/**
+	 * Persist the trade in the database
+	 * @param trade
+	 */
+	private void persistTrade(final Trade trade) {
 		// Store order in database
 		try(final Session session = sessionFactory.openSession()) {
 			session.beginTransaction();
-			session.save(order);
+			session.save(trade);
 			session.getTransaction().commit();
 		}
-	
 	}
 }

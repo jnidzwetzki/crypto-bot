@@ -5,5 +5,6 @@ public enum TradeState {
 	OPENING,
 	OPEN,
 	CLOSING,
-	CLOSED;
+	CLOSED,
+	ERROR;
 }

@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.BitfinexClientFactory;
-import org.achfrag.crypto.bitfinex.BitfinexOrderBuilder;
 import org.achfrag.crypto.bitfinex.TickerManager;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
@@ -20,8 +19,6 @@ import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.commands.UnsubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
 import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
-import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
-import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.crypto.bitfinex.entity.Trade;
@@ -202,18 +199,10 @@ public class Main implements Runnable {
 			logger.error("Unable to close a trade, there is no trade open");
 			return;
 		}
-				
-		final double amount = openTrade.getAmount() * -1.0;
 		
-		final BitfinexOrder order = BitfinexOrderBuilder
-				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, amount)
-				.build();
-		
-		openTrade.setTradeState(TradeState.CLOSING);
 		openTrade.setExpectedPriceClose(lastClosePrice.toDouble());
-		openTrade.addCloseOrder(order);
-		orderManager.executeOrder(order);
-		openTrade.setTradeState(TradeState.CLOSED);
+
+		orderManager.closeTrade(openTrade);
 	}
 
 	/**
@@ -237,22 +226,14 @@ public class Main implements Runnable {
 				bitfinexApiBroker.getWallets());
 		
 		final Trade trade = new Trade(TradeDirection.LONG, currency, amount);
+		trade.setExpectedPriceOpen(lastClosePrice.toDouble());
 
 		if(trades.get(currency) == null) {
 			trades.put(currency, new ArrayList<>());
 		}
 		
 		trades.get(currency).add(trade);
-	
-		final BitfinexOrder order = BitfinexOrderBuilder
-				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, amount)
-				.build();
-		
-		trade.setTradeState(TradeState.OPENING);
-		trade.setExpectedPriceOpen(lastClosePrice.toDouble());
-		trade.addOpenOrder(order);
-		orderManager.executeOrder(order);
-		trade.setTradeState(TradeState.OPENING);
+		orderManager.openTrade(trade);
 	}
 	
 	private void handleTickCallback(final String symbol, final Tick tick) {		
