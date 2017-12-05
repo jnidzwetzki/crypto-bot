@@ -3,6 +3,7 @@ package org.achfrag.crypto.test;
 import java.util.Arrays;
 import java.util.List;
 
+import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
@@ -10,12 +11,14 @@ import org.achfrag.crypto.bitfinex.entity.Trade;
 import org.achfrag.crypto.bitfinex.entity.TradeDirection;
 import org.achfrag.crypto.bitfinex.entity.TradeState;
 import org.achfrag.crypto.bitfinex.util.HibernateUtil;
+import org.achfrag.crypto.bot.OrderManager;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TestPersistence {
 	
@@ -103,5 +106,50 @@ public class TestPersistence {
 		session.close();
 		
 		Assert.assertEquals(1, result2.size());
+	}
+	
+	
+	/**
+	 * Test get open trades from order manager
+	 */
+	@Test
+	public void testGetOpenTrades() {
+		
+		final BitfinexApiBroker apiBroker = Mockito.mock(BitfinexApiBroker.class);
+		final OrderManager ordermanager = new OrderManager(apiBroker);
+		
+		Assert.assertTrue(ordermanager.getAllOpenTrades().isEmpty());
+
+		final Trade trade = new Trade(TradeDirection.LONG	, BitfinexCurrencyPair.BTC_USD, 1);
+		trade.setTradeState(TradeState.CREATED);
+		
+		final Session session = sessionFactory.openSession();
+		
+		session.beginTransaction();
+		session.save(trade);
+		session.getTransaction().commit();
+
+		Assert.assertTrue(ordermanager.getAllOpenTrades().isEmpty());
+
+		session.beginTransaction();
+		trade.setTradeState(TradeState.OPEN);
+		session.saveOrUpdate(trade);
+		session.getTransaction().commit();
+		
+		session.beginTransaction();
+		Assert.assertEquals(1, ordermanager.getAllOpenTrades().size());
+		session.getTransaction().commit();
+		
+		final Trade trade2 = new Trade(TradeDirection.LONG, BitfinexCurrencyPair.BTC_USD, 1);
+		trade2.setTradeState(TradeState.OPEN);
+		session.beginTransaction();
+		session.save(trade2);
+		session.getTransaction().commit();
+		
+		session.beginTransaction();
+		Assert.assertEquals(2, ordermanager.getAllOpenTrades().size());
+		session.getTransaction().commit();
+		
+		session.close();
 	}
 }
