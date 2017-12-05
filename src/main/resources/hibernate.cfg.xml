@@ -33,6 +33,7 @@
 
         <mapping class="org.achfrag.crypto.bitfinex.entity.BitfinexOrder"/>
         <mapping class="org.achfrag.crypto.bitfinex.entity.ExchangeOrder"/>
+        <mapping class="org.achfrag.crypto.bitfinex.entity.Trade"/>
 
     </session-factory>
 

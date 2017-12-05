@@ -24,6 +24,9 @@ import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
+import org.achfrag.crypto.bitfinex.entity.Trade;
+import org.achfrag.crypto.bitfinex.entity.TradeDirection;
+import org.achfrag.crypto.bitfinex.entity.TradeState;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.slf4j.Logger;
@@ -34,7 +37,6 @@ import org.ta4j.core.Order.OrderType;
 import org.ta4j.core.Strategy;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
-import org.ta4j.core.Trade;
 
 public class Main implements Runnable {
 
@@ -192,7 +194,7 @@ public class Main implements Runnable {
 	private void closeOrder(final String symbol, final int endIndex) {
 		
 		final BitfinexCurrencyPair currency = BitfinexCurrencyPair.fromSymbolString(symbol);
-		final Decimal orderSize = Decimal.valueOf(currency.getMinimalOrderSize());
+		//final Decimal orderSize = Decimal.valueOf(currency.getMinimalOrderSize());
 		final Decimal lastClosePrice = timeSeries.get(symbol).getLastTick().getClosePrice();
 		
 		final Trade openTrade = getOpenTrade(currency);
@@ -201,17 +203,18 @@ public class Main implements Runnable {
 			logger.error("Unable to close a trade, there is no trade open");
 			return;
 		}
-		
-		openTrade.operate(endIndex, lastClosePrice, orderSize);
-		
-		final double amount = PositionSizeManager.getPositionSize(currency, OrderType.SELL, 
-				bitfinexApiBroker.getWallets()) * -1.0;
+				
+		final double amount = openTrade.getAmount() * -1.0;
 		
 		final BitfinexOrder order = BitfinexOrderBuilder
 				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, amount)
 				.build();
 		
+		openTrade.setTradeState(TradeState.CLOSING);
+		openTrade.setExpectedPriceClose(lastClosePrice.toDouble());
+		openTrade.addCloseOrder(order);
 		orderManager.executeOrder(order);
+		openTrade.setTradeState(TradeState.CLOSED);
 	}
 
 	/**
@@ -222,7 +225,6 @@ public class Main implements Runnable {
 	 */
 	private void openOrder(final String symbol, final int endIndex) {
 		final BitfinexCurrencyPair currency = BitfinexCurrencyPair.fromSymbolString(symbol);
-		final Decimal orderSize = Decimal.valueOf(currency.getMinimalOrderSize());
 		final Decimal lastClosePrice = timeSeries.get(symbol).getLastTick().getClosePrice();
 		
 		final Trade openTrade = getOpenTrade(currency);
@@ -232,23 +234,26 @@ public class Main implements Runnable {
 			return;
 		}
 		
-		final Trade trade = new Trade(OrderType.BUY);
-		trade.operate(endIndex, lastClosePrice, orderSize);
+		final double amount = PositionSizeManager.getPositionSize(currency, OrderType.BUY, 
+				bitfinexApiBroker.getWallets());
+		
+		final Trade trade = new Trade(TradeDirection.LONG, currency, amount);
 
 		if(trades.get(currency) == null) {
 			trades.put(currency, new ArrayList<>());
 		}
 		
 		trades.get(currency).add(trade);
-		
-		final double amount = PositionSizeManager.getPositionSize(currency, OrderType.BUY, 
-				bitfinexApiBroker.getWallets());
-		
+	
 		final BitfinexOrder order = BitfinexOrderBuilder
 				.create(currency, BitfinexOrderType.EXCHANGE_MARKET, amount)
 				.build();
 		
+		trade.setTradeState(TradeState.OPENING);
+		trade.setExpectedPriceOpen(lastClosePrice.toDouble());
+		trade.addOpenOrder(order);
 		orderManager.executeOrder(order);
+		trade.setTradeState(TradeState.OPENING);
 	}
 	
 	private void handleTickCallback(final String symbol, final Tick tick) {		
@@ -301,7 +306,7 @@ public class Main implements Runnable {
 			
 			final Trade trade = getOpenTrade(currency);
 			if(trade != null) {
-				final double priceIn = trade.getEntry().getPrice().toDouble();
+				final double priceIn = trade.getExpectedPriceOpen();
 				final double currentPrice = tickerManager.getLastTick(currency).getClosePrice().toDouble();
 				System.out.println(symbol + ": price in " + priceIn + " / " + (currentPrice - priceIn));
 			}	
@@ -319,7 +324,7 @@ public class Main implements Runnable {
                 		continue;
                 }
                 
-                lastTrades.sort((t1, t2) -> Integer.compare(t2.getEntry().getIndex(), t1.getEntry().getIndex()));
+                lastTrades.sort((t1, t2) -> Long.compare(t2.getTid(), t1.getTid()));
                 
                 final List<Trade> lastTwoTrades = lastTrades.subList(Math.max(lastTrades.size() - 2, 0), lastTrades.size());
 
@@ -359,7 +364,9 @@ public class Main implements Runnable {
 			return null;
 		}
 
-		final List<Trade> openTrades = tradeList.stream().filter(t -> ! t.isClosed()).collect(Collectors.toList());
+		final List<Trade> openTrades = tradeList.stream()
+				.filter(t -> t.getTradeState() == TradeState.OPEN)
+				.collect(Collectors.toList());
 		
 		if(openTrades.size() > 1) {
 			throw new IllegalArgumentException("More then one open trade for " + symbol + " / " + openTrades);

@@ -5,6 +5,8 @@ import java.util.List;
 import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
+import org.achfrag.crypto.bitfinex.entity.Trade;
+import org.achfrag.crypto.bitfinex.entity.TradeDirection;
 import org.achfrag.crypto.bitfinex.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -20,8 +22,11 @@ public class PersistenceTest {
 		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 		Session session = sessionFactory.openSession();
 
+		final Trade trade = new Trade(TradeDirection.LONG	, BitfinexCurrencyPair.BTC_USD, 1);
+		trade.getOrdersOpen().add(order);
+		
 		session.beginTransaction();
-		session.save(order);
+		session.save(trade);
 		session.getTransaction().commit();
 
 		// now lets pull events from the database and list them
@@ -29,9 +34,9 @@ public class PersistenceTest {
 		session.beginTransaction();
 
 		@SuppressWarnings("unchecked")
-		List<BitfinexOrder> result = session.createQuery("from BitfinexOrder").list();
+		List<Trade> result = session.createQuery("from Trade").list();
 
-		for (BitfinexOrder oneOrder : result) {
+		for (Trade oneOrder : result) {
 			System.out.println(oneOrder);
 		}
 
