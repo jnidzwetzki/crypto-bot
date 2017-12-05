@@ -1,6 +1,7 @@
 package org.achfrag.crypto.bot;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.BitfinexOrderBuilder;
@@ -39,7 +40,7 @@ public class OrderManager {
 	private static final String OPEN_TRADES_QUERY = "from Trade t where t.tradeState = '" + TradeState.OPEN.name() + "'";
 
 	public OrderManager(final BitfinexApiBroker bitfinexApiBroker) {
-		this.bitfinexApiBroker = bitfinexApiBroker;
+		this.bitfinexApiBroker = Objects.requireNonNull(bitfinexApiBroker);
 		
 		// Persistence session factory
 		this.sessionFactory = HibernateUtil.getSessionFactory();
