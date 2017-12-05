@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -24,6 +26,7 @@ public class Trade {
 	/**
 	 * The state of the trade
 	 */
+	@Enumerated(EnumType.STRING)
 	private TradeState tradeState;
 	
 	/**
