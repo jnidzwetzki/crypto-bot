@@ -77,6 +77,11 @@ public class Main implements Runnable {
 	@Override
 	public void run() {
 		try {			
+			trades.clear();
+			
+			final List<Trade> openTrades = orderManager.getAllOpenTrades();
+			openTrades.forEach(t -> addTradeToOpenTradeList(t));
+			
 			bitfinexApiBroker.connect();
 			
 			requestHistoricalData(bitfinexApiBroker);			
@@ -135,9 +140,6 @@ public class Main implements Runnable {
 			
 			logger.info("Loaded ticks for symbol {} {}", bitfinexString,
 					+ timeSeries.get(bitfinexString).getEndIndex());
-			
-		/*	final Chart chart = new Chart(bitfinexString, strategy, currencyTimeSeries);
-			chart.showChart();*/
 		}
 	}
 
@@ -228,12 +230,25 @@ public class Main implements Runnable {
 		final Trade trade = new Trade(TradeDirection.LONG, currency, amount);
 		trade.setExpectedPriceOpen(lastClosePrice.toDouble());
 
-		if(trades.get(currency) == null) {
+		addTradeToOpenTradeList(trade);
+		orderManager.openTrade(trade);
+	}
+
+
+	/**
+	 * Open the trade to the open trades list
+	 * @param currency
+	 * @param trade
+	 */
+	private void addTradeToOpenTradeList(final Trade trade) {
+		
+		final BitfinexCurrencyPair currency = trade.getSymbol();
+		
+		if(! trades.containsKey(currency)) {
 			trades.put(currency, new ArrayList<>());
 		}
 		
 		trades.get(currency).add(trade);
-		orderManager.openTrade(trade);
 	}
 	
 	private void handleTickCallback(final String symbol, final Tick tick) {		

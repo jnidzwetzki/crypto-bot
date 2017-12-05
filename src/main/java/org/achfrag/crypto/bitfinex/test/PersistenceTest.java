@@ -7,6 +7,7 @@ import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.Trade;
 import org.achfrag.crypto.bitfinex.entity.TradeDirection;
+import org.achfrag.crypto.bitfinex.entity.TradeState;
 import org.achfrag.crypto.bitfinex.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -24,6 +25,7 @@ public class PersistenceTest {
 
 		final Trade trade = new Trade(TradeDirection.LONG	, BitfinexCurrencyPair.BTC_USD, 1);
 		trade.getOrdersOpen().add(order);
+		trade.setTradeState(TradeState.ERROR);
 		
 		session.beginTransaction();
 		session.save(trade);
@@ -34,7 +36,7 @@ public class PersistenceTest {
 		session.beginTransaction();
 
 		@SuppressWarnings("unchecked")
-		List<Trade> result = session.createQuery("from Trade").list();
+		List<Trade> result = session.createQuery("from Trade t where t.tradeState = '" + TradeState.ERROR.name() + "'").list();
 
 		for (Trade oneOrder : result) {
 			System.out.println(oneOrder);

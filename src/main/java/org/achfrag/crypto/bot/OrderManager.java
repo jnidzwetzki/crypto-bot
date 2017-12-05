@@ -1,5 +1,7 @@
 package org.achfrag.crypto.bot;
 
+import java.util.List;
+
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.BitfinexOrderBuilder;
 import org.achfrag.crypto.bitfinex.entity.APIException;
@@ -30,6 +32,11 @@ public class OrderManager {
 	 * The Logger
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(OrderManager.class);
+
+	/**
+	 * The open trades query
+	 */
+	private static final String OPEN_TRADES_QUERY = "from Trade t where t.tradeState = '" + TradeState.OPEN.name() + "'";
 
 	public OrderManager(final BitfinexApiBroker bitfinexApiBroker) {
 		this.bitfinexApiBroker = bitfinexApiBroker;
@@ -125,6 +132,17 @@ public class OrderManager {
 			session.beginTransaction();
 			session.save(trade);
 			session.getTransaction().commit();
+		}
+	}
+	
+	/**
+	 * Get all open trades from database
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Trade> getAllOpenTrades() {
+		try (final Session session = sessionFactory.openSession()) {
+			return session.createQuery(OPEN_TRADES_QUERY).list();
 		}
 	}
 }
