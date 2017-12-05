@@ -194,7 +194,6 @@ public class Main implements Runnable {
 	private void closeOrder(final String symbol, final int endIndex) {
 		
 		final BitfinexCurrencyPair currency = BitfinexCurrencyPair.fromSymbolString(symbol);
-		//final Decimal orderSize = Decimal.valueOf(currency.getMinimalOrderSize());
 		final Decimal lastClosePrice = timeSeries.get(symbol).getLastTick().getClosePrice();
 		
 		final Trade openTrade = getOpenTrade(currency);
