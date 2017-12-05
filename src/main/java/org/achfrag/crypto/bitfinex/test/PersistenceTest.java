@@ -5,9 +5,9 @@ import java.util.List;
 import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
+import org.achfrag.crypto.bitfinex.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
 
 public class PersistenceTest {
 
@@ -17,7 +17,7 @@ public class PersistenceTest {
 		BitfinexOrder order = new BitfinexOrder(BitfinexCurrencyPair.BTC_USD, BitfinexOrderType.EXCHANGE_LIMIT, 0, 0, 0,
 				0, false, false, -1);
 
-		SessionFactory sessionFactory = new Configuration().configure().buildSessionFactory();
+		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 		Session session = sessionFactory.openSession();
 
 		session.beginTransaction();

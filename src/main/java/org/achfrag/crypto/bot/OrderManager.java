@@ -4,9 +4,9 @@ import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.entity.APIException;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
+import org.achfrag.crypto.bitfinex.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +30,8 @@ public class OrderManager {
 	public OrderManager(final BitfinexApiBroker bitfinexApiBroker) {
 		this.bitfinexApiBroker = bitfinexApiBroker;
 		
-		// Persistence
-		this.sessionFactory = new Configuration().configure().buildSessionFactory();
+		// Persistence session factory
+		this.sessionFactory = HibernateUtil.getSessionFactory();
 
 		// Register order callbacks
 		bitfinexApiBroker.addOrderCallback((o) -> handleOrderCallback(o));
