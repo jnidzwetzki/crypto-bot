@@ -1,6 +1,8 @@
 package org.achfrag.crypto.bitfinex.entity;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -21,7 +23,10 @@ public class ExchangeOrder {
 	private long updated;
 	private double amount;
 	private double amountAtCreation;
+	
+	@Enumerated(EnumType.STRING)
 	private BitfinexOrderType orderType;
+	
 	private String state;
 	private double price;
 	private double priceAvg;

@@ -1,6 +1,8 @@
 package org.achfrag.crypto.bitfinex.entity;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -16,8 +18,13 @@ public class BitfinexOrder {
 	private long id;
 	
 	private final long cid;
+	
+	@Enumerated(EnumType.STRING)
 	private final BitfinexCurrencyPair symbol; 
+	
+	@Enumerated(EnumType.STRING)
 	private final BitfinexOrderType type;
+	
 	private final double price;
 	private final double priceTrailing;
 	private final double priceAuxLimit;
