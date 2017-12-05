@@ -130,7 +130,7 @@ public class OrderManager {
 		// Store order in database
 		try(final Session session = sessionFactory.openSession()) {
 			session.beginTransaction();
-			session.save(trade);
+			session.saveOrUpdate(trade);
 			session.getTransaction().commit();
 		}
 	}
