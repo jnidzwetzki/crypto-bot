@@ -26,6 +26,7 @@ import org.achfrag.crypto.bitfinex.entity.TradeDirection;
 import org.achfrag.crypto.bitfinex.entity.TradeState;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.EMAStrategy03;
+import org.achfrag.crypto.strategy.TradeStrategyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.BaseTimeSeries;
@@ -50,6 +51,8 @@ public class Main implements Runnable {
 	private final Map<BitfinexCurrencyPair, List<Trade>> trades;
 	
 	public static boolean UPDATE_SCREEN = true;
+	
+	public TradeStrategyFactory strategyFactory = new EMAStrategy03(5, 12, 40);
 	
 	protected static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
 
@@ -102,7 +105,7 @@ public class Main implements Runnable {
 			final String bitfinexString = currency.toBitfinexString();
 			final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
 			timeSeries.put(bitfinexString, currencyTimeSeries);
-			final Strategy strategy = EMAStrategy03.getStrategy(currencyTimeSeries, 5, 12, 40);
+			final Strategy strategy = strategyFactory.getStrategy(currencyTimeSeries);
 			strategies.put(bitfinexString, strategy);
 
 			final CountDownLatch tickCountdown = new CountDownLatch(100);
@@ -227,7 +230,7 @@ public class Main implements Runnable {
 		final double amount = PositionSizeManager.getPositionSize(currency, OrderType.BUY, 
 				bitfinexApiBroker.getWallets());
 		
-		final Trade trade = new Trade(TradeDirection.LONG, currency, amount);
+		final Trade trade = new Trade(strategyFactory.getName(), TradeDirection.LONG, currency, amount);
 		trade.setExpectedPriceOpen(lastClosePrice.toDouble());
 
 		addTradeToOpenTradeList(trade);

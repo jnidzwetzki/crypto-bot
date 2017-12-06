@@ -12,9 +12,9 @@ import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 import org.ta4j.core.trading.rules.StopGainRule;
 import org.ta4j.core.trading.rules.StopLossRule;
 
-public class EMAStrategy01 {
+public class EMAStrategy01 implements TradeStrategyFactory {
 
-	public static Strategy getStrategy(TimeSeries timeSeries) {
+	public Strategy getStrategy(TimeSeries timeSeries) {
 		ClosePriceIndicator closePrice = new ClosePriceIndicator(timeSeries);
 
 		SMAIndicator shortSma = new SMAIndicator(closePrice, 5);
@@ -29,6 +29,11 @@ public class EMAStrategy01 {
 		final BaseStrategy strategy = new BaseStrategy(buyingRule, sellingRule);
 		
 		return strategy;
+	}
+
+	@Override
+	public String getName() {
+		return "EMAStrategy01";
 	}
 
 }

@@ -24,6 +24,11 @@ public class Trade {
 	private long tid;
 	
 	/**
+	 * The strategy
+	 */
+	private String strategy;
+	
+	/**
 	 * The state of the trade
 	 */
 	@Enumerated(EnumType.STRING)
@@ -77,8 +82,10 @@ public class Trade {
 		expectedPriceClose = -1;
 	}
 	
-	public Trade(final TradeDirection tradeDirection, final BitfinexCurrencyPair symbol, final double amount) {
+	public Trade(final String strategy, final TradeDirection tradeDirection, 
+			final BitfinexCurrencyPair symbol, final double amount) {
 		this();
+		this.strategy = strategy;
 		this.tradeDirection = tradeDirection;
 		this.symbol = symbol;
 		this.amount = amount;
@@ -86,10 +93,10 @@ public class Trade {
 
 	@Override
 	public String toString() {
-		return "Trade [tid=" + tid + ", tradeState=" + tradeState + ", tradeDirection=" + tradeDirection
-				+ ", ordersOpen=" + ordersOpen + ", ordersClose=" + ordersClose + ", symbol=" + symbol + ", amount="
-				+ amount + ", expectedPriceOpen=" + expectedPriceOpen + ", expectedPriceClose=" + expectedPriceClose
-				+ "]";
+		return "Trade [tid=" + tid + ", strategy=" + strategy + ", tradeState=" + tradeState + ", tradeDirection="
+				+ tradeDirection + ", ordersOpen=" + ordersOpen + ", ordersClose=" + ordersClose + ", symbol=" + symbol
+				+ ", amount=" + amount + ", expectedPriceOpen=" + expectedPriceOpen + ", expectedPriceClose="
+				+ expectedPriceClose + "]";
 	}
 
 	public long getTid() {
@@ -174,5 +181,12 @@ public class Trade {
 	public void setExpectedPriceClose(final double expectedPriceClose) {
 		this.expectedPriceClose = expectedPriceClose;
 	}
-	
+
+	public String getStrategy() {
+		return strategy;
+	}
+
+	public void setStrategy(final String strategy) {
+		this.strategy = strategy;
+	}
 }

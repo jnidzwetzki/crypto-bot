@@ -15,9 +15,9 @@ import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 import org.ta4j.core.trading.rules.OverIndicatorRule;
 import org.ta4j.core.trading.rules.UnderIndicatorRule;
 
-public class ForexStrategy01 {
+public class ForexStrategy01 implements TradeStrategyFactory {
 
-	public static Strategy getStrategy(TimeSeries timeSeries) {
+	public Strategy getStrategy(TimeSeries timeSeries) {
 		ClosePriceIndicator closePrice = new ClosePriceIndicator(timeSeries);
 
 		EMAIndicator sma1 = new EMAIndicator(closePrice, 5);
@@ -39,6 +39,11 @@ public class ForexStrategy01 {
 		final BaseStrategy strategy = new BaseStrategy(buyingRule, sellingRule);
 		
 		return strategy;
+	}
+
+	@Override
+	public String getName() {
+		return "ForexStrategy01";
 	}
 
 }

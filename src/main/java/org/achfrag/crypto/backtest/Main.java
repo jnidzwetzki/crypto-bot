@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.EMAStrategy03;
-import org.achfrag.crypto.strategy.ForexStrategy01;
+import org.achfrag.crypto.strategy.TradeStrategyFactory;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Strategy;
@@ -21,7 +21,6 @@ import org.ta4j.core.TimeSeries;
 import org.ta4j.core.TimeSeriesManager;
 import org.ta4j.core.Trade;
 import org.ta4j.core.TradingRecord;
-import org.ta4j.core.analysis.criteria.RewardRiskRatioCriterion;
 import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
@@ -40,10 +39,10 @@ public class Main implements Runnable {
 			loadDataFromFile();
 
 			System.out.println("Executing trading on ticks: " + timeSeries.getEndIndex());
+			final TradeStrategyFactory factory = new EMAStrategy03(5, 12, 40);
 			
-		//	final Strategy strategy = EMAStrategy03.getStrategy(timeSeries, 5, 12, 40);
-			final Strategy strategy = ForexStrategy01.getStrategy(timeSeries);
-			processTrade("Strategy 5-12-40", strategy);	
+		//	final Strategy strategy = ForexStrategy01.getStrategy(timeSeries);
+			processTrade(factory);	
 
 			//findEma();
 
@@ -61,20 +60,19 @@ public class Main implements Runnable {
 		for(final int sma1Value : sma1) {
 			for(final int sma2Value : sma2) {
 				for(final int sma3Value : sma3) {
-					final Strategy strategy = EMAStrategy03.getStrategy(timeSeries, sma1Value, sma2Value, sma3Value);
-					
-					processTrade("Strategy " + sma1Value + "-" + sma2Value + "-" + sma3Value,  strategy);	
+					final TradeStrategyFactory factory = new EMAStrategy03(sma1Value, sma2Value, sma3Value);
+					processTrade(factory);	
 				}
 			}
 		}
 	}
 
-	private void processTrade(final String strategyName, final Strategy strategy) {
+	private void processTrade(final TradeStrategyFactory strategyFactory) {
 		TimeSeriesManager seriesManager = new TimeSeriesManager(timeSeries);
 
 		//debugTrades(strategy);
 		
-		
+		final Strategy strategy = strategyFactory.getStrategy(timeSeries);
 		TradingRecord tradingRecord = seriesManager.run(strategy);
 
 		double totalPl = 0.0;
@@ -110,12 +108,13 @@ public class Main implements Runnable {
 			}
 			
 		//	System.out.println("P/L: " + pl + " In " + priceIn + " Out " + priceOut);
-			totalPl = totalPl + (pl * (priceIn.toDouble() / USD_AMOUNT));
+			final double boughtContracts = USD_AMOUNT / priceIn.toDouble();
+			totalPl = totalPl + (pl * boughtContracts);
 		}
 		
 		looserInARowList.add(looserInARow);
 
-		System.out.println("Strategy: " + strategyName);
+		System.out.println("Strategy: " + strategyFactory.getName());
 		System.out.println("Total P/L: " + totalPl);
 		System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
 		System.out.format("Winner %d, looser %d\n", winner, looser);
@@ -167,15 +166,22 @@ public class Main implements Runnable {
 			final long timestamp = Long.parseLong(parts[0]);
 			final double price = Double.parseDouble(parts[1]);
 			final double volume = Double.parseDouble(parts[2]);
-
-			// Drop unstable data (01.01.2017)
+			
+			// Drop unstable data 
+			// 1483228800 - 01.01.2017
+			// 1451606400 - 01.01.2016
+			
 			if (timestamp < 1483228800) {
 				continue;
 			}
 			
+			//if(timestamp > 1483228800) {
+			//	continue;
+			//}
+
 			tickMerger.addNewPrice(TimeUnit.SECONDS.toMillis(timestamp), price, volume);
 		}
-
+		
 		tickMerger.close();
 		br.close();
 	}

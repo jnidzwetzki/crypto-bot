@@ -83,7 +83,7 @@ public class TestPersistence {
 		final BitfinexOrder order = new BitfinexOrder(BitfinexCurrencyPair.BTC_USD, 
 				BitfinexOrderType.EXCHANGE_LIMIT, 0, 0, 0, 0, false, false, -1);
 		
-		final Trade trade = new Trade(TradeDirection.LONG	, BitfinexCurrencyPair.BTC_USD, 1);
+		final Trade trade = new Trade("ABC", TradeDirection.LONG, BitfinexCurrencyPair.BTC_USD, 1);
 		trade.getOrdersOpen().add(order);
 		trade.setTradeState(TradeState.OPEN);
 		
@@ -120,7 +120,7 @@ public class TestPersistence {
 		
 		Assert.assertTrue(ordermanager.getAllOpenTrades().isEmpty());
 
-		final Trade trade = new Trade(TradeDirection.LONG	, BitfinexCurrencyPair.BTC_USD, 1);
+		final Trade trade = new Trade("ABC", TradeDirection.LONG, BitfinexCurrencyPair.BTC_USD, 1);
 		trade.setTradeState(TradeState.CREATED);
 		
 		final Session session = sessionFactory.openSession();
@@ -140,7 +140,7 @@ public class TestPersistence {
 		Assert.assertEquals(1, ordermanager.getAllOpenTrades().size());
 		session.getTransaction().commit();
 		
-		final Trade trade2 = new Trade(TradeDirection.LONG, BitfinexCurrencyPair.BTC_USD, 1);
+		final Trade trade2 = new Trade("ABC", TradeDirection.LONG, BitfinexCurrencyPair.BTC_USD, 1);
 		trade2.setTradeState(TradeState.OPEN);
 		session.beginTransaction();
 		session.save(trade2);
