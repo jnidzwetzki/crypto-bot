@@ -17,6 +17,15 @@ public class TestTickMeger {
 	private final static double DELTA = 0.00001;
 
 	/**
+	 * Test close tickmerger without any tick
+	 * @throws IOException
+	 */
+	public void testEmptyTickMerger() throws IOException {
+		final TickMerger tickMerger = new TickMerger("abc", Timeframe.SECONDS_30, (s, t) -> {});
+		tickMerger.close();
+	}
+	
+	/**
 	 * Test one tick
 	 * @throws InterruptedException
 	 * @throws IOException

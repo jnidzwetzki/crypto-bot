@@ -1,7 +1,6 @@
 package org.achfrag.crypto.bitfinex.util;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -61,6 +60,10 @@ public class TickMerger implements Closeable {
 	}
 
 	protected void closeBar() {
+		if(prices.isEmpty()) {
+			return;
+		}
+		
 		final double open = prices.get(0);
 		final double close = prices.get(prices.size() - 1);
 		final double high = prices.stream().mapToDouble(e -> e).max().orElse(-1);
@@ -82,7 +85,7 @@ public class TickMerger implements Closeable {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		closeBar();
 	}
 
