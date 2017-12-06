@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
+import org.achfrag.crypto.strategy.BBreakoutStrategy;
 import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.achfrag.crypto.strategy.TradeStrategyFactory;
 import org.ta4j.core.BaseTimeSeries;
@@ -39,10 +40,15 @@ public class Main implements Runnable {
 			loadDataFromFile();
 
 			System.out.println("Executing trading on ticks: " + timeSeries.getEndIndex());
-			final TradeStrategyFactory factory = new EMAStrategy03(5, 12, 40);
+			
+			printHeader();
+
+		//	final TradeStrategyFactory factory = new EMAStrategy03(5, 12, 40);
 			
 		//	final Strategy strategy = ForexStrategy01.getStrategy(timeSeries);
-			processTrade(factory);	
+			
+			final TradeStrategyFactory factory = new BBreakoutStrategy(100, 2, 1);
+			processTrade(factory);
 
 			//findEma();
 
@@ -114,17 +120,19 @@ public class Main implements Runnable {
 		
 		looserInARowList.add(looserInARow);
 
-		System.out.println("Strategy: " + strategyFactory.getName());
-		System.out.println("Total P/L: " + totalPl);
-		System.out.println("Number of trades for our strategy: " + tradingRecord.getTradeCount());
-		System.out.format("Winner %d, looser %d\n", winner, looser);
-		System.out.format("Max win %f, max loose %f\n", maxWin, maxLoose);
-		System.out.format("Looser in a row %f\n", looserInARowList.stream().mapToDouble(e -> e).max().orElse(-1));
+		double looserInARowTotal = looserInARowList.stream().mapToDouble(e -> e).max().orElse(-1);
 		
+		System.out.format("%s\t%f\t%d\t%d\t%d\t%f\t%f\t%f\n", strategyFactory.getName(), totalPl, 
+				tradingRecord.getTradeCount(), winner, looser, maxWin, maxLoose, looserInARowTotal);
+
 		/*
 		final Chart chart = new Chart(strategy, timeSeries);
 		chart.showChart();
 */
+	}
+
+	private void printHeader() {
+		System.out.println("Strategy\tP/L\tTrades\tWinner\tLooser\tMax win\tMax loose\tLooser row\n");
 	}
 
 	protected void debugTrades(final Strategy strategy) {
