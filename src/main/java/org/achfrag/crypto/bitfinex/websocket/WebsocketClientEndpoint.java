@@ -113,8 +113,8 @@ public class WebsocketClientEndpoint {
 		
 		try {
 			userSession.close(new CloseReason(CloseCodes.NORMAL_CLOSURE, "Socket closed"));
-		} catch (IOException e) {
-			logger.error("Got exception while closing socket");
+		} catch (Throwable e) {
+			logger.error("Got exception while closing socket", e);
 		}
 		
 		userSession = null;
