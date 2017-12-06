@@ -20,7 +20,7 @@ public class UnsubscribeCandlesCommand extends AbstractAPICommand {
 	@Override
 	public String getCommand(final BitfinexApiBroker bitfinexApiBroker) {
 		
-		final String symbol = "trade:" + timeframe.getBitfinexString() + ":" + currencyPair.toBitfinexString();
+		final String symbol = currencyPair.toBifinexCandlestickString(timeframe);
 		
 		final Integer channel = bitfinexApiBroker.getChannelForSymbol(symbol);
 		
