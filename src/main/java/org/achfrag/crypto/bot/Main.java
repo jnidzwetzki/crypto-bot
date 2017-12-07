@@ -5,18 +5,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.BitfinexClientFactory;
 import org.achfrag.crypto.bitfinex.TickerManager;
 import org.achfrag.crypto.bitfinex.commands.AbstractAPICommand;
-import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
-import org.achfrag.crypto.bitfinex.commands.UnsubscribeCandlesCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
 import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
@@ -29,7 +25,6 @@ import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.achfrag.crypto.strategy.TradeStrategyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Order.OrderType;
 import org.ta4j.core.Strategy;
@@ -87,7 +82,11 @@ public class Main implements Runnable {
 			
 			bitfinexApiBroker.connect();
 			
-			requestHistoricalData(bitfinexApiBroker);			
+			final Map<String, TimeSeries> historicalCandles = HistoricalCandlesHelper
+					.requestHistoricalCandles(bitfinexApiBroker, TIMEFRAME, tradedCurrencies);
+			timeSeries.putAll(historicalCandles);
+			
+			createStrategies();
 			registerTicker(bitfinexApiBroker);
 						
 			while (true) {
@@ -98,51 +97,14 @@ public class Main implements Runnable {
 		}
 	}
 
-	private void requestHistoricalData(final BitfinexApiBroker bitfinexApiBroker) throws InterruptedException, APIException {
-		logger.info("Request historical candles");
+	/**
+	 * Init the trading stretegies
+	 */
+	private void createStrategies() {
 		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
-			
 			final String bitfinexString = currency.toBitfinexString();
-			final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
-			timeSeries.put(bitfinexString, currencyTimeSeries);
-			final Strategy strategy = strategyFactory.getStrategy(currencyTimeSeries);
+			final Strategy strategy = strategyFactory.getStrategy(timeSeries.get(bitfinexString));
 			strategies.put(bitfinexString, strategy);
-
-			final CountDownLatch tickCountdown = new CountDownLatch(100);
-			
-			// Add bars to timeseries callback
-			final BiConsumer<String, Tick> callback = (channelSymbol, tick) -> {
-				
-				// channel symbol trade:1m:tLTCUSD
-				final String symbol = (channelSymbol.split(":"))[2];
-
-				final TimeSeries timeSeriesToAdd = timeSeries.get(symbol);
-				
-				try { 
-					timeSeriesToAdd.addTick(tick);
-					tickCountdown.countDown();
-				} catch(IllegalArgumentException e) {
-					logger.error("Unable to add tick {} to time series, last tick is {}", 
-							tick, 
-							timeSeriesToAdd.getLastTick());
-				}
-			};
-			
-			final String barSymbol = currency.toBifinexCandlestickString(TIMEFRAME);
-			
-			bitfinexApiBroker.registerTickCallback(barSymbol, callback);
-			bitfinexApiBroker.sendCommand(new SubscribeCandlesCommand(currency, TIMEFRAME));
-
-			// Wait for 100 tics or 10 seconds. All snapshot ticks are handled in 
-			// a syncronized block, so we receive the full snapshot even if we 
-			// call removeTickCallback.
-			tickCountdown.await(10, TimeUnit.SECONDS);
-			
-			bitfinexApiBroker.removeTickCallback(barSymbol, callback);
-			bitfinexApiBroker.sendCommand(new UnsubscribeCandlesCommand(currency, TIMEFRAME));
-			
-			logger.info("Loaded ticks for symbol {} {}", bitfinexString,
-					+ timeSeries.get(bitfinexString).getEndIndex());
 		}
 	}
 
@@ -151,7 +113,7 @@ public class Main implements Runnable {
 		logger.info("Register ticker");
 		
 		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
-			
+
 			final String bitfinexString = currency.toBitfinexString();
 
 			tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
