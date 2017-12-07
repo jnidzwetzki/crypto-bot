@@ -564,6 +564,12 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			final JSONArray subarray = jsonArray.getJSONArray(1);			
 			final String channelSymbol = getFromChannelSymbolMap(channel);
 			
+			if(channelSymbol == null) {
+				logger.error("Unable to determine symbol for channel {}", channel);
+				logger.error("Data is {}", jsonArray);
+				return;
+			}
+			
 			if(channelSymbol.contains("trade")) {
 				handleCandlestickCallback(channelSymbol, subarray);
 			} else {
