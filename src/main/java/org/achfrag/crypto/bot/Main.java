@@ -238,7 +238,7 @@ public class Main implements Runnable {
 		
 		final TickerManager tickerManager = bitfinexApiBroker.getTickerManager();
 
-		clearScreen();
+		CliTools.clearScreen();
 		System.out.println("");
 		System.out.println("==========");
 		System.out.println("Last ticks");
@@ -306,11 +306,6 @@ public class Main implements Runnable {
 			System.out.println(order);
 		}
 	}
-	
-	public void clearScreen() {  
-	    System.out.print("\033[H\033[2J");  
-	    System.out.flush();  
-	}  
 	
 	/**
 	 * Get the open trade for symbol or null
