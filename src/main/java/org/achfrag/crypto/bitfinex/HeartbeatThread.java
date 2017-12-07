@@ -154,10 +154,6 @@ class HeartbeatThread extends ExceptionSafeThread {
 		eventsInTimeslotManager.waitForNewTimeslot();
 		logger.info("Wait for next reconnect timeslot DONE");
 
-		// Disable auto reconnect to ignore session closed 
-		// events, and preventing duplicate reconnects
-		bitfinexApiBroker.setAutoReconnectEnabled(false);
 		bitfinexApiBroker.reconnect();
-		bitfinexApiBroker.setAutoReconnectEnabled(true);
 	}
 }

@@ -695,6 +695,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 */
 	protected synchronized boolean reconnect() {
 		try {
+			// Disable auto reconnect to ignore session closed 
+			// events, and preventing duplicate reconnects
+			setAutoReconnectEnabled(false);
+			
 			logger.info("Performing reconnect");
 			authenticated = false;
 			
@@ -710,6 +714,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 			updateConnectionHeartbeat();
 			
+			setAutoReconnectEnabled(true);
 			return true;
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
