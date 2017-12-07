@@ -165,11 +165,29 @@ public class DonchianBot implements Runnable {
 				final DonchianChannelLower donchianChannelLower = new DonchianChannelLower(closePrice, 48);
 				Decimal newStopLoss = donchianChannelLower.getValue(currencyTimeSeries.getEndIndex());
 				System.out.println("Low is at: " + newStopLoss);
-							
-				moveStopLossOrder(currencyPair, newStopLoss);
+				
+				if(getStopLossOrder(symbol) != null) {
+					moveStopLossOrder(currencyPair, newStopLoss);
+				} else {
+					createEntryOrder(currencyPair);
+				}
 			}
 		} catch (APIException e) {
 			logger.error("Got exception while executing trading system", e);
+		}
+	}
+
+	/**
+	 * Find a good entry order
+	 * @param currencyPair
+	 */
+	private void createEntryOrder(final BitfinexCurrencyPair currencyPair) {
+		final ExchangeOrder entryOrder = getEntryOrder(currencyPair.toBitfinexString());		
+		
+		if(entryOrder != null) {
+			
+		} else {
+			
 		}
 	}
 
@@ -182,13 +200,7 @@ public class DonchianBot implements Runnable {
 	private void moveStopLossOrder(BitfinexCurrencyPair currencyPair, Decimal newStopLoss) throws APIException {
 		String symbol = currencyPair.toBitfinexString();
 
-		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrders();
-
-		final ExchangeOrder openOrder = openOrders.stream()
-			.filter(e -> e.getOrderType() == BitfinexOrderType.EXCHANGE_STOP)
-			.filter(e -> e.getSymbol().equals(symbol))
-			.findAny()
-			.orElse(null);
+		final ExchangeOrder openOrder = getStopLossOrder(symbol);
 		
 		if(openOrder == null) {
 			return;
@@ -199,13 +211,15 @@ public class DonchianBot implements Runnable {
 		
 		final double newStopLossValue = Math.round(newStopLoss.toDouble() - (newStopLoss.toDouble() / 100 * 0.2));
 		
-		if(oldStopLoss < newStopLossValue) {
-			logger.info("Recommending to move to {} (adjusted: {})", newStopLoss, newStopLossValue);
+		logger.info("Current stop-loss value is {}", newStopLossValue);
+
+		if(SIMULATION) {
+			return;
+		}
 		
-			if(SIMULATION) {
-				return;
-			}
-			
+		if(oldStopLoss < newStopLossValue) {
+			logger.info("Changing stop-loss order");
+	
 			bitfinexApiBroker.cancelOrder(openOrder.getOrderId());
 			
 			final BitfinexOrder order = BitfinexOrderBuilder
@@ -214,8 +228,44 @@ public class DonchianBot implements Runnable {
 					.build();
 			
 			bitfinexApiBroker.placeOrder(order);
+		} else {
+			logger.info("Not changing the old stop-loss order");
 		}
+	}
+
+	/**
+	 * Get the open stop loss order
+	 * @param symbol
+	 * @param openOrders
+	 * @return
+	 */
+	private ExchangeOrder getStopLossOrder(String symbol) {
 		
+		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrders();
+		
+		return openOrders.stream()
+			.filter(e -> e.getOrderType() == BitfinexOrderType.EXCHANGE_STOP)
+			.filter(e -> e.getSymbol().equals(symbol))
+			.findAny()
+			.orElse(null);
+	}
+	
+
+	/**
+	 * Get the open stop loss order
+	 * @param symbol
+	 * @param openOrders
+	 * @return
+	 */
+	private ExchangeOrder getEntryOrder(String symbol) {
+		
+		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrders();
+		
+		return openOrders.stream()
+			.filter(e -> e.getOrderType() == BitfinexOrderType.STOP)
+			.filter(e -> e.getSymbol().equals(symbol))
+			.findAny()
+			.orElse(null);
 	}
 	
 	/**
