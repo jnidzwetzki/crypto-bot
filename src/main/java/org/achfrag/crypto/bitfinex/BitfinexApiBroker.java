@@ -488,9 +488,13 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 		synchronized (orders) {
 			// Replace order 
-			orders.removeIf(o -> o.getCid() == exchangeOrder.getCid());
-			orders.add(exchangeOrder);
+			orders.removeIf(o -> o.getOrderId() == exchangeOrder.getOrderId());
 			
+			// Remove canceled orders
+			if(! exchangeOrder.getState().equals(ExchangeOrder.STATE_CANCELED)) {
+				orders.add(exchangeOrder);
+			}
+						
 			orders.notifyAll();
 		}
 		
