@@ -452,8 +452,8 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		if(! (orders.get(0) instanceof JSONArray)) {
 			handleOrderCallback(orders);
 		} else {
-			for(int walletPos = 0; walletPos < orders.length(); walletPos++) {
-				final JSONArray orderArray = orders.getJSONArray(walletPos);
+			for(int orderPos = 0; orderPos < orders.length(); orderPos++) {
+				final JSONArray orderArray = orders.getJSONArray(orderPos);
 				handleOrderCallback(orderArray);
 			}
 			
@@ -469,7 +469,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 */
 	private void handleOrderCallback(final JSONArray order) {		
 		final ExchangeOrder exchangeOrder = new ExchangeOrder();
-		exchangeOrder.setOrderId(order.getInt(0));
+		exchangeOrder.setOrderId(order.getLong(0));
 		exchangeOrder.setGroupId(order.optInt(1, -1));
 		exchangeOrder.setCid(order.getLong(2));
 		exchangeOrder.setSymbol(order.getString(3));
@@ -755,7 +755,7 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * @param date
 	 * @throws APIException 
 	 */
-	public void cancelOrder(final String id) throws APIException {
+	public void cancelOrder(final long id) throws APIException {
 		
 		if(! authenticated) {
 			throw new APIException("Unable to cancel order, this is not a authentificated connection");

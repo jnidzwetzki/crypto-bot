@@ -8,9 +8,9 @@ public class CancelOrderCommand extends AbstractAPICommand {
 	/**
 	 * The cid
 	 */
-	private String id;
+	private long id;
 
-	public CancelOrderCommand(final String id) {
+	public CancelOrderCommand(final long id) {
 		this.id = id;
 	}
 
@@ -25,6 +25,7 @@ public class CancelOrderCommand extends AbstractAPICommand {
 		sb.append(cancelJson.toString());
 		sb.append("]\n");
 				
+		System.out.println(sb);
 		return sb.toString();
 	}
 

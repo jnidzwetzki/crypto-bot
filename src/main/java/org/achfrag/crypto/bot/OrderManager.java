@@ -146,4 +146,19 @@ public class OrderManager {
 			return session.createQuery(OPEN_TRADES_QUERY).list();
 		}
 	}
+	
+	/**
+	 * Cancel a order
+	 * @param id
+	 * @throws APIException 
+	 */
+	public void cancelOrder(final int id) throws APIException {
+		
+		if(! bitfinexApiBroker.isAuthenticated()) {
+			logger.error("Unable to cancel order {}, conecction is not authenticated", id);
+			return;
+		}
+		
+		bitfinexApiBroker.cancelOrder(id);
+	}
 }

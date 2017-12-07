@@ -15,7 +15,7 @@ public class ExchangeOrder {
 	@GeneratedValue
 	private long id;
 	
-	private int orderId;
+	private long orderId;
 	private int groupId;
 	private long cid;
 	private String symbol;
@@ -52,11 +52,11 @@ public class ExchangeOrder {
 
 	}
 	
-	public int getOrderId() {
+	public long getOrderId() {
 		return orderId;
 	}
 
-	public void setOrderId(final int orderId) {
+	public void setOrderId(final long orderId) {
 		this.orderId = orderId;
 	}
 
