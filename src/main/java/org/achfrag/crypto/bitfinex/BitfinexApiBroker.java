@@ -422,6 +422,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			handleOrdersCallback(jsonArray);
 			break;
 			
+		// Order update
+		case "ou":
+			handleOrdersCallback(jsonArray);
+			break;
+			
 		// Order cancelation
 		case "oc":
 			handleOrdersCallback(jsonArray);
