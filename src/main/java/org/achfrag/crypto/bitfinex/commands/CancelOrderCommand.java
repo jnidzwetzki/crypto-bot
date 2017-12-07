@@ -25,7 +25,6 @@ public class CancelOrderCommand extends AbstractAPICommand {
 		sb.append(cancelJson.toString());
 		sb.append("]\n");
 				
-		System.out.println(sb);
 		return sb.toString();
 	}
 
