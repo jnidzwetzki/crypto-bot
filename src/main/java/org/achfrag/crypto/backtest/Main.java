@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.BBreakoutStrategy;
+import org.achfrag.crypto.strategy.DonchianChannelStrategy;
 import org.achfrag.crypto.strategy.EMAStrategy03;
 import org.achfrag.crypto.strategy.TradeStrategyFactory;
 import org.ta4j.core.BaseTimeSeries;
@@ -47,9 +48,8 @@ public class Main implements Runnable {
 			
 		//	final Strategy strategy = ForexStrategy01.getStrategy(timeSeries);
 			
-			final TradeStrategyFactory factory = new BBreakoutStrategy(100, 2, 1);
+			final TradeStrategyFactory factory = new DonchianChannelStrategy(48, 48);
 			processTrade(factory);
-
 			//findEma();
 
 		} catch (Exception e) {
@@ -60,8 +60,8 @@ public class Main implements Runnable {
 	protected void findEma() throws InterruptedException {
 		
 		final List<Integer> sma1 = Arrays.asList(5, 6, 7, 8, 9, 10, 11, 12, 15);
-		final List<Integer> sma2 = Arrays.asList(10, 12, 14, 16, 18, 20, 30);
-		final List<Integer> sma3 = Arrays.asList(40, 50, 60);
+		final List<Integer> sma2 = Arrays.asList(10, 12, 14, 16, 18, 20, 30, 40);
+		final List<Integer> sma3 = Arrays.asList(40, 50, 60, 70, 80, 90);
 		
 		for(final int sma1Value : sma1) {
 			for(final int sma2Value : sma2) {
