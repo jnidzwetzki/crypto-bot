@@ -107,7 +107,7 @@
 				<version>1.2.1</version>
 
 				<configuration>
-					<mainClass>org.achfrag.crypto.bot.Main</mainClass>
+					<mainClass>org.achfrag.crypto.bot.DonchianBot</mainClass>
 				</configuration>
 
 			</plugin>
