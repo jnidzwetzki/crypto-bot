@@ -4,7 +4,7 @@
   <img alt="Build Status" src="https://travis-ci.org/jnidzwetzki/crypto-bot.svg?branch=master">
 </a>
 
-A crypto currency trading bot
+A crypto currency trading bot. This project also contains a client for the Bitfinex WebSocket API (v2). At the moment, historical candles, orders, ticks, and wallets are supported.
 
 # Examples
 
