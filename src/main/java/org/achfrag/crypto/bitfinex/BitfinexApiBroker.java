@@ -30,7 +30,6 @@ import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Wallet;
 import org.achfrag.crypto.bitfinex.websocket.WebsocketClientEndpoint;
-import org.achfrag.crypto.bitfinex.websocket.WebsocketCloseHandler;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -42,7 +41,7 @@ import org.ta4j.core.Tick;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
-public class BitfinexApiBroker implements WebsocketCloseHandler {
+public class BitfinexApiBroker {
 
 	/**
 	 * The bitfinex api
@@ -78,11 +77,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 * The last heartbeat value
 	 */
 	protected final AtomicLong lastHeatbeat;
-	
-	/**
-	 * The websocket auto reconnect flag
-	 */
-	protected volatile boolean autoReconnectEnabled = true;
 
 	/**
 	 * The heartbeat thread
@@ -152,7 +146,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			final URI bitfinexURI = new URI(BITFINEX_URI);
 			websocketEndpoint = new WebsocketClientEndpoint(bitfinexURI);
 			websocketEndpoint.addConsumer(apiCallback);
-			websocketEndpoint.addCloseHandler(this);
 			websocketEndpoint.connect();
 			updateConnectionHeartbeat();
 			
@@ -676,29 +669,12 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.achfrag.crypto.bitfinex.ReconnectHandler#handleReconnect()
-	 */
-	@Override
-	public void handleWebsocketClose() {
-		
-		if(autoReconnectEnabled == false) {
-			return;
-		}
-		
-		reconnect(); 
-	}
-
 	/**
 	 * Perform a reconnect
 	 * @return
 	 */
 	protected synchronized boolean reconnect() {
 		try {
-			// Disable auto reconnect to ignore session closed 
-			// events, and preventing duplicate reconnects
-			setAutoReconnectEnabled(false);
-			
 			logger.info("Performing reconnect");
 			authenticated = false;
 			
@@ -714,7 +690,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 
 			updateConnectionHeartbeat();
 			
-			setAutoReconnectEnabled(true);
 			return true;
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
@@ -801,22 +776,6 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		logger.info("Cancel order group {}", id);
 		final CancelOrderGroupCommand cancelOrder = new CancelOrderGroupCommand(id);
 		sendCommand(cancelOrder);
-	}
-
-	/**
-	 * Is auto reconnecting enabled
-	 * @return
-	 */
-	public boolean isAutoReconnectEnabled() {
-		return autoReconnectEnabled;
-	}
-
-	/**
-	 * Change auto reconnect status
-	 * @param autoReconnectEnabled
-	 */
-	public void setAutoReconnectEnabled(final boolean autoReconnectEnabled) {
-		this.autoReconnectEnabled = autoReconnectEnabled;
 	}
 	
 	/**

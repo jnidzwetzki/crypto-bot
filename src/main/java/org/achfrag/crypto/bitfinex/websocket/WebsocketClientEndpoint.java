@@ -32,8 +32,6 @@ public class WebsocketClientEndpoint {
 
 	private final List<Consumer<String>> callbackConsumer;
 
-	private final List<WebsocketCloseHandler> closeHandler;
-
 	private final CountDownLatch connectLatch = new CountDownLatch(1);
 
 	private URI endpointURI;
@@ -47,7 +45,6 @@ public class WebsocketClientEndpoint {
 	public WebsocketClientEndpoint(final URI endpointURI) {
 		this.endpointURI = endpointURI;
 		this.callbackConsumer = new ArrayList<>();
-		this.closeHandler = new ArrayList<>();
 	}
 
 	public void connect() throws DeploymentException, IOException, InterruptedException {
@@ -65,7 +62,6 @@ public class WebsocketClientEndpoint {
 	@OnClose
 	public void onClose(final Session userSession, final CloseReason reason) {
 		logger.info("Closing websocket: " + reason);
-		closeHandler.forEach((h) -> h.handleWebsocketClose());
 		this.userSession = null;
 	}
 
@@ -102,10 +98,6 @@ public class WebsocketClientEndpoint {
 		return callbackConsumer.remove(consumer);
 	}
 
-	public void addCloseHandler(final WebsocketCloseHandler theCloseHandler) {
-		closeHandler.add(theCloseHandler);
-	}
-
 	public void close() {
 		if(userSession == null) {
 			return;
@@ -118,5 +110,13 @@ public class WebsocketClientEndpoint {
 		}
 		
 		userSession = null;
+	}
+	
+	/**
+	 * Is this websocket connected
+	 * @return
+	 */
+	public boolean isConnected() {
+		return userSession != null;
 	}
 }

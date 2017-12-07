@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.achfrag.crypto.bitfinex.commands.PingCommand;
 import org.achfrag.crypto.bitfinex.util.EventsInTimeslotManager;
+import org.achfrag.crypto.bitfinex.websocket.WebsocketClientEndpoint;
 import org.achfrag.crypto.util.ExceptionSafeThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,25 +63,34 @@ class HeartbeatThread extends ExceptionSafeThread {
 			
 			Thread.sleep(TimeUnit.SECONDS.toMillis(3));
 			
-			if(bitfinexApiBroker.getWebsocketEndpoint() != null) {
+			final WebsocketClientEndpoint websocketEndpoint = bitfinexApiBroker.getWebsocketEndpoint();
+			
+			if(websocketEndpoint == null) {
+				continue;
+			}
 				
-				sendHeartbeatIfNeeded();
+			if(! websocketEndpoint.isConnected()) {
+				logger.error("We are not connected, reconnecting");
+				executeReconnect();
+				continue;
+			}
+			
+			sendHeartbeatIfNeeded();
 
-				final boolean tickerUpToDate = checkTickerFreshness();
-				
-				if(! tickerUpToDate) {
-					logger.error("Ticker are outdated, reconnecting");
-					executeReconnect();
-					continue;
-				}
-				
-				final boolean reconnectNeeded = checkConnectionTimeout();
-				
-				if(reconnectNeeded) {
-					logger.error("Global connection heartbeat time out, reconnecting");
-					executeReconnect();
-					continue;
-				}
+			final boolean tickerUpToDate = checkTickerFreshness();
+			
+			if(! tickerUpToDate) {
+				logger.error("Ticker are outdated, reconnecting");
+				executeReconnect();
+				continue;
+			}
+			
+			final boolean reconnectNeeded = checkConnectionTimeout();
+			
+			if(reconnectNeeded) {
+				logger.error("Global connection heartbeat time out, reconnecting");
+				executeReconnect();
+				continue;
 			}
 		}
 	}
