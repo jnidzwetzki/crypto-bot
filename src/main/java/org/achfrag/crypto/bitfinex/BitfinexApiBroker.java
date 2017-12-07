@@ -105,6 +105,11 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	private CountDownLatch authenticatedLatch;
 	
 	/**
+	 * The oder snapshot latch
+	 */
+	private CountDownLatch orderSnapshotLatch;
+	
+	/**
 	 * Is the connection authenticated?
 	 */
 	private boolean authenticated;
@@ -167,7 +172,8 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 	 */
 	private void executeAuthentification() throws InterruptedException, APIException {
 		authenticatedLatch = new CountDownLatch(1);
-		
+		orderSnapshotLatch = new CountDownLatch(1);
+
 		if(isAuthenticatedConnection()) {
 			sendCommand(new AuthCommand());
 			logger.info("Waiting for authentification");
@@ -176,6 +182,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			if(! authenticated) {
 				throw new APIException("Unable to perform authentification");
 			}
+			
+			// Wait for order snapshot
+			orderSnapshotLatch.await(10, TimeUnit.SECONDS);
 		}
 	}
 
@@ -296,7 +305,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			logger.error("Unable to authenticate: {}", jsonObject.toString());
 		}
 		
-		authenticatedLatch.countDown();
+		if(authenticatedLatch != null) {
+			authenticatedLatch.countDown();
+		}
 	}
 
 	/**
@@ -350,6 +361,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 		}
 	}
 
+	/**
+	 * Handle a channel callback
+	 * @param message
+	 */
 	protected void handleChannelCallback(final String message) {
 		// Channel callback
 		logger.debug("Channel callback");
@@ -440,6 +455,10 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			for(int walletPos = 0; walletPos < orders.length(); walletPos++) {
 				final JSONArray orderArray = orders.getJSONArray(walletPos);
 				handleOrderCallback(orderArray);
+			}
+			
+			if(orderSnapshotLatch != null) {
+				orderSnapshotLatch.countDown();
 			}
 		}
 	}
@@ -664,7 +683,9 @@ public class BitfinexApiBroker implements WebsocketCloseHandler {
 			logger.info("Performing reconnect");
 			authenticated = false;
 			
+			// Invalidate old data
 			tickerManager.invalidateTickerHeartbeat();
+			orders.clear();
 			
 			websocketEndpoint.close();
 			websocketEndpoint.connect();
