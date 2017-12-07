@@ -67,8 +67,8 @@ public class TestTickMeger {
 		};
 		
 		final TickMerger tickMerger = new TickMerger("abc", Timeframe.SECONDS_30, tickConsumer);
-		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), 1.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:33").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("01:01:13").getTime(), 1.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), 2.0, 5.0);
 		tickMerger.close();
 		
 		latch.await();
@@ -116,13 +116,75 @@ public class TestTickMeger {
 		
 		final BiConsumer<String, Tick> tickConsumer = (s, t) -> {
 			latch.countDown();
-			System.out.println(t);
 		};
 		
 		final TickMerger tickMerger = new TickMerger("abc", Timeframe.SECONDS_30, tickConsumer);
 		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), 1.0, 5.0);
 		tickMerger.addNewPrice(parser.parse("01:01:33").getTime(), 2.0, 5.0);
 		tickMerger.addNewPrice(parser.parse("02:01:53").getTime(), 2.0, 5.0);
+
+		tickMerger.close();
+		
+		latch.await();
+	}
+	
+	/**
+	 * Test the alignment of the ticks
+	 * @throws InterruptedException
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	@Test(timeout=10000)
+	public void testTickAlignment1() throws InterruptedException, IOException, ParseException {
+		
+        final SimpleDateFormat parser = new SimpleDateFormat("HH:mm:ss");
+        
+		final CountDownLatch latch = new CountDownLatch(3);
+		
+		final BiConsumer<String, Tick> tickConsumer = (s, t) -> {
+			Assert.assertTrue(t.getEndTime().getSecond() == 29 || t.getEndTime().getSecond() == 59);
+			latch.countDown();
+		};
+		
+		final TickMerger tickMerger = new TickMerger("abc", Timeframe.SECONDS_30, tickConsumer);
+		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), 1.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("01:01:33").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("02:01:53").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("22:22:53").getTime(), 2.0, 5.0);
+
+		tickMerger.close();
+		
+		latch.await();
+	}
+	
+	/**
+	 * Test the alignment of the ticks
+	 * @throws InterruptedException
+	 * @throws IOException
+	 * @throws ParseException
+	 */
+	@Test(timeout=10000)
+	public void testTickAlignment2() throws InterruptedException, IOException, ParseException {
+		
+        final SimpleDateFormat parser = new SimpleDateFormat("HH:mm:ss");
+        
+		final CountDownLatch latch = new CountDownLatch(4);
+		
+		final BiConsumer<String, Tick> tickConsumer = (s, t) -> {
+			Assert.assertTrue(t.getEndTime().getMinute() == 14 
+					|| t.getEndTime().getMinute() == 29
+					|| t.getEndTime().getMinute() == 44
+					|| t.getEndTime().getMinute() == 59);
+	
+			Assert.assertEquals(59, t.getEndTime().getSecond());
+			latch.countDown();
+		};
+		
+		final TickMerger tickMerger = new TickMerger("abc", Timeframe.MINUTES_15, tickConsumer);
+		tickMerger.addNewPrice(parser.parse("01:01:00").getTime(), 1.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("02:41:33").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("10:33:11").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("22:22:53").getTime(), 2.0, 5.0);
 
 		tickMerger.close();
 		

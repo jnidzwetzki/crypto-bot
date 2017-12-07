@@ -36,7 +36,9 @@ public class TickMerger implements Closeable {
 	public void addNewPrice(final long timestamp, final double price, final double volume)  {
 
 		if (timeframeBegin == -1) {
-			timeframeBegin = timestamp;
+			// Align timeframe
+			final long millisecondsFromEpoch = timestamp / timeframe.getMilliSeconds();
+			timeframeBegin = millisecondsFromEpoch * timeframe.getMilliSeconds();
 		} 
 		
 		final long periodEnd = timeframeBegin + timeframe.getMilliSeconds();
