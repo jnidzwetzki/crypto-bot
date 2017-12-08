@@ -693,6 +693,7 @@ public class BitfinexApiBroker {
 			return true;
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
+			disconnect();
 			return false;
 		}
 	}
@@ -720,6 +721,13 @@ public class BitfinexApiBroker {
 			while(channelIdSymbolMap.size() != oldChannelIdSymbolMap.size()) {
 				
 				if(execution > 10) {
+					
+					// Restore old map for reconnect
+					synchronized (channelIdSymbolMap) {
+						channelIdSymbolMap.clear();
+						channelIdSymbolMap.putAll(oldChannelIdSymbolMap);
+					}
+					
 					throw new APIException("Subscription of ticker failed");
 				}
 				
