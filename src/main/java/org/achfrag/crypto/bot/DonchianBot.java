@@ -16,14 +16,17 @@ import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Timeframe;
+import org.achfrag.crypto.bitfinex.entity.Wallet;
 import org.achfrag.crypto.bitfinex.util.TickMerger;
 import org.achfrag.crypto.strategy.indicator.DonchianChannelLower;
+import org.achfrag.crypto.strategy.indicator.DonchianChannelUpper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.helpers.MaxPriceIndicator;
+import org.ta4j.core.indicators.helpers.MinPriceIndicator;
 
 public class DonchianBot implements Runnable {
 	
@@ -65,13 +68,16 @@ public class DonchianBot implements Runnable {
 	/**
 	 * Simulate
 	 */
-	public final static boolean SIMULATION = false;
+	public final static boolean SIMULATION = true;
 
 	
 	public DonchianBot() {
 		this.tickMerger = new HashMap<>();
 		this.timeSeries = new HashMap<>();
+		
+		// FIXME: Currently the wallets are USD / BTC only. Implement before change
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD);
+		
 		this.bitfinexApiBroker = BitfinexClientFactory.buildBifinexClient();
 		this.orderManager = new OrderManager(bitfinexApiBroker);
 	}
@@ -157,19 +163,15 @@ public class DonchianBot implements Runnable {
 	 */
 	private void executeSystem() {
 		try {
-			for(final BitfinexCurrencyPair currencyPair : tradedCurrencies) {
-				String symbol = currencyPair.toBitfinexString();
-				TimeSeries currencyTimeSeries = timeSeries.get(symbol);
-				final ClosePriceIndicator closePrice = new ClosePriceIndicator(currencyTimeSeries);
+			for(final BitfinexCurrencyPair currencyPair : tradedCurrencies) {				
+				final Wallet wallet = getExchangeBTCWallet();
 
-				final DonchianChannelLower donchianChannelLower = new DonchianChannelLower(closePrice, 48);
-				Decimal newStopLoss = donchianChannelLower.getValue(currencyTimeSeries.getEndIndex());
-				System.out.println("Low is at: " + newStopLoss);
-				
-				if(getStopLossOrder(symbol) != null) {
-					moveStopLossOrder(currencyPair, newStopLoss);
+				if(wallet.getBalance() > currencyPair.getMinimalOrderSize()) {
+					logger.info("We are invested, adjusting stop loss");
+					moveStopLossOrder(currencyPair);
 				} else {
-					createEntryOrder(currencyPair);
+					logger.info("We are not invested, adjusting entry");
+					moveEntryOrder(currencyPair);
 				}
 			}
 		} catch (APIException e) {
@@ -185,14 +187,76 @@ public class DonchianBot implements Runnable {
 	 * Find a good entry order
 	 * @param currencyPair
 	 */
-	private void createEntryOrder(final BitfinexCurrencyPair currencyPair) {
+	private void moveEntryOrder(final BitfinexCurrencyPair currencyPair) {
 		final ExchangeOrder entryOrder = getEntryOrder(currencyPair.toBitfinexString());		
 		
-		if(entryOrder != null) {
-			
-		} else {
-			
+		String symbol = currencyPair.toBitfinexString();
+		TimeSeries currencyTimeSeries = timeSeries.get(symbol);
+		final MaxPriceIndicator maxPrice = new MaxPriceIndicator(currencyTimeSeries);
+
+		final DonchianChannelUpper donchianChannelUpper = new DonchianChannelUpper(maxPrice, 96);
+		final Decimal upperValue = donchianChannelUpper.getValue(currencyTimeSeries.getEndIndex());
+		logger.info("Upper is at: {}", upperValue);
+		
+		final double adjustedUpper = Math.round(upperValue.toDouble() + (upperValue.toDouble() / 100 * 1.0));
+
+		if(entryOrder != null && entryOrder.getPrice() == adjustedUpper) {
+			logger.info("Old entry upper is at {}, sleeping", entryOrder.getPrice());
+			return;
 		}
+		
+		try {
+			if(SIMULATION) {
+				return;
+			}
+			
+			if(entryOrder != null) {
+				orderManager.cancelOrderAndWaitForCompletion(entryOrder.getOrderId());
+			} 
+			
+			final Wallet wallet = getExchangeUSDWallet();
+			final double amount = (wallet.getBalance() / upperValue.toDouble()) * 0.8;
+			final BitfinexOrder order = BitfinexOrderBuilder
+					.create(currencyPair, BitfinexOrderType.EXCHANGE_STOP, amount)
+					.withPrice(adjustedUpper)
+					.setPostOnly()
+					.build();
+			
+				bitfinexApiBroker.placeOrder(order);
+		
+		} catch (APIException e) {
+			logger.error("Unable to place order", e);
+		} catch (InterruptedException e) {
+			logger.info("Got interrupted exception", e);
+			Thread.currentThread().interrupt();
+			return;
+		} 
+	}
+	
+	/**
+	 * Get the USD wallet
+	 * @return
+	 */
+	private Wallet getExchangeUSDWallet() {
+		return bitfinexApiBroker.getWallets()
+			.stream()
+			.filter(w -> w.getWalletType().equals(Wallet.WALLET_TYPE_EXCHANGE))
+			.filter(w -> w.getCurreny().equals("USD"))
+			.findFirst()
+			.orElse(null);
+	}
+	
+	/**
+	 * Get the USD wallet
+	 * @return
+	 */
+	private Wallet getExchangeBTCWallet() {
+		return bitfinexApiBroker.getWallets()
+			.stream()
+			.filter(w -> w.getWalletType().equals(Wallet.WALLET_TYPE_EXCHANGE))
+			.filter(w -> w.getCurreny().equals("BTC"))
+			.findFirst()
+			.orElse(null);
 	}
 
 	/**
@@ -202,36 +266,44 @@ public class DonchianBot implements Runnable {
 	 * @throws APIException 
 	 * @throws InterruptedException 
 	 */
-	private void moveStopLossOrder(BitfinexCurrencyPair currencyPair, Decimal newStopLoss) 
+	private void moveStopLossOrder(BitfinexCurrencyPair currencyPair) 
 			throws APIException, InterruptedException {
 		
-		String symbol = currencyPair.toBitfinexString();
+		final String symbol = currencyPair.toBitfinexString();
+		final TimeSeries currencyTimeSeries = timeSeries.get(symbol);
+		
+		final MinPriceIndicator minPrice = new MinPriceIndicator(currencyTimeSeries);
 
+		final DonchianChannelLower donchianChannelLower = new DonchianChannelLower(minPrice, 48);
+		Decimal newStopLoss = donchianChannelLower.getValue(currencyTimeSeries.getEndIndex());
+		System.out.println("Low is at: " + newStopLoss);
+
+		final double newStopLossValue = Math.round(newStopLoss.toDouble() - (newStopLoss.toDouble() / 100 * 0.2));
+		logger.info("Current stop-loss value is {}", newStopLossValue);
+		
 		final ExchangeOrder openOrder = getStopLossOrder(symbol);
 		
-		if(openOrder == null) {
+		if(openOrder != null && openOrder.getPrice() < newStopLossValue) {
+			logger.info("Stop loss is alreary set to {} (calculated {})", 
+					openOrder.getPrice(), newStopLossValue);
 			return;
 		}
 		
-		final double oldStopLoss = openOrder.getPrice();
-		logger.info("Current stop loss order at {} ({})", oldStopLoss, openOrder);
-		
-		final double newStopLossValue = Math.round(newStopLoss.toDouble() - (newStopLoss.toDouble() / 100 * 0.2));
-		
-		logger.info("Current stop-loss value is {}", newStopLossValue);
-
-		if(SIMULATION) {
-			return;
-		}
-		
-		if(oldStopLoss < newStopLossValue) {
+		if(openOrder.getPrice() > newStopLossValue) {
 			logger.info("Changing stop-loss order");
 	
-			orderManager.cancelOrderAndWaitForCompletion(openOrder.getOrderId());
+			if(SIMULATION) {
+				return;
+			}
+			
+			if(openOrder != null) {
+				orderManager.cancelOrderAndWaitForCompletion(openOrder.getOrderId());
+			}
 			
 			final BitfinexOrder order = BitfinexOrderBuilder
 					.create(currencyPair, BitfinexOrderType.EXCHANGE_STOP, openOrder.getAmount())
 					.withPrice(newStopLossValue)
+					.setPostOnly()
 					.build();
 			
 			bitfinexApiBroker.placeOrder(order);
