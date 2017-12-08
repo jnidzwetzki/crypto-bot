@@ -2,6 +2,8 @@ package org.achfrag.crypto.bot;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.crypto.bitfinex.BitfinexOrderBuilder;
@@ -150,15 +152,33 @@ public class OrderManager {
 	/**
 	 * Cancel a order
 	 * @param id
-	 * @throws APIException 
+	 * @throws APIException, InterruptedException 
 	 */
-	public void cancelOrder(final int id) throws APIException {
+	public void cancelOrderAndWaitForCompletion(final long id) throws APIException, InterruptedException {
 		
 		if(! bitfinexApiBroker.isAuthenticated()) {
 			logger.error("Unable to cancel order {}, conecction is not authenticated", id);
 			return;
 		}
 		
-		bitfinexApiBroker.cancelOrder(id);
+		final CountDownLatch waitLatch = new CountDownLatch(1);
+		
+		final Consumer<ExchangeOrder> ordercallback = (o) -> {
+			if(o.getOrderId() == id && o.getState() == ExchangeOrder.STATE_CANCELED) {
+				waitLatch.countDown();
+			}
+		};
+		
+		bitfinexApiBroker.addOrderCallback(ordercallback);
+		
+		try {
+			bitfinexApiBroker.cancelOrder(id);
+			waitLatch.await();
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			bitfinexApiBroker.removeOrderCallback(ordercallback);
+		}
+		
 	}
 }

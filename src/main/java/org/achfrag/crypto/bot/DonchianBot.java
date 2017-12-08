@@ -174,6 +174,10 @@ public class DonchianBot implements Runnable {
 			}
 		} catch (APIException e) {
 			logger.error("Got exception while executing trading system", e);
+		} catch (InterruptedException e) {
+			logger.error("Got interrupted exception");
+			Thread.currentThread().interrupt();
+			return;
 		}
 	}
 
@@ -196,8 +200,11 @@ public class DonchianBot implements Runnable {
 	 * @param symbol
 	 * @param newStopLoss
 	 * @throws APIException 
+	 * @throws InterruptedException 
 	 */
-	private void moveStopLossOrder(BitfinexCurrencyPair currencyPair, Decimal newStopLoss) throws APIException {
+	private void moveStopLossOrder(BitfinexCurrencyPair currencyPair, Decimal newStopLoss) 
+			throws APIException, InterruptedException {
+		
 		String symbol = currencyPair.toBitfinexString();
 
 		final ExchangeOrder openOrder = getStopLossOrder(symbol);
@@ -220,7 +227,7 @@ public class DonchianBot implements Runnable {
 		if(oldStopLoss < newStopLossValue) {
 			logger.info("Changing stop-loss order");
 	
-			bitfinexApiBroker.cancelOrder(openOrder.getOrderId());
+			orderManager.cancelOrderAndWaitForCompletion(openOrder.getOrderId());
 			
 			final BitfinexOrder order = BitfinexOrderBuilder
 					.create(currencyPair, BitfinexOrderType.EXCHANGE_STOP, openOrder.getAmount())
