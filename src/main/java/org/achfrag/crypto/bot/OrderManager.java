@@ -11,6 +11,7 @@ import org.achfrag.crypto.bitfinex.entity.APIException;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
+import org.achfrag.crypto.bitfinex.entity.ExchangeOrderState;
 import org.achfrag.crypto.bitfinex.entity.Trade;
 import org.achfrag.crypto.bitfinex.entity.TradeState;
 import org.achfrag.crypto.bitfinex.util.HibernateUtil;
@@ -164,7 +165,7 @@ public class OrderManager {
 		final CountDownLatch waitLatch = new CountDownLatch(1);
 		
 		final Consumer<ExchangeOrder> ordercallback = (o) -> {
-			if(o.getOrderId() == id && o.getState() == ExchangeOrder.STATE_CANCELED) {
+			if(o.getOrderId() == id && o.getState() == ExchangeOrderState.STATE_CANCELED) {
 				waitLatch.countDown();
 			}
 		};

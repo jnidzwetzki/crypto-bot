@@ -29,6 +29,7 @@ import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
+import org.achfrag.crypto.bitfinex.entity.ExchangeOrderState;
 import org.achfrag.crypto.bitfinex.entity.OrderBookFrequency;
 import org.achfrag.crypto.bitfinex.entity.OrderBookPrecision;
 import org.achfrag.crypto.bitfinex.entity.Wallet;
@@ -503,7 +504,10 @@ public class BitfinexApiBroker {
 		exchangeOrder.setAmount(order.getDouble(6));
 		exchangeOrder.setAmountAtCreation(order.getDouble(7));
 		exchangeOrder.setOrderType(BitfinexOrderType.fromString(order.getString(8)));
-		exchangeOrder.setState(order.getString(13));
+		
+		final ExchangeOrderState orderState = ExchangeOrderState.fromString(order.getString(13));
+		exchangeOrder.setState(orderState);
+		
 		exchangeOrder.setPrice(order.getDouble(16));
 		exchangeOrder.setPriceAvg(order.optDouble(17, -1));
 		exchangeOrder.setPriceTrailing(order.optDouble(18, -1));
@@ -516,7 +520,7 @@ public class BitfinexApiBroker {
 			orders.removeIf(o -> o.getOrderId() == exchangeOrder.getOrderId());
 			
 			// Remove canceled orders
-			if(! exchangeOrder.getState().equals(ExchangeOrder.STATE_CANCELED)) {
+			if(exchangeOrder.getState() != ExchangeOrderState.STATE_CANCELED) {
 				orders.add(exchangeOrder);
 			}
 						

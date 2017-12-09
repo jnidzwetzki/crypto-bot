@@ -27,23 +27,15 @@ public class ExchangeOrder {
 	@Enumerated(EnumType.STRING)
 	private BitfinexOrderType orderType;
 	
-	private String state;
+	@Enumerated(EnumType.STRING)
+	private ExchangeOrderState state;
+	
 	private double price;
 	private double priceAvg;
 	private double priceTrailing;
 	private double priceAuxLimit;
 	private boolean notify;
 	private boolean hidden;
-	
-	public final static String STATE_ACTIVE = "ACTIVE";
-	
-	public final static String STATE_EXECUTED = "EXECUTED";
-
-	public final static String STATE_PARTIALLY_FILLED = "PARTIALLY FILLED";
-
-	public final static String STATE_CANCELED = "CANCELED";
-
-	public final static String STATE_POSTONLY_CANCELED = "POSTONLY CANCELED";
 
 	/**
 	 * Needed for hibernate
@@ -124,11 +116,11 @@ public class ExchangeOrder {
 		this.orderType = orderType;
 	}
 
-	public String getState() {
+	public ExchangeOrderState getState() {
 		return state;
 	}
 
-	public void setState(final String state) {
+	public void setState(final ExchangeOrderState state) {
 		this.state = state;
 	}
 
