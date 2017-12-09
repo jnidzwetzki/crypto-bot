@@ -22,12 +22,15 @@ import org.achfrag.crypto.bitfinex.commands.CancelOrderCommand;
 import org.achfrag.crypto.bitfinex.commands.CancelOrderGroupCommand;
 import org.achfrag.crypto.bitfinex.commands.CommandException;
 import org.achfrag.crypto.bitfinex.commands.OrderCommand;
+import org.achfrag.crypto.bitfinex.commands.SubscribeOrderbookCommand;
 import org.achfrag.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.crypto.bitfinex.entity.APIException;
 import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
+import org.achfrag.crypto.bitfinex.entity.OrderBookFrequency;
+import org.achfrag.crypto.bitfinex.entity.OrderBookPrecision;
 import org.achfrag.crypto.bitfinex.entity.Wallet;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -808,6 +811,26 @@ public class BitfinexApiBroker {
 		logger.info("Cancel order group {}", id);
 		final CancelOrderGroupCommand cancelOrder = new CancelOrderGroupCommand(id);
 		sendCommand(cancelOrder);
+	}
+	
+	/**
+	 * Subscribe the orderbook
+	 * @param currencyPair
+	 * @param orderBookPrecision
+	 * @param orderBookFrequency
+	 * @param pricePoints
+	 */
+	public void subscribeOrderbook(final BitfinexCurrencyPair currencyPair, 
+			final OrderBookPrecision orderBookPrecision, final OrderBookFrequency orderBookFrequency, 
+			final int pricePoints) {
+		
+		logger.info("Subscribe to orderbook {}", currencyPair);
+		
+		final SubscribeOrderbookCommand subscribeOrderbookCommand = 
+				new SubscribeOrderbookCommand(currencyPair, orderBookPrecision, 
+				orderBookFrequency, pricePoints);
+		
+		sendCommand(subscribeOrderbookCommand);
 	}
 	
 	/**
