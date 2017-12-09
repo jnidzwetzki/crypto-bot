@@ -628,13 +628,13 @@ public class BitfinexApiBroker {
 		final Instant i = Instant.ofEpochMilli(parts.getLong(0));
 		final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
 		
-		final Tick tick = new BaseTick(withTimezone, 
-				parts.getDouble(1), 
-				parts.getDouble(2), 
-				parts.getDouble(3), 
-				parts.getDouble(4), 
-				parts.getDouble(5));
-
+		final double open = parts.getDouble(1);
+		final double close = parts.getDouble(2);
+		final double high = parts.getDouble(3);
+		final double low = parts.getDouble(4);
+		final double volume = parts.getDouble(5);
+		
+		final Tick tick = new BaseTick(withTimezone, open, high, low, close, volume);
 		ticksBuffer.add(tick);
 	}
 
