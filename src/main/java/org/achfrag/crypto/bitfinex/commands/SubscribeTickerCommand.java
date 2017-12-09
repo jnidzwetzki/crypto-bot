@@ -25,7 +25,4 @@ public class SubscribeTickerCommand extends AbstractAPICommand {
 		
 		return subscribeJson.toString();
 	}
-	
-	
-
 }
