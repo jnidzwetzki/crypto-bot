@@ -1,4 +1,4 @@
-package org.achfrag.crypto.bitfinex.websocket;
+package org.achfrag.crypto.bitfinex;
 
 import java.io.IOException;
 import java.net.URI;
@@ -19,7 +19,6 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
-import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

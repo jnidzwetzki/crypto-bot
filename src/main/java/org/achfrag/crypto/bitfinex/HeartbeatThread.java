@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.achfrag.crypto.bitfinex.commands.PingCommand;
 import org.achfrag.crypto.bitfinex.util.EventsInTimeslotManager;
-import org.achfrag.crypto.bitfinex.websocket.WebsocketClientEndpoint;
 import org.achfrag.crypto.util.ExceptionSafeThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

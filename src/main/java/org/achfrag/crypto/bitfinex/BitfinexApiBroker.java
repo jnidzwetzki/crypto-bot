@@ -29,7 +29,6 @@ import org.achfrag.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.crypto.bitfinex.entity.Wallet;
-import org.achfrag.crypto.bitfinex.websocket.WebsocketClientEndpoint;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
