@@ -394,6 +394,31 @@ public class BitfinexApiBroker {
 			// Ignore channel heartbeat values
 			break;
 			
+		// Positions
+		case "ps":
+			// Ignore positions
+			break;
+		
+		// Founding offers
+		case "fos":
+			// Ignore founding offers
+			break;
+			
+		// Founding credits
+		case "fcs":
+			// Ignore founding credits
+			break;
+			
+		// Founding loans
+		case "fls":
+			// Ignore founding loans
+			break;
+		
+		// Ats - Unkown
+		case "ats":
+			// Ignore
+			break;
+			
 		// Wallet snapshot
 		case "ws":
 			handleWalletsCallback(jsonArray);
