@@ -27,19 +27,30 @@ import com.google.common.base.Throwables;
 @ClientEndpoint
 public class WebsocketClientEndpoint {
 
+	/**
+	 * The user session
+	 */
 	private Session userSession = null;
 
+	/**
+	 * The callback consumer
+	 */
 	private final List<Consumer<String>> callbackConsumer;
 
+	/**
+	 * The wait for connection latch
+	 */
 	private final CountDownLatch connectLatch = new CountDownLatch(1);
 
-	private URI endpointURI;
+	/**
+	 * The endpoint URL
+	 */
+	private final URI endpointURI;
 	
 	/**
 	 * The Logger
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
-
 
 	public WebsocketClientEndpoint(final URI endpointURI) {
 		this.endpointURI = endpointURI;
