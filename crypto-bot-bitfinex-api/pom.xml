@@ -9,6 +9,12 @@
 
 	<name>Crypto bot - Bitfinex API</name>
 	<url>https://github.com/jnidzwetzki/crypto-bot</url>
+	
+	<parent>
+        <groupId>org.achfrag.trading</groupId>
+		<artifactId>crypto-bot-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
