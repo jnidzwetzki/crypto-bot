@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn" name="crypto-bot" packages="">
+    <Appenders>
+        <RollingFile name="cryptobot_RollingFile" fileName="/tmp/crypto-bot.log"
+                     filePattern="crypto-bot.%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout>
+                <Pattern>%-4r [%t] %d %-5p %c{1} %M() - %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="90"/>
+        </RollingFile>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout>
+                <Pattern>%-4r [%t] %d %-5p %c{1} %M() - %m%n</Pattern>
+            </PatternLayout>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="debug">
+            <AppenderRef ref="cryptobot_RollingFile" level="debug"/>
+            <AppenderRef ref="STDOUT" level="debug"/>
+        </Root>
+    </Loggers>
+</Configuration>
