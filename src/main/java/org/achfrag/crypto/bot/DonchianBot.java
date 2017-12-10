@@ -68,7 +68,7 @@ public class DonchianBot implements Runnable {
 	/**
 	 * Simulate
 	 */
-	public final static boolean SIMULATION = true;
+	public final static boolean SIMULATION = false;
 
 	
 	public DonchianBot() {
@@ -196,9 +196,9 @@ public class DonchianBot implements Runnable {
 
 		final DonchianChannelUpper donchianChannelUpper = new DonchianChannelUpper(maxPrice, 96);
 		final Decimal upperValue = donchianChannelUpper.getValue(currencyTimeSeries.getEndIndex());
-		logger.info("Upper is at: {}", upperValue);
-		
-		final double adjustedUpper = Math.round(upperValue.toDouble() + (upperValue.toDouble() / 100 * 1.0));
+
+		final double adjustedUpper = Math.round(upperValue.toDouble() + (upperValue.toDouble() / 100 * 0.5));
+		logger.info("Calculated upper is at: {} / entry order is {}", adjustedUpper, entryOrder);
 
 		if(entryOrder != null && entryOrder.getPrice() == adjustedUpper) {
 			logger.info("Old entry upper is at {}, sleeping", entryOrder.getPrice());
@@ -214,15 +214,15 @@ public class DonchianBot implements Runnable {
 				orderManager.cancelOrderAndWaitForCompletion(entryOrder.getOrderId());
 			} 
 			
-			final Wallet wallet = getExchangeUSDWallet();
-			final double amount = (wallet.getBalance() / upperValue.toDouble()) * 0.8;
+			final double amount = calculatePositionSize(upperValue);
+			
 			final BitfinexOrder order = BitfinexOrderBuilder
 					.create(currencyPair, BitfinexOrderType.EXCHANGE_STOP, amount)
 					.withPrice(adjustedUpper)
 					.setPostOnly()
 					.build();
 			
-				bitfinexApiBroker.placeOrder(order);
+			bitfinexApiBroker.placeOrder(order);
 		
 		} catch (APIException e) {
 			logger.error("Unable to place order", e);
@@ -231,6 +231,21 @@ public class DonchianBot implements Runnable {
 			Thread.currentThread().interrupt();
 			return;
 		} 
+	}
+
+	/**
+	 * Calculate the positon size
+	 * @param upperValue
+	 * @return
+	 */
+	private double calculatePositionSize(final Decimal upperValue) {
+		
+		return 0.002;
+		
+		/**
+		final Wallet wallet = getExchangeUSDWallet();
+		return (wallet.getBalance() / upperValue.toDouble()) * 0.8;
+		*/
 	}
 	
 	/**
@@ -283,33 +298,29 @@ public class DonchianBot implements Runnable {
 		
 		final ExchangeOrder openOrder = getStopLossOrder(symbol);
 		
-		if(openOrder != null && openOrder.getPrice() < newStopLossValue) {
-			logger.info("Stop loss is alreary set to {} (calculated {})", 
+		if(openOrder != null && openOrder.getPrice() > newStopLossValue) {
+			logger.info("Stop loss is already set to {} (calculated {})", 
 					openOrder.getPrice(), newStopLossValue);
 			return;
 		}
 		
-		if(openOrder.getPrice() > newStopLossValue) {
-			logger.info("Changing stop-loss order");
-	
-			if(SIMULATION) {
-				return;
-			}
-			
-			if(openOrder != null) {
-				orderManager.cancelOrderAndWaitForCompletion(openOrder.getOrderId());
-			}
-			
-			final BitfinexOrder order = BitfinexOrderBuilder
-					.create(currencyPair, BitfinexOrderType.EXCHANGE_STOP, openOrder.getAmount())
-					.withPrice(newStopLossValue)
-					.setPostOnly()
-					.build();
-			
-			bitfinexApiBroker.placeOrder(order);
-		} else {
-			logger.info("Not changing the old stop-loss order");
+		logger.info("Changing stop-loss order");
+
+		if(SIMULATION) {
+			return;
 		}
+		
+		if(openOrder != null) {
+			orderManager.cancelOrderAndWaitForCompletion(openOrder.getOrderId());
+		}
+		
+		final BitfinexOrder order = BitfinexOrderBuilder
+				.create(currencyPair, BitfinexOrderType.EXCHANGE_STOP, openOrder.getAmount())
+				.withPrice(newStopLossValue)
+				.setPostOnly()
+				.build();
+		
+		bitfinexApiBroker.placeOrder(order);
 	}
 
 	/**
@@ -341,7 +352,7 @@ public class DonchianBot implements Runnable {
 		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrders();
 		
 		return openOrders.stream()
-			.filter(e -> e.getOrderType() == BitfinexOrderType.STOP)
+			.filter(e -> e.getOrderType() == BitfinexOrderType.EXCHANGE_STOP)
 			.filter(e -> e.getSymbol().equals(symbol))
 			.findAny()
 			.orElse(null);
