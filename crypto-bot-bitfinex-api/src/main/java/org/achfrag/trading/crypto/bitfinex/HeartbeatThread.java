@@ -19,7 +19,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 	/**
 	 * The API timeout
 	 */
-	private static final long CPNNECTION_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+	private static final long CPNNECTION_TIMEOUT = TimeUnit.SECONDS.toMillis(45);
 	
 	/**
 	 * The API timeout
