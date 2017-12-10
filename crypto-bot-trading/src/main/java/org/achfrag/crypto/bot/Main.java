@@ -140,10 +140,14 @@ public class Main implements Runnable {
 		
 		final int endIndex = timeSeries.get(symbol).getEndIndex();
 
-		if (strategies.get(symbol).shouldEnter(endIndex)) {
-			openOrder(symbol, endIndex);
-		} else if (strategies.get(symbol).shouldExit(endIndex)) {
-			closeOrder(symbol, endIndex);
+		try {
+			if (strategies.get(symbol).shouldEnter(endIndex)) {
+				openOrder(symbol, endIndex);
+			} else if (strategies.get(symbol).shouldExit(endIndex)) {
+				closeOrder(symbol, endIndex);
+			}
+		} catch (APIException e) {
+			logger.error("Got an exception while executing order", e);
 		}
 		
 		updateScreen();
@@ -178,7 +182,7 @@ public class Main implements Runnable {
 	 * @param endIndex
 	 * @throws APIException
 	 */
-	private void openOrder(final String symbol, final int endIndex) {
+	private void openOrder(final String symbol, final int endIndex) throws APIException {
 		final BitfinexCurrencyPair currency = BitfinexCurrencyPair.fromSymbolString(symbol);
 		final Decimal lastClosePrice = timeSeries.get(symbol).getLastTick().getClosePrice();
 		
@@ -293,17 +297,21 @@ public class Main implements Runnable {
                 }
         }  
 		
-		System.out.println("");
-		System.out.println("==========");
-		System.out.println("Orders");
-		System.out.println("==========");
-		
-		final List<ExchangeOrder> orders = new ArrayList<>(bitfinexApiBroker.getOrders());
-		orders.sort((o1, o2) -> Long.compare(o2.getCid(), o1.getCid()));
-		final List<ExchangeOrder> lastOrders = orders.subList(Math.max(orders.size() - 3, 0), orders.size());
+		try {
+			System.out.println("");
+			System.out.println("==========");
+			System.out.println("Orders");
+			System.out.println("==========");
+			
+			final List<ExchangeOrder> orders = new ArrayList<>(bitfinexApiBroker.getOrders());
+			orders.sort((o1, o2) -> Long.compare(o2.getCid(), o1.getCid()));
+			final List<ExchangeOrder> lastOrders = orders.subList(Math.max(orders.size() - 3, 0), orders.size());
 
-		for(final ExchangeOrder order : lastOrders) {
-			System.out.println(order);
+			for(final ExchangeOrder order : lastOrders) {
+				System.out.println(order);
+			}
+		} catch (APIException e) {
+			logger.error("Got eception while reading wallets", e);
 		}
 	}
 	

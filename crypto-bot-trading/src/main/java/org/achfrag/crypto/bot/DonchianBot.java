@@ -186,8 +186,9 @@ public class DonchianBot implements Runnable {
 	/**
 	 * Find a good entry order
 	 * @param currencyPair
+	 * @throws APIException 
 	 */
-	private void moveEntryOrder(final BitfinexCurrencyPair currencyPair) {
+	private void moveEntryOrder(final BitfinexCurrencyPair currencyPair) throws APIException {
 		final ExchangeOrder entryOrder = getEntryOrder(currencyPair.toBitfinexString());		
 		
 		String symbol = currencyPair.toBitfinexString();
@@ -251,8 +252,9 @@ public class DonchianBot implements Runnable {
 	/**
 	 * Get the USD wallet
 	 * @return
+	 * @throws APIException 
 	 */
-	private Wallet getExchangeUSDWallet() {
+	private Wallet getExchangeUSDWallet() throws APIException {
 		return bitfinexApiBroker.getWallets()
 			.stream()
 			.filter(w -> w.getWalletType().equals(Wallet.WALLET_TYPE_EXCHANGE))
@@ -264,8 +266,9 @@ public class DonchianBot implements Runnable {
 	/**
 	 * Get the USD wallet
 	 * @return
+	 * @throws APIException 
 	 */
-	private Wallet getExchangeBTCWallet() {
+	private Wallet getExchangeBTCWallet() throws APIException {
 		return bitfinexApiBroker.getWallets()
 			.stream()
 			.filter(w -> w.getWalletType().equals(Wallet.WALLET_TYPE_EXCHANGE))
@@ -328,8 +331,9 @@ public class DonchianBot implements Runnable {
 	 * @param symbol
 	 * @param openOrders
 	 * @return
+	 * @throws APIException 
 	 */
-	private ExchangeOrder getStopLossOrder(String symbol) {
+	private ExchangeOrder getStopLossOrder(String symbol) throws APIException {
 		
 		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrders();
 		
@@ -346,8 +350,9 @@ public class DonchianBot implements Runnable {
 	 * @param symbol
 	 * @param openOrders
 	 * @return
+	 * @throws APIException 
 	 */
-	private ExchangeOrder getEntryOrder(String symbol) {
+	private ExchangeOrder getEntryOrder(String symbol) throws APIException {
 		
 		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrders();
 		
