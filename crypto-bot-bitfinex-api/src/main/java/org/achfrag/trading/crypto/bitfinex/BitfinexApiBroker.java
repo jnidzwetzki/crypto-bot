@@ -704,7 +704,7 @@ public class BitfinexApiBroker {
 	 * Perform a reconnect
 	 * @return
 	 */
-	protected synchronized boolean reconnect() {
+	public synchronized boolean reconnect() {
 		try {
 			logger.info("Performing reconnect");
 			authenticated = false;
