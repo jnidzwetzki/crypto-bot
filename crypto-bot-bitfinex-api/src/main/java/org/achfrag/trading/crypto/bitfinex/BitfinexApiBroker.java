@@ -723,7 +723,7 @@ public class BitfinexApiBroker {
 			return true;
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
-			disconnect();
+			websocketEndpoint.close();
 			return false;
 		}
 	}
