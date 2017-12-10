@@ -128,6 +128,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 		final long nextHeartbeat = bitfinexApiBroker.getLastHeatbeat().get() + HEARTBEAT;
 
 		if(nextHeartbeat < System.currentTimeMillis()) {
+			logger.debug("Send heartbeat");
 			bitfinexApiBroker.sendCommand(new PingCommand());
 		}
 	}

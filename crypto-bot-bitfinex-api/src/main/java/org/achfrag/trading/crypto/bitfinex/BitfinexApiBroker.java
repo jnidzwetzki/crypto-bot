@@ -394,7 +394,8 @@ public class BitfinexApiBroker {
 		switch (subchannel) {
 		// Heartbeat 
 		case "hb":
-			// Ignore channel heartbeat values
+			logger.debug("Got connection heartbeat");
+			updateConnectionHeartbeat();
 			break;
 			
 		// Positions
