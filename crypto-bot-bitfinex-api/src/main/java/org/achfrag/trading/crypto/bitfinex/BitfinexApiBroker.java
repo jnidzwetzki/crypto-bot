@@ -530,7 +530,9 @@ public class BitfinexApiBroker {
 		}
 		
 		// Notify callbacks
-		orderCallbacks.forEach(c -> c.accept(exchangeOrder));
+		synchronized (orderCallbacks) {
+			orderCallbacks.forEach(c -> c.accept(exchangeOrder));
+		}
 	}
 
 	/**
@@ -900,7 +902,9 @@ public class BitfinexApiBroker {
 	 * @param callback
 	 */
 	public void addOrderCallback(final Consumer<ExchangeOrder> callback) {
-		orderCallbacks.add(callback);
+		synchronized (orderCallbacks) {
+			orderCallbacks.add(callback);
+		}
 	}
 	
 	/**
@@ -909,7 +913,9 @@ public class BitfinexApiBroker {
 	 * @return
 	 */
 	public boolean removeOrderCallback(final Consumer<ExchangeOrder> callback) {
-		return orderCallbacks.remove(callback);
+		synchronized (orderCallbacks) {
+			return orderCallbacks.remove(callback);
+		}
 	}
 
 	/**
