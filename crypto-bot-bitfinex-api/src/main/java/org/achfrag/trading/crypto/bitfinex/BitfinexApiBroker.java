@@ -211,7 +211,7 @@ public class BitfinexApiBroker {
 		
 		if(websocketEndpoint != null) {
 			websocketEndpoint.removeConsumer(apiCallback);
-			websocketEndpoint.close();
+			websocketEndpoint.disconnect();
 			websocketEndpoint = null;
 		}
 	}
@@ -717,7 +717,7 @@ public class BitfinexApiBroker {
 			tickerManager.invalidateTickerHeartbeat();
 			orders.clear();
 			
-			websocketEndpoint.close();
+			websocketEndpoint.disconnect();
 			websocketEndpoint.connect();
 			
 			executeAuthentification();
@@ -728,7 +728,7 @@ public class BitfinexApiBroker {
 			return true;
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
-			websocketEndpoint.close();
+			websocketEndpoint.disconnect();
 			return false;
 		}
 	}

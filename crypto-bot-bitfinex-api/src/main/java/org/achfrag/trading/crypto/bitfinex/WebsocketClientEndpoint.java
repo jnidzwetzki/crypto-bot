@@ -1,11 +1,12 @@
 package org.achfrag.trading.crypto.bitfinex;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import javax.websocket.ClientEndpoint;
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Throwables;
 
 @ClientEndpoint
-public class WebsocketClientEndpoint implements Closeable {
+public class WebsocketClientEndpoint {
 
 	/**
 	 * The user session
@@ -37,6 +38,11 @@ public class WebsocketClientEndpoint implements Closeable {
 	 * The callback consumer
 	 */
 	private final List<Consumer<String>> callbackConsumer;
+	
+	/**
+	 * The thread pool for the consumer
+	 */
+	private final ExecutorService consumerExecutorService;
 
 	/**
 	 * The wait for connection latch
@@ -56,6 +62,7 @@ public class WebsocketClientEndpoint implements Closeable {
 	public WebsocketClientEndpoint(final URI endpointURI) {
 		this.endpointURI = endpointURI;
 		this.callbackConsumer = new ArrayList<>();
+		this.consumerExecutorService = Executors.newFixedThreadPool(10);
 	}
 
 	/**
@@ -66,6 +73,12 @@ public class WebsocketClientEndpoint implements Closeable {
 	 * @throws InterruptedException
 	 */
 	public void connect() throws DeploymentException, IOException, InterruptedException {
+		
+		if(consumerExecutorService.isTerminated()) {
+			throw new IOException("close was called on this websocket, unable to reconnect. "
+					+ "Please use disconnect instead!");
+		}
+		
 		final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 		this.userSession = container.connectToServer(this, endpointURI);
 		connectLatch.await();
@@ -85,8 +98,13 @@ public class WebsocketClientEndpoint implements Closeable {
 
 	@OnMessage
 	public void onMessage(final String message) {
+		
+		// Execute callbacks in another thread
 		synchronized (callbackConsumer) {
-			callbackConsumer.forEach((c) -> c.accept(message));
+			callbackConsumer.forEach((c) -> {
+				final Runnable runnable = () -> c.accept(message);
+				consumerExecutorService.submit(runnable);
+			});
 		}
 	}
 	
@@ -138,8 +156,15 @@ public class WebsocketClientEndpoint implements Closeable {
 	/**
 	 * Close the connection
 	 */
-	@Override
 	public void close() {
+		disconnect();
+		consumerExecutorService.shutdown();
+	}
+	
+	/**
+	 * Disconnect form server
+	 */
+	public void disconnect() {
 		if(userSession == null) {
 			return;
 		}

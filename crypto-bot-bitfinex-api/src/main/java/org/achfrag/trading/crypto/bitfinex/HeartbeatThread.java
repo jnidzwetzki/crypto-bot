@@ -154,7 +154,7 @@ class HeartbeatThread extends ExceptionSafeThread {
 	 */
 	private void executeReconnect() throws InterruptedException {
 		// Close connection
-		bitfinexApiBroker.getWebsocketEndpoint().close();
+		bitfinexApiBroker.getWebsocketEndpoint().disconnect();
 		
 		// Store the reconnect time to prevent to much
 		// reconnects in a short timeframe. Otherwise the
