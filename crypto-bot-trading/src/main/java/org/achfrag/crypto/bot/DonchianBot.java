@@ -317,12 +317,18 @@ public class DonchianBot implements Runnable {
 			return;
 		}
 		
+		final Wallet wallet = getExchangeBTCWallet();
+
+		// * -1.0 for sell order
+		double amount = wallet.getBalance() * -1.0;
+		
 		if(openOrder != null) {
 			orderManager.cancelOrderAndWaitForCompletion(openOrder.getOrderId());
+			amount = openOrder.getAmount();
 		}
 		
 		final BitfinexOrder order = BitfinexOrderBuilder
-				.create(currencyPair, BitfinexOrderType.EXCHANGE_STOP, openOrder.getAmount())
+				.create(currencyPair, BitfinexOrderType.EXCHANGE_STOP, amount)
 				.withPrice(newStopLossValue)
 				.setPostOnly()
 				.build();
