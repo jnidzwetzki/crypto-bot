@@ -1,5 +1,6 @@
 package org.achfrag.trading.crypto.bitfinex;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Throwables;
 
 @ClientEndpoint
-public class WebsocketClientEndpoint {
+public class WebsocketClientEndpoint implements Closeable {
 
 	/**
 	 * The user session
@@ -57,6 +58,13 @@ public class WebsocketClientEndpoint {
 		this.callbackConsumer = new ArrayList<>();
 	}
 
+	/**
+	 * Open a new connection and wait until connection is ready
+	 * 
+	 * @throws DeploymentException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
 	public void connect() throws DeploymentException, IOException, InterruptedException {
 		final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 		this.userSession = container.connectToServer(this, endpointURI);
@@ -85,6 +93,10 @@ public class WebsocketClientEndpoint {
         logger.error("OnError called {}", Throwables.getStackTraceAsString(t));
     }
 
+	/**
+	 * Send a new message to the server
+	 * @param message
+	 */
 	public void sendMessage(final String message) {
 		
 		if(userSession == null) {
@@ -100,14 +112,27 @@ public class WebsocketClientEndpoint {
 		userSession.getAsyncRemote().sendText(message);
 	}
 
+	/**
+	 * Add a new connection data consumer
+	 * @param consumer
+	 */
 	public void addConsumer(final Consumer<String> consumer) {
 		callbackConsumer.add(consumer);
 	}
 
+	/**
+	 * Remove a connection data consumer
+	 * @param consumer
+	 * @return
+	 */
 	public boolean removeConsumer(final Consumer<String> consumer) {
 		return callbackConsumer.remove(consumer);
 	}
 
+	/**
+	 * Close the connection
+	 */
+	@Override
 	public void close() {
 		if(userSession == null) {
 			return;
