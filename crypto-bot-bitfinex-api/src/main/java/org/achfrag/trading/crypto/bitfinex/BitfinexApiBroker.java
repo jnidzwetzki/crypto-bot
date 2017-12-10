@@ -256,6 +256,8 @@ public class BitfinexApiBroker {
 	 * Handle a API callback
 	 */
 	protected void handleAPICallback(final String message) {
+		
+		logger.debug("Got {}", message);
 				
 		// JSON callback
 		final JSONTokener tokener = new JSONTokener(message);
