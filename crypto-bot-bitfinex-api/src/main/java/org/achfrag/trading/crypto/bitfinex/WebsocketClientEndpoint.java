@@ -1,5 +1,6 @@
 package org.achfrag.trading.crypto.bitfinex;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Throwables;
 
 @ClientEndpoint
-public class WebsocketClientEndpoint {
+public class WebsocketClientEndpoint implements Closeable {
 
 	/**
 	 * The user session
@@ -156,6 +157,7 @@ public class WebsocketClientEndpoint {
 	/**
 	 * Close the connection
 	 */
+	@Override
 	public void close() {
 		disconnect();
 		consumerExecutorService.shutdown();
