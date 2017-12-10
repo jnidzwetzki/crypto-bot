@@ -215,7 +215,11 @@ public class DonchianBot implements Runnable {
 				orderManager.cancelOrderAndWaitForCompletion(entryOrder.getOrderId());
 			} 
 			
-			final double amount = calculatePositionSize(upperValue);
+			double amount = calculatePositionSize(upperValue);
+			
+			if(entryOrder != null) {
+				amount = entryOrder.getAmount();
+			}
 			
 			final BitfinexOrder order = BitfinexOrderBuilder
 					.create(currencyPair, BitfinexOrderType.EXCHANGE_STOP, amount)
