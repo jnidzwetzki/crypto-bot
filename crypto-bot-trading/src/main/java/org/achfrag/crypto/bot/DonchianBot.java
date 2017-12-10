@@ -305,7 +305,7 @@ public class DonchianBot implements Runnable {
 		
 		final ExchangeOrder openOrder = getStopLossOrder(symbol);
 		
-		if(openOrder != null && openOrder.getPrice() > newStopLossValue) {
+		if(openOrder != null && openOrder.getPrice() >= newStopLossValue) {
 			logger.info("Stop loss is already set to {} (calculated {})", 
 					openOrder.getPrice(), newStopLossValue);
 			return;
