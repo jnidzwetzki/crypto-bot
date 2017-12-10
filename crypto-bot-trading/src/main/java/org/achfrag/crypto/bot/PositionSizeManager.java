@@ -2,8 +2,8 @@ package org.achfrag.crypto.bot;
 
 import java.util.Collection;
 
-import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
-import org.achfrag.crypto.bitfinex.entity.Wallet;
+import org.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
+import org.achfrag.trading.crypto.bitfinex.entity.Wallet;
 import org.ta4j.core.Order.OrderType;
 
 public class PositionSizeManager {

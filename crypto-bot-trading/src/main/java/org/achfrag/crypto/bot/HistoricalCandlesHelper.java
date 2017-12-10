@@ -7,12 +7,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import org.achfrag.crypto.bitfinex.BitfinexApiBroker;
-import org.achfrag.crypto.bitfinex.commands.SubscribeCandlesCommand;
-import org.achfrag.crypto.bitfinex.commands.UnsubscribeCandlesCommand;
-import org.achfrag.crypto.bitfinex.entity.APIException;
-import org.achfrag.crypto.bitfinex.entity.BitfinexCurrencyPair;
-import org.achfrag.crypto.bitfinex.entity.Timeframe;
+import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
+import org.achfrag.trading.crypto.bitfinex.commands.SubscribeCandlesCommand;
+import org.achfrag.trading.crypto.bitfinex.commands.UnsubscribeCandlesCommand;
+import org.achfrag.trading.crypto.bitfinex.entity.APIException;
+import org.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
+import org.achfrag.trading.crypto.bitfinex.entity.Timeframe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.BaseTimeSeries;

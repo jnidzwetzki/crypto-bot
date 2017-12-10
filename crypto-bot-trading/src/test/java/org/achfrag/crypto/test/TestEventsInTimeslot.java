@@ -2,7 +2,7 @@ package org.achfrag.crypto.test;
 
 import java.util.concurrent.TimeUnit;
 
-import org.achfrag.crypto.bitfinex.util.EventsInTimeslotManager;
+import org.achfrag.trading.crypto.bitfinex.util.EventsInTimeslotManager;
 import org.junit.Assert;
 import org.junit.Test;
 
