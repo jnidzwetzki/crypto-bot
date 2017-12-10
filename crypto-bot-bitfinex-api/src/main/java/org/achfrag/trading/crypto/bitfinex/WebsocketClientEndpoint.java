@@ -85,7 +85,9 @@ public class WebsocketClientEndpoint implements Closeable {
 
 	@OnMessage
 	public void onMessage(final String message) {
-		callbackConsumer.forEach((c) -> c.accept(message));
+		synchronized (callbackConsumer) {
+			callbackConsumer.forEach((c) -> c.accept(message));
+		}
 	}
 	
 	@OnError
@@ -117,7 +119,9 @@ public class WebsocketClientEndpoint implements Closeable {
 	 * @param consumer
 	 */
 	public void addConsumer(final Consumer<String> consumer) {
-		callbackConsumer.add(consumer);
+		synchronized (callbackConsumer) {
+			callbackConsumer.add(consumer);
+		}
 	}
 
 	/**
@@ -126,7 +130,9 @@ public class WebsocketClientEndpoint implements Closeable {
 	 * @return
 	 */
 	public boolean removeConsumer(final Consumer<String> consumer) {
-		return callbackConsumer.remove(consumer);
+		synchronized (callbackConsumer) {
+			return callbackConsumer.remove(consumer);
+		}
 	}
 
 	/**
