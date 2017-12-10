@@ -14,15 +14,33 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<developers>
+		<developer>
+			<id>jkn</id>
+			<name>Jan Kristof Nidzwetzki</name>
+			<email>jnidzwetzki@gmx.de</email>
+			<timezone>Europe/Berlin</timezone>
+		</developer>
+	</developers>
+
+	<scm>
+		<url>https://travis-ci.org/jnidzwetzki/crypto-bot</url>
+	</scm>
+
+	<ciManagement>
+		<system>Travis</system>
+		<url>https://travis-ci.org/jnidzwetzki/crypto-bot</url>
+	</ciManagement>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/jnidzwetzki/crypto-bot/issues</url>
+	</issueManagement>
+
 	<modules>
 		<module>crypto-bot-bitfinex-api</module>
 		<module>crypto-bot-trading</module>
 	</modules>
-	
-	<dependencies>
-
-
-	</dependencies>
 
 	<licenses>
 		<license>
