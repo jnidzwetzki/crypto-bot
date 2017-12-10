@@ -15,7 +15,8 @@
 	</properties>
 
 	<modules>
-		<module>trading-bot</module>
+		<module>crypto-bot-bitfinex-api</module>
+		<module>crypto-bot-trading</module>
 	</modules>
 	
 	<dependencies>

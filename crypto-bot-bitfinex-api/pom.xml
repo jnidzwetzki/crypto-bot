@@ -7,7 +7,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>crypto-bot-bitfinex-api</name>
+	<name>Crypto bot - Bitfinex API</name>
 	<url>https://github.com/jnidzwetzki/crypto-bot</url>
 
 	<properties>
