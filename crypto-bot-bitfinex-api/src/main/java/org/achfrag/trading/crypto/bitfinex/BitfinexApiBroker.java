@@ -773,9 +773,7 @@ public class BitfinexApiBroker {
 	 */
 	public void placeOrder(final BitfinexOrder order) throws APIException {
 		
-		if(! authenticated) {
-			throw new APIException("Unable to place order, this is not a authentificated connection");
-		}
+		throwExceptionIfUnauthenticated();
 		
 		logger.info("Executing new order {}", order);
 		final OrderCommand orderCommand = new OrderCommand(order);
@@ -790,9 +788,7 @@ public class BitfinexApiBroker {
 	 */
 	public void cancelOrder(final long id) throws APIException {
 		
-		if(! authenticated) {
-			throw new APIException("Unable to cancel order, this is not a authentificated connection");
-		}
+		throwExceptionIfUnauthenticated();
 		
 		logger.info("Cancel order with id {}", id);
 		final CancelOrderCommand cancelOrder = new CancelOrderCommand(id);
@@ -807,9 +803,7 @@ public class BitfinexApiBroker {
 	 */
 	public void cancelOrderGroup(final int id) throws APIException {
 		
-		if(! authenticated) {
-			throw new APIException("Unable to cancel order, this is not a authentificated connection");
-		}
+		throwExceptionIfUnauthenticated();
 		
 		logger.info("Cancel order group {}", id);
 		final CancelOrderGroupCommand cancelOrder = new CancelOrderGroupCommand(id);
@@ -863,18 +857,36 @@ public class BitfinexApiBroker {
 	/**
 	 * Get all wallets
 	 * @return 
+	 * @throws APIException 
 	 */
-	public Collection<Wallet> getWallets() {
+	public Collection<Wallet> getWallets() throws APIException {
+		
+		throwExceptionIfUnauthenticated();
+		
 		synchronized (walletTable) {
 			return Collections.unmodifiableCollection(walletTable.values());
+		}
+	}
+
+	/**
+	 * Throw a new exception if called on a unauthenticated connection
+	 * @throws APIException
+	 */
+	private void throwExceptionIfUnauthenticated() throws APIException {
+		if(! authenticated) {
+			throw new APIException("Unable to perform operation on an unauthenticated connection");
 		}
 	}
 	
 	/**
 	 * Get the list with exchange orders
 	 * @return
+	 * @throws APIException 
 	 */
-	public List<ExchangeOrder> getOrders() {
+	public List<ExchangeOrder> getOrders() throws APIException {
+		
+		throwExceptionIfUnauthenticated();
+		
 		synchronized (orders) {
 			return Collections.unmodifiableList(orders);
 		}
