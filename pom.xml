@@ -7,7 +7,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>Crypto bot parent</name>
+	<name>Crypto bot - Parent</name>
 	<url>https://github.com/jnidzwetzki/crypto-bot</url>
 
 	<properties>
