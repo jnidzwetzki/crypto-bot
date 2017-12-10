@@ -4,7 +4,7 @@
         <RollingFile name="cryptobot_RollingFile" fileName="/tmp/crypto-bot.log"
                      filePattern="crypto-bot.%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout>
-                <Pattern>%-4r [%t] %d %-5p %c{1} %M() - %m%n</Pattern>
+                <Pattern>[%p] %d{MM-dd-yyyy HH:mm:ss,SSS} %c %M - %m%n</Pattern>
             </PatternLayout>
             <Policies>
                 <TimeBasedTriggeringPolicy/>
