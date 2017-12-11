@@ -222,7 +222,9 @@ public class BitfinexApiBroker {
 	 */
 	public void sendCommand(final AbstractAPICommand apiCommand) {
 		try {
-			websocketEndpoint.sendMessage(apiCommand.getCommand(this));
+			final String command = apiCommand.getCommand(this);
+			logger.debug("Sending to server: {}", command);
+			websocketEndpoint.sendMessage(command);
 		} catch (CommandException e) {
 			logger.error("Got Exception while sending command", e);
 		}
