@@ -110,9 +110,7 @@ public class TickerManager {
 	 */
 	public void registerTickCallback(final String symbol, final BiConsumer<String, Tick> callback) throws APIException {
 		
-		if(! channelCallbacks.containsKey(symbol)) {
-			channelCallbacks.put(symbol, new ArrayList<>());
-		}
+		channelCallbacks.putIfAbsent(symbol, new ArrayList<>());
 				
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
 		
