@@ -31,6 +31,7 @@ import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrderState;
 import org.achfrag.trading.crypto.bitfinex.entity.OrderBookFrequency;
 import org.achfrag.trading.crypto.bitfinex.entity.OrderBookPrecision;
+import org.achfrag.trading.crypto.bitfinex.entity.TradingOrderbookEntry;
 import org.achfrag.trading.crypto.bitfinex.entity.Wallet;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -74,6 +75,11 @@ public class BitfinexApiBroker {
 	 * The tick manager
 	 */
 	private TickerManager tickerManager;
+	
+	/**
+	 * The orderbook manager
+	 */
+	private OrderbookManager orderbookManager;
 	
 	/**
 	 * The last heartbeat value
@@ -132,6 +138,7 @@ public class BitfinexApiBroker {
 		this.orderCallbacks = new ArrayList<>();
 		this.lastHeatbeat = new AtomicLong();
 		this.tickerManager = new TickerManager();
+		this.orderbookManager = new OrderbookManager();
 		this.walletTable = HashBasedTable.create();
 		this.orders = new ArrayList<>();
 		this.authenticated = false;
@@ -948,6 +955,30 @@ public class BitfinexApiBroker {
 	 */
 	public boolean removeTickCallback(String symbol, BiConsumer<String, Tick> callback) throws APIException {
 		return tickerManager.removeTickCallback(symbol, callback);
+	}
+
+	/**
+	 * Register a new trading orderbook callback
+	 * @param symbol
+	 * @param callback
+	 * @throws APIException
+	 */
+	public void registerTradingOrderbookCallback(final String symbol, 
+			final BiConsumer<String, TradingOrderbookEntry> callback) throws APIException {
+		
+		orderbookManager.registerTradingOrderbookCallback(symbol, callback);
+	}
+
+	/**
+	 * Remove a trading orderbook callback
+	 * @param symbol
+	 * @param callback
+	 * @return
+	 * @throws APIException
+	 */
+	public boolean removeTradingOrderbookCallback(final String symbol,
+			final BiConsumer<String, TradingOrderbookEntry> callback) throws APIException {
+		return orderbookManager.removeTradingOrderbookCallback(symbol, callback);
 	}
 
 }
