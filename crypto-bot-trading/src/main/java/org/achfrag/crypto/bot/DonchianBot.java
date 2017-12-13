@@ -242,15 +242,11 @@ public class DonchianBot implements Runnable {
 	 * Calculate the positon size
 	 * @param upperValue
 	 * @return
+	 * @throws APIException 
 	 */
-	private double calculatePositionSize(final Decimal upperValue) {
-		
-		return 0.002;
-		
-		/**
+	private double calculatePositionSize(final Decimal upperValue) throws APIException {
 		final Wallet wallet = getExchangeUSDWallet();
 		return (wallet.getBalance() / upperValue.toDouble()) * 0.8;
-		*/
 	}
 	
 	/**
