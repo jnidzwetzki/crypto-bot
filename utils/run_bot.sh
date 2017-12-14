@@ -1,5 +1,8 @@
 #!/bin/bash
 
 mvn install -DskipTests
-mvn -pl crypto-bot-trading exec:java
 
+libs=$(find target/lib -name '*.jar' | xargs echo | tr ' ' ':')
+classpath="$libs"
+
+java -cp $classpath org.achfrag.crypto.bot.DonchianBot
