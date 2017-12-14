@@ -91,30 +91,6 @@
 							<outputDirectory>${project.parent.build.directory}/lib</outputDirectory>
 						</configuration>
 					</execution>
-					<execution>
-						<id>copy-artifact</id>
-						<phase>package</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>${project.groupId}</groupId>
-									<artifactId>crypto-bot-bitfinex-api</artifactId>
-									<version>${project.version}</version>
-									<type>${project.packaging}</type>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${project.groupId}</groupId>
-									<artifactId>crypto-bot-trading</artifactId>
-									<version>${project.version}</version>
-									<type>${project.packaging}</type>
-								</artifactItem>
-							</artifactItems>
-							<outputDirectory>${project.parent.build.directory}/lib</outputDirectory>
-						</configuration>
-					</execution>
 				</executions>
 			</plugin>
 		</plugins>
