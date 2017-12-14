@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.achfrag.trading.crypto.bitfinex.commands.PingCommand;
 import org.achfrag.trading.crypto.bitfinex.util.EventsInTimeslotManager;
-import org.achfrag.trading.crypto.util.ExceptionSafeThread;
+import org.bboxdb.commons.concurrent.ExceptionSafeThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

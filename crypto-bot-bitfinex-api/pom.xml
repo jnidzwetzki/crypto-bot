@@ -61,6 +61,12 @@
 			<artifactId>hibernate-commons-annotations</artifactId>
 			<version>5.0.1.Final</version>
 		</dependency>
+		<dependency>
+			<groupId>org.bboxdb</groupId>
+			<artifactId>bboxdb-commons</artifactId>
+			<version>0.3.7</version>
+		</dependency>
+		
 
 		<!-- Testing dependencies -->
 		<dependency>
