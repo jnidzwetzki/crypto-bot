@@ -73,11 +73,8 @@ public class DonchianBot implements Runnable {
 	
 	public DonchianBot() {
 		this.tickMerger = new HashMap<>();
-		this.timeSeries = new HashMap<>();
-		
-		// FIXME: Currently the wallets are USD / BTC only. Implement before change
+		this.timeSeries = new HashMap<>();		
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD);
-		
 		this.bitfinexApiBroker = BitfinexClientFactory.buildBifinexClient();
 		this.orderManager = new OrderManager(bitfinexApiBroker);
 	}
@@ -144,7 +141,6 @@ public class DonchianBot implements Runnable {
 		executeSystem();
 	}
 
-
 	/**
 	 * Handle the tick callback
 	 * @param symbol
@@ -189,7 +185,7 @@ public class DonchianBot implements Runnable {
 	 * @throws APIException 
 	 */
 	private void moveEntryOrder(final BitfinexCurrencyPair currencyPair) throws APIException {
-		final ExchangeOrder entryOrder = getEntryOrder(currencyPair.toBitfinexString());		
+		final ExchangeOrder entryOrder = getStopOrder(currencyPair.toBitfinexString());		
 		
 		String symbol = currencyPair.toBitfinexString();
 		TimeSeries currencyTimeSeries = timeSeries.get(symbol);
@@ -286,7 +282,7 @@ public class DonchianBot implements Runnable {
 		final double newStopLossValue = Math.round(newStopLoss.toDouble() - (newStopLoss.toDouble() / 100 * 0.2));
 		logger.info("Current stop-loss value is {}", newStopLossValue);
 		
-		final ExchangeOrder openOrder = getStopLossOrder(symbol);
+		final ExchangeOrder openOrder = getStopOrder(symbol);
 		
 		if(openOrder != null && openOrder.getPrice() >= newStopLossValue) {
 			logger.info("Stop loss is already set to {} (calculated {})", 
@@ -326,26 +322,7 @@ public class DonchianBot implements Runnable {
 	 * @return
 	 * @throws APIException 
 	 */
-	private ExchangeOrder getStopLossOrder(String symbol) throws APIException {
-		
-		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrders();
-		
-		return openOrders.stream()
-			.filter(e -> e.getOrderType() == BitfinexOrderType.EXCHANGE_STOP)
-			.filter(e -> e.getSymbol().equals(symbol))
-			.findAny()
-			.orElse(null);
-	}
-	
-
-	/**
-	 * Get the open stop loss order
-	 * @param symbol
-	 * @param openOrders
-	 * @return
-	 * @throws APIException 
-	 */
-	private ExchangeOrder getEntryOrder(String symbol) throws APIException {
+	private ExchangeOrder getStopOrder(final String symbol) throws APIException {
 		
 		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrders();
 		
