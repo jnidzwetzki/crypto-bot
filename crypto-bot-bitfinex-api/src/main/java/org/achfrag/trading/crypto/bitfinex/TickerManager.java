@@ -167,8 +167,7 @@ public class TickerManager {
 			
 			for (final Tick tick : ticksBuffer) {
 				callbacks.forEach((c) -> {
-					final Runnable runnable = () -> c.accept(symbol, tick);
-					executorService.submit(runnable);
+					c.accept(symbol, tick);
 				});
 			}
 		}
