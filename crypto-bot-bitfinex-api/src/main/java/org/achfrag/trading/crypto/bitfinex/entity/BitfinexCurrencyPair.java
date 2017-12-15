@@ -14,12 +14,12 @@ public enum BitfinexCurrencyPair {
 	/**
 	 * The name of the first curreny 
 	 */
-	protected final String pair1;
+	protected final String currency1;
 	
 	/**
 	 * The name of the second currency
 	 */
-	protected final String pair2;
+	protected final String currency2;
 	
 	/**
 	 * The minimal order size
@@ -27,13 +27,13 @@ public enum BitfinexCurrencyPair {
 	protected final double minimalOrderSize;
 
 	private BitfinexCurrencyPair(final String pair1, final String pair2, final double minimalOrderSize) {
-		this.pair1 = pair1;
-		this.pair2 = pair2;
+		this.currency1 = pair1;
+		this.currency2 = pair2;
 		this.minimalOrderSize = minimalOrderSize;
 	}
 	
 	public String toBitfinexString() {
-		return "t" + pair1 + pair2;
+		return "t" + currency1 + currency2;
 	}
 	
 	public String toBifinexCandlestickString(final Timeframe timeframe) {
@@ -53,4 +53,11 @@ public enum BitfinexCurrencyPair {
 		throw new IllegalArgumentException("Unable to find order type for: " + symbolString);
 	}
 
+	public String getCurrency1() {
+		return currency1;
+	}
+	
+	public String getCurrency2() {
+		return currency2;
+	}
 }
