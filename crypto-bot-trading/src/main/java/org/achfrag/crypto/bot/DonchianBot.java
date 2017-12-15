@@ -164,7 +164,7 @@ public class DonchianBot implements Runnable {
 	private void executeSystem() {
 		try {
 			for(final BitfinexCurrencyPair currencyPair : tradedCurrencies) {				
-				final Wallet wallet = getExchangeBTCWallet();
+				final Wallet wallet = getExchangeWallet(currencyPair.getCurrency2());
 
 				if(wallet.getBalance() > currencyPair.getMinimalOrderSize()) {
 					logger.info("We are invested, adjusting stop loss");
@@ -245,34 +245,21 @@ public class DonchianBot implements Runnable {
 	 * @throws APIException 
 	 */
 	private double calculatePositionSize(final Decimal upperValue) throws APIException {
-		final Wallet wallet = getExchangeUSDWallet();
+		final Wallet wallet = getExchangeWallet("USD");
 		return (wallet.getBalance() / upperValue.toDouble()) * 0.8;
 	}
 	
 	/**
-	 * Get the USD wallet
+	 * Get the exchange wallet
+	 * @param currency 
 	 * @return
 	 * @throws APIException 
 	 */
-	private Wallet getExchangeUSDWallet() throws APIException {
+	private Wallet getExchangeWallet(final String currency) throws APIException {
 		return bitfinexApiBroker.getWallets()
 			.stream()
 			.filter(w -> w.getWalletType().equals(Wallet.WALLET_TYPE_EXCHANGE))
-			.filter(w -> w.getCurreny().equals("USD"))
-			.findFirst()
-			.orElse(null);
-	}
-	
-	/**
-	 * Get the USD wallet
-	 * @return
-	 * @throws APIException 
-	 */
-	private Wallet getExchangeBTCWallet() throws APIException {
-		return bitfinexApiBroker.getWallets()
-			.stream()
-			.filter(w -> w.getWalletType().equals(Wallet.WALLET_TYPE_EXCHANGE))
-			.filter(w -> w.getCurreny().equals("BTC"))
+			.filter(w -> w.getCurreny().equals(currency))
 			.findFirst()
 			.orElse(null);
 	}
@@ -313,7 +300,7 @@ public class DonchianBot implements Runnable {
 			return;
 		}
 		
-		final Wallet wallet = getExchangeBTCWallet();
+		final Wallet wallet = getExchangeWallet(currencyPair.getCurrency1());
 
 		// * -1.0 for sell order
 		double amount = wallet.getBalance() * -1.0;
