@@ -49,7 +49,7 @@ public class OrderManager {
 		this.sessionFactory = HibernateUtil.getSessionFactory();
 
 		// Register order callbacks
-		bitfinexApiBroker.addOrderCallback((o) -> handleOrderCallback(o));
+		bitfinexApiBroker.registerOrderCallback((o) -> handleOrderCallback(o));
 	}
 	
 	/**
@@ -170,7 +170,7 @@ public class OrderManager {
 			}
 		};
 		
-		bitfinexApiBroker.addOrderCallback(ordercallback);
+		bitfinexApiBroker.registerOrderCallback(ordercallback);
 		
 		try {
 			bitfinexApiBroker.cancelOrder(id);

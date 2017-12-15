@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
@@ -27,8 +28,14 @@ public class TickerManager {
 	 * The channel callbacks
 	 */
 	private final Map<String, List<BiConsumer<String, Tick>>> channelCallbacks;
-	
-	public TickerManager() {
+
+	/**
+	 * The executor service
+	 */
+	private final ExecutorService executorService;
+
+	public TickerManager(final ExecutorService executorService) {
+		this.executorService = executorService;
 		this.lastTick = new HashMap<>();
 		this.lastTickTimestamp = new HashMap<>();
 		this.channelCallbacks = new HashMap<>();
@@ -145,14 +152,24 @@ public class TickerManager {
 	 * @param ticksArray
 	 */
 	public void handleTicksList(final String symbol, final List<Tick> ticksBuffer) {
-				
+		
+		// Notify callbacks async
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
-
-		if(callbacks != null) {
-			synchronized (callbacks) {
-				for(final Tick tick : ticksBuffer) {
-					callbacks.forEach(c -> c.accept(symbol, tick));
-				}
+		
+		if(callbacks == null) {
+			return;
+		}
+				
+		synchronized(callbacks) {
+			if(callbacks.isEmpty()) {
+				return;
+			}
+			
+			for (final Tick tick : ticksBuffer) {
+				callbacks.forEach((c) -> {
+					final Runnable runnable = () -> c.accept(symbol, tick);
+					executorService.submit(runnable);
+				});
 			}
 		}
 	}
@@ -170,10 +187,19 @@ public class TickerManager {
 		
 		final List<BiConsumer<String, Tick>> callbacks = channelCallbacks.get(symbol);
 
-		if(callbacks != null) {
-			synchronized (callbacks) {
-				callbacks.forEach(c -> c.accept(symbol, tick));
+		if(callbacks == null) {
+			return;
+		}
+				
+		synchronized(callbacks) {
+			if(callbacks.isEmpty()) {
+				return;
 			}
+			
+			callbacks.forEach((c) -> {
+				final Runnable runnable = () -> c.accept(symbol, tick);
+				executorService.submit(runnable);
+			});
 		}
 	}
 	

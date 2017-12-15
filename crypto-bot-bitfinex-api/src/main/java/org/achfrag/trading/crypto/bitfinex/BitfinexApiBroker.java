@@ -1,5 +1,6 @@
 package org.achfrag.trading.crypto.bitfinex;
 
+import java.io.Closeable;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -10,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
@@ -47,7 +50,7 @@ import org.ta4j.core.Tick;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
-public class BitfinexApiBroker {
+public class BitfinexApiBroker implements Closeable {
 
 	/**
 	 * The bitfinex api
@@ -137,21 +140,27 @@ public class BitfinexApiBroker {
 	private final Map<String, ChannelHandler> channelHandler;
 	
 	/**
+	 * The executor service
+	 */
+	private final ExecutorService executorService;
+	
+	/**
 	 * The Logger
 	 */
 	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
 
 	public BitfinexApiBroker() {
+		this.executorService = Executors.newFixedThreadPool(10);
 		this.channelIdSymbolMap = new HashMap<>();
 		this.orderCallbacks = new ArrayList<>();
 		this.lastHeatbeat = new AtomicLong();
-		this.tickerManager = new TickerManager();
-		this.orderbookManager = new OrderbookManager();
+		this.tickerManager = new TickerManager(executorService);
+		this.orderbookManager = new OrderbookManager(executorService);
 		this.walletTable = HashBasedTable.create();
 		this.orders = new ArrayList<>();
 		this.authenticated = false;
 		this.channelHandler = new HashMap<>();
-		
+
 		setupChannelHandler();
 	}
 
@@ -250,7 +259,8 @@ public class BitfinexApiBroker {
 	/**
 	 * Disconnect the websocket
 	 */
-	public void disconnect() {
+	@Override
+	public void close() {
 		
 		if(heartbeatThread != null) {
 			heartbeatThread.interrupt();
@@ -259,8 +269,12 @@ public class BitfinexApiBroker {
 		
 		if(websocketEndpoint != null) {
 			websocketEndpoint.removeConsumer(apiCallback);
-			websocketEndpoint.disconnect();
+			websocketEndpoint.close();
 			websocketEndpoint = null;
+		}
+		
+		if(executorService != null) {
+			executorService.shutdown();
 		}
 	}
 
@@ -600,7 +614,7 @@ public class BitfinexApiBroker {
 			tickerManager.invalidateTickerHeartbeat();
 			orders.clear();
 			
-			websocketEndpoint.disconnect();
+			websocketEndpoint.close();
 			websocketEndpoint.connect();
 			
 			executeAuthentification();
@@ -611,7 +625,7 @@ public class BitfinexApiBroker {
 			return true;
 		} catch (Exception e) {
 			logger.error("Got exception while reconnect", e);
-			websocketEndpoint.disconnect();
+			websocketEndpoint.close();
 			return false;
 		}
 	}
@@ -793,7 +807,7 @@ public class BitfinexApiBroker {
 	 * Add a order callback
 	 * @param callback
 	 */
-	public void addOrderCallback(final Consumer<ExchangeOrder> callback) {
+	public void registerOrderCallback(final Consumer<ExchangeOrder> callback) {
 		synchronized (orderCallbacks) {
 			orderCallbacks.add(callback);
 		}
@@ -878,5 +892,13 @@ public class BitfinexApiBroker {
 	 */
 	public List<Consumer<ExchangeOrder>> getOrderCallbacks() {
 		return orderCallbacks;
+	}
+	
+	/**
+	 * Get the executor service
+	 * @return
+	 */
+	public ExecutorService getExecutorService() {
+		return executorService;
 	}
 }

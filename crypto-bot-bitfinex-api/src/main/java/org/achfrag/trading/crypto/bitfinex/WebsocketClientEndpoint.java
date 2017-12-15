@@ -6,8 +6,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import javax.websocket.ClientEndpoint;
@@ -41,11 +39,6 @@ public class WebsocketClientEndpoint implements Closeable {
 	private final List<Consumer<String>> callbackConsumer;
 	
 	/**
-	 * The thread pool for the consumer
-	 */
-	private final ExecutorService consumerExecutorService;
-
-	/**
 	 * The wait for connection latch
 	 */
 	private final CountDownLatch connectLatch = new CountDownLatch(1);
@@ -63,7 +56,6 @@ public class WebsocketClientEndpoint implements Closeable {
 	public WebsocketClientEndpoint(final URI endpointURI) {
 		this.endpointURI = endpointURI;
 		this.callbackConsumer = new ArrayList<>();
-		this.consumerExecutorService = Executors.newFixedThreadPool(10);
 	}
 
 	/**
@@ -74,12 +66,6 @@ public class WebsocketClientEndpoint implements Closeable {
 	 * @throws InterruptedException
 	 */
 	public void connect() throws DeploymentException, IOException, InterruptedException {
-		
-		if(consumerExecutorService.isTerminated()) {
-			throw new IOException("close was called on this websocket, unable to reconnect. "
-					+ "Please use disconnect instead!");
-		}
-		
 		final WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 		this.userSession = container.connectToServer(this, endpointURI);
 		connectLatch.await();
@@ -102,10 +88,7 @@ public class WebsocketClientEndpoint implements Closeable {
 		
 		// Execute callbacks in another thread
 		synchronized (callbackConsumer) {
-			callbackConsumer.forEach((c) -> {
-				final Runnable runnable = () -> c.accept(message);
-				consumerExecutorService.submit(runnable);
-			});
+			callbackConsumer.forEach((c) -> c.accept(message));
 		}
 	}
 	
@@ -159,14 +142,6 @@ public class WebsocketClientEndpoint implements Closeable {
 	 */
 	@Override
 	public void close() {
-		disconnect();
-		consumerExecutorService.shutdown();
-	}
-	
-	/**
-	 * Disconnect form server
-	 */
-	public void disconnect() {
 		if(userSession == null) {
 			return;
 		}

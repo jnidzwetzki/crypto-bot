@@ -2,6 +2,7 @@ package org.achfrag.trading.crypto.bitfinex.channel;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
@@ -92,10 +93,25 @@ public class OrderHandler implements ChannelHandler {
 			orders.notifyAll();
 		}
 		
-		// Notify callbacks
+		// Notify callbacks async
 		final List<Consumer<ExchangeOrder>> orderCallbacks = bitfinexApiBroker.getOrderCallbacks();
-		synchronized (orderCallbacks) {
-			orderCallbacks.forEach(c -> c.accept(exchangeOrder));
+		
+		if(orderCallbacks == null) {
+			return;
+		}
+		
+		final ExecutorService executorService = bitfinexApiBroker.getExecutorService();
+		
+		synchronized(orderCallbacks) {
+			if(orderCallbacks.isEmpty()) {
+				return;
+			}
+			
+			orderCallbacks.forEach((c) -> {
+				final Runnable runnable = () -> c.accept(exchangeOrder);
+				executorService.submit(runnable);
+			});
 		}
 	}
+
 }

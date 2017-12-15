@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
@@ -15,11 +16,16 @@ public class OrderbookManager {
 	 * The channel callbacks
 	 */
 	private final Map<String, List<BiConsumer<String, TradingOrderbookEntry>>> channelCallbacks;
+	
+	/**
+	 * The executor service
+	 */
+	private ExecutorService executorService;
 
-	public OrderbookManager() {
+	public OrderbookManager(final ExecutorService executorService) {
+		this.executorService = executorService;
 		this.channelCallbacks = new HashMap<>();
 	}
-	
 	
 	/**
 	 * Register a new trading orderbook callback
