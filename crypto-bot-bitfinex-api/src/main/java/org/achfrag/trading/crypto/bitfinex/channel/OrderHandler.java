@@ -1,9 +1,6 @@
 package org.achfrag.trading.crypto.bitfinex.channel;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
 
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
@@ -79,39 +76,6 @@ public class OrderHandler implements ChannelHandler {
 		exchangeOrder.setNotify(order.getInt(23) == 1 ? true : false);
 		exchangeOrder.setHidden(order.getInt(24) == 1 ? true : false);
 
-		final List<ExchangeOrder> orders = bitfinexApiBroker.getOrders();
-		
-		synchronized (orders) {
-			// Replace order 
-			orders.removeIf(o -> o.getOrderId() == exchangeOrder.getOrderId());
-			
-			// Remove canceled orders
-			if(exchangeOrder.getState() != ExchangeOrderState.STATE_CANCELED) {
-				orders.add(exchangeOrder);
-			}
-						
-			orders.notifyAll();
-		}
-		
-		// Notify callbacks async
-		final List<Consumer<ExchangeOrder>> orderCallbacks = bitfinexApiBroker.getOrderCallbacks();
-		
-		if(orderCallbacks == null) {
-			return;
-		}
-		
-		final ExecutorService executorService = bitfinexApiBroker.getExecutorService();
-		
-		synchronized(orderCallbacks) {
-			if(orderCallbacks.isEmpty()) {
-				return;
-			}
-			
-			orderCallbacks.forEach((c) -> {
-				final Runnable runnable = () -> c.accept(exchangeOrder);
-				executorService.submit(runnable);
-			});
-		}
+		bitfinexApiBroker.getOrderManager().updateOrder(exchangeOrder);
 	}
-
 }

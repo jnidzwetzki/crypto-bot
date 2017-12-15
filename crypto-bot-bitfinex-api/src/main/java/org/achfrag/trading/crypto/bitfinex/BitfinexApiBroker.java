@@ -71,21 +71,21 @@ public class BitfinexApiBroker implements Closeable {
 	 * The channel map
 	 */
 	private final Map<Integer, String> channelIdSymbolMap;
-
-	/**
-	 * The order callbacks
-	 */
-	private final List<Consumer<ExchangeOrder>> orderCallbacks;
-
+	
 	/**
 	 * The tick manager
 	 */
-	private TickerManager tickerManager;
+	private final TickerManager tickerManager;
 	
 	/**
 	 * The orderbook manager
 	 */
-	private OrderbookManager orderbookManager;
+	private final OrderbookManager orderbookManager;
+	
+	/**
+	 * The order manager
+	 */
+	private final OrderManager orderManager;
 	
 	/**
 	 * The last heartbeat value
@@ -130,11 +130,6 @@ public class BitfinexApiBroker implements Closeable {
 	private final Table<String, String, Wallet> walletTable;
 	
 	/**
-	 * The orders
-	 */
-	private final List<ExchangeOrder> orders;
-	
-	/**
 	 * The channel handler
 	 */
 	private final Map<String, ChannelHandler> channelHandler;
@@ -152,12 +147,11 @@ public class BitfinexApiBroker implements Closeable {
 	public BitfinexApiBroker() {
 		this.executorService = Executors.newFixedThreadPool(10);
 		this.channelIdSymbolMap = new HashMap<>();
-		this.orderCallbacks = new ArrayList<>();
 		this.lastHeatbeat = new AtomicLong();
 		this.tickerManager = new TickerManager(executorService);
 		this.orderbookManager = new OrderbookManager(executorService);
+		this.orderManager = new OrderManager(executorService);
 		this.walletTable = HashBasedTable.create();
-		this.orders = new ArrayList<>();
 		this.authenticated = false;
 		this.channelHandler = new HashMap<>();
 
@@ -612,7 +606,7 @@ public class BitfinexApiBroker implements Closeable {
 			
 			// Invalidate old data
 			tickerManager.invalidateTickerHeartbeat();
-			orders.clear();
+			orderManager.clear();
 			
 			websocketEndpoint.close();
 			websocketEndpoint.connect();
@@ -790,41 +784,6 @@ public class BitfinexApiBroker implements Closeable {
 	}
 	
 	/**
-	 * Get the list with exchange orders
-	 * @return
-	 * @throws APIException 
-	 */
-	public List<ExchangeOrder> getOrders() throws APIException {
-		
-		throwExceptionIfUnauthenticated();
-		
-		synchronized (orders) {
-			return orders;
-		}
-	}
-	
-	/**
-	 * Add a order callback
-	 * @param callback
-	 */
-	public void registerOrderCallback(final Consumer<ExchangeOrder> callback) {
-		synchronized (orderCallbacks) {
-			orderCallbacks.add(callback);
-		}
-	}
-	
-	/**
-	 * Remove a order callback
-	 * @param callback
-	 * @return
-	 */
-	public boolean removeOrderCallback(final Consumer<ExchangeOrder> callback) {
-		synchronized (orderCallbacks) {
-			return orderCallbacks.remove(callback);
-		}
-	}
-
-	/**
 	 * Get the ticker manager
 	 * @return
 	 */
@@ -887,18 +846,35 @@ public class BitfinexApiBroker implements Closeable {
 	}
 	
 	/**
-	 * Get the order callbacks
-	 * @return
-	 */
-	public List<Consumer<ExchangeOrder>> getOrderCallbacks() {
-		return orderCallbacks;
-	}
-	
-	/**
 	 * Get the executor service
 	 * @return
 	 */
 	public ExecutorService getExecutorService() {
 		return executorService;
+	}
+	
+	/**
+	 * Get the order manager
+	 * @return
+	 */
+	public OrderManager getOrderManager() {
+		return orderManager;
+	}
+
+	/**
+	 * Register a new order callback
+	 * @param callback
+	 */
+	public void registerOrderCallback(Consumer<ExchangeOrder> callback) {
+		orderManager.registerOrderCallback(callback);
+	}
+
+	/**
+	 * Remove the order callback
+	 * @param callback
+	 * @return
+	 */
+	public boolean removeOrderCallback(Consumer<ExchangeOrder> callback) {
+		return orderManager.removeOrderCallback(callback);
 	}
 }
