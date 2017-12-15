@@ -3,7 +3,7 @@ package org.achfrag.crypto.test;
 import java.util.Arrays;
 import java.util.List;
 
-import org.achfrag.crypto.bot.OrderManager;
+import org.achfrag.crypto.bot.PortfolioOrderManager;
 import org.achfrag.crypto.util.HibernateUtil;
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
@@ -116,7 +116,7 @@ public class TestPersistence {
 	public void testGetOpenTrades() {
 		
 		final BitfinexApiBroker apiBroker = Mockito.mock(BitfinexApiBroker.class);
-		final OrderManager ordermanager = new OrderManager(apiBroker);
+		final PortfolioOrderManager ordermanager = new PortfolioOrderManager(apiBroker);
 		
 		Assert.assertTrue(ordermanager.getAllOpenTrades().isEmpty());
 

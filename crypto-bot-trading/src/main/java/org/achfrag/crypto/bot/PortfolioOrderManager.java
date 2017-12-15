@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import org.achfrag.crypto.util.HibernateUtil;
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.trading.crypto.bitfinex.BitfinexOrderBuilder;
+import org.achfrag.trading.crypto.bitfinex.OrderManager;
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexOrderType;
@@ -20,7 +21,7 @@ import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OrderManager {
+public class PortfolioOrderManager {
 
 	/**
 	 * The bitfinex API
@@ -35,21 +36,25 @@ public class OrderManager {
 	/**
 	 * The Logger
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(OrderManager.class);
+	private final static Logger logger = LoggerFactory.getLogger(PortfolioOrderManager.class);
 
 	/**
 	 * The open trades query
 	 */
 	private static final String OPEN_TRADES_QUERY = "from Trade t where t.tradeState = '" + TradeState.OPEN.name() + "'";
 
-	public OrderManager(final BitfinexApiBroker bitfinexApiBroker) {
+	public PortfolioOrderManager(final BitfinexApiBroker bitfinexApiBroker) {
 		this.bitfinexApiBroker = Objects.requireNonNull(bitfinexApiBroker);
 		
 		// Persistence session factory
 		this.sessionFactory = HibernateUtil.getSessionFactory();
 
 		// Register order callbacks
-		bitfinexApiBroker.getOrderManager().registerOrderCallback((o) -> handleOrderCallback(o));
+		final OrderManager orderManager = bitfinexApiBroker.getOrderManager();
+		
+		if(orderManager != null) {
+			orderManager.registerOrderCallback((o) -> handleOrderCallback(o));
+		}
 	}
 	
 	/**

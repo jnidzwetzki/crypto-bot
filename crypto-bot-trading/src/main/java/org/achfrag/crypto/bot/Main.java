@@ -41,7 +41,7 @@ public class Main implements Runnable {
 
 	protected final List<BitfinexCurrencyPair> tradedCurrencies; 
 		
-	protected final OrderManager orderManager;
+	protected final PortfolioOrderManager orderManager;
 	
 	private final Map<BitfinexCurrencyPair, List<Trade>> trades;
 	
@@ -67,7 +67,7 @@ public class Main implements Runnable {
 		this.timeSeries = new HashMap<>();
 		this.strategies = new HashMap<>();
 		this.bitfinexApiBroker = BitfinexClientFactory.buildBifinexClient();
-		this.orderManager = new OrderManager(bitfinexApiBroker);
+		this.orderManager = new PortfolioOrderManager(bitfinexApiBroker);
 		this.trades = new HashMap<>();
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD);
 	}

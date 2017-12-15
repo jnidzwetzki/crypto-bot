@@ -53,7 +53,7 @@ public class DonchianBot implements Runnable {
 	/**
 	 * The order manager
 	 */
-	protected final OrderManager orderManager;
+	protected final PortfolioOrderManager orderManager;
 
 	/**
 	 * The timeframe to trade
@@ -76,7 +76,7 @@ public class DonchianBot implements Runnable {
 		this.timeSeries = new HashMap<>();		
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD);
 		this.bitfinexApiBroker = BitfinexClientFactory.buildBifinexClient();
-		this.orderManager = new OrderManager(bitfinexApiBroker);
+		this.orderManager = new PortfolioOrderManager(bitfinexApiBroker);
 	}
 
 	@Override
