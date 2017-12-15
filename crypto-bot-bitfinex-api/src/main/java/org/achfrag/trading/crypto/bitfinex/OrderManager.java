@@ -24,7 +24,7 @@ public class OrderManager {
 	/**
 	 * The executor service
 	 */
-	private ExecutorService executorService;
+	private final ExecutorService executorService;
 	
 	public OrderManager(ExecutorService executorService) {
 		this.executorService = executorService;

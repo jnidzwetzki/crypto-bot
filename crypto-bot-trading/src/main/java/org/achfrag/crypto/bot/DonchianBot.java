@@ -162,10 +162,10 @@ public class DonchianBot implements Runnable {
 	private void executeSystem() {
 		try {
 			for(final BitfinexCurrencyPair currencyPair : tradedCurrencies) {				
-				final Wallet wallet = getExchangeWallet(currencyPair.getCurrency2());
+				final Wallet wallet = getExchangeWallet(currencyPair.getCurrency1());
 
 				if(wallet.getBalance() > currencyPair.getMinimalOrderSize()) {
-					logger.info("We are invested, adjusting stop loss");
+					logger.info("We are invested {}, adjusting stop loss", wallet.getBalance());
 					moveStopLossOrder(currencyPair);
 				} else {
 					logger.info("We are not invested, adjusting entry");
@@ -244,7 +244,7 @@ public class DonchianBot implements Runnable {
 	 */
 	private double calculatePositionSize(final Decimal upperValue) throws APIException {
 		final Wallet wallet = getExchangeWallet("USD");
-		return (wallet.getBalance() / upperValue.toDouble()) * 0.8;
+		return (wallet.getBalance() / upperValue.toDouble()) * 0.9;
 	}
 	
 	/**
