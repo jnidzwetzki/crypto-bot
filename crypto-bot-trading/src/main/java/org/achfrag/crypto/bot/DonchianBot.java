@@ -324,7 +324,7 @@ public class DonchianBot implements Runnable {
 	 */
 	private ExchangeOrder getStopOrder(final String symbol) throws APIException {
 		
-		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrders();
+		final List<ExchangeOrder> openOrders = bitfinexApiBroker.getOrderManager().getOrders();
 		
 		return openOrders.stream()
 			.filter(e -> e.getOrderType() == BitfinexOrderType.EXCHANGE_STOP)

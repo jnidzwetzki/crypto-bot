@@ -303,7 +303,7 @@ public class Main implements Runnable {
 			System.out.println("Orders");
 			System.out.println("==========");
 			
-			final List<ExchangeOrder> orders = new ArrayList<>(bitfinexApiBroker.getOrders());
+			final List<ExchangeOrder> orders = new ArrayList<>(bitfinexApiBroker.getOrderManager().getOrders());
 			orders.sort((o1, o2) -> Long.compare(o2.getCid(), o1.getCid()));
 			final List<ExchangeOrder> lastOrders = orders.subList(Math.max(orders.size() - 3, 0), orders.size());
 
