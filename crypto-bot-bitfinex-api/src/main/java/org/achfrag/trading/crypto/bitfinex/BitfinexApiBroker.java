@@ -15,6 +15,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import org.achfrag.trading.crypto.bitfinex.channel.ChannelHandler;
+import org.achfrag.trading.crypto.bitfinex.channel.DoNothingHandler;
+import org.achfrag.trading.crypto.bitfinex.channel.HeartbeatHandler;
+import org.achfrag.trading.crypto.bitfinex.channel.OrderHandler;
+import org.achfrag.trading.crypto.bitfinex.channel.WalletHandler;
 import org.achfrag.trading.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.trading.crypto.bitfinex.commands.AuthCommand;
 import org.achfrag.trading.crypto.bitfinex.commands.CancelOrderCommand;
@@ -26,9 +31,7 @@ import org.achfrag.trading.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexOrder;
-import org.achfrag.trading.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
-import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrderState;
 import org.achfrag.trading.crypto.bitfinex.entity.OrderBookFrequency;
 import org.achfrag.trading.crypto.bitfinex.entity.OrderBookPrecision;
 import org.achfrag.trading.crypto.bitfinex.entity.TradingOrderbookEntry;
@@ -129,6 +132,11 @@ public class BitfinexApiBroker {
 	private final List<ExchangeOrder> orders;
 	
 	/**
+	 * The channel handler
+	 */
+	private final Map<String, ChannelHandler> channelHandler;
+	
+	/**
 	 * The Logger
 	 */
 	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
@@ -142,6 +150,39 @@ public class BitfinexApiBroker {
 		this.walletTable = HashBasedTable.create();
 		this.orders = new ArrayList<>();
 		this.authenticated = false;
+		this.channelHandler = new HashMap<>();
+		
+		setupChannelHandler();
+	}
+
+	/**
+	 * Setup the chennel handler
+	 */
+	private void setupChannelHandler() {
+		// Heartbeat
+		channelHandler.put("hb", new HeartbeatHandler());
+		// Positions
+		channelHandler.put("ps", new DoNothingHandler());
+		// Founding offers
+		channelHandler.put("fos", new DoNothingHandler());
+		// Founding credits
+		channelHandler.put("fcs", new DoNothingHandler());
+		// Founding loans
+		channelHandler.put("fls", new DoNothingHandler());
+		// Ats - Unkown
+		channelHandler.put("ats", new DoNothingHandler());
+		// Wallet snapshot
+		channelHandler.put("ws", new WalletHandler());
+		// Wallet update
+		channelHandler.put("wu", new WalletHandler());
+		// Order snapshot
+		channelHandler.put("os", new OrderHandler());
+		// Order notification
+		channelHandler.put("on", new OrderHandler());
+		// Order update
+		channelHandler.put("ou", new OrderHandler());
+		// Order cancelation
+		channelHandler.put("oc", new OrderHandler());
 	}
 	
 	public BitfinexApiBroker(final String apiKey, final String apiSecret) {
@@ -333,7 +374,7 @@ public class BitfinexApiBroker {
 	/**
 	 * Update the connection heartbeat
 	 */
-	private void updateConnectionHeartbeat() {
+	public void updateConnectionHeartbeat() {
 		lastHeatbeat.set(System.currentTimeMillis());
 	}
 
@@ -402,183 +443,16 @@ public class BitfinexApiBroker {
 				
 		final String subchannel = jsonArray.getString(1);
 
-		switch (subchannel) {
-		// Heartbeat 
-		case "hb":
-			logger.debug("Got connection heartbeat");
-			updateConnectionHeartbeat();
-			break;
-			
-		// Positions
-		case "ps":
-			// Ignore positions
-			break;
-		
-		// Founding offers
-		case "fos":
-			// Ignore founding offers
-			break;
-			
-		// Founding credits
-		case "fcs":
-			// Ignore founding credits
-			break;
-			
-		// Founding loans
-		case "fls":
-			// Ignore founding loans
-			break;
-		
-		// Ats - Unkown
-		case "ats":
-			// Ignore
-			break;
-			
-		// Wallet snapshot
-		case "ws":
-			handleWalletsCallback(jsonArray);
-			break;
-			
-		// Wallet update
-		case "wu":
-			handleWalletsCallback(jsonArray);
-			break;
-			
-		// Order snapshot
-		case "os":
-			handleOrdersCallback(jsonArray);
-			break;
-			
-		// Order notification
-		case "on":
-			handleOrdersCallback(jsonArray);
-			break;
-			
-		// Order update
-		case "ou":
-			handleOrdersCallback(jsonArray);
-			break;
-			
-		// Order cancelation
-		case "oc":
-			handleOrdersCallback(jsonArray);
-			break;
-			
-		default:
+		if(! channelHandler.containsKey(subchannel)) {
 			logger.error("No match found for message {}", message);
-			break;
-		}
-	}
-
-	/**
-	 * Handle the orders callback
-	 * @param jsonArray
-	 */
-	private void handleOrdersCallback(final JSONArray jsonArray) {
-		
-		logger.info("Got order callback {}", jsonArray.toString());
-		
-		final JSONArray orders = jsonArray.getJSONArray(2);
-		
-		// No orders active
-		if(orders.length() == 0) {
-			return;
-		}
-		
-		// Snapshot or update
-		if(! (orders.get(0) instanceof JSONArray)) {
-			handleOrderCallback(orders);
 		} else {
-			for(int orderPos = 0; orderPos < orders.length(); orderPos++) {
-				final JSONArray orderArray = orders.getJSONArray(orderPos);
-				handleOrderCallback(orderArray);
-			}
+			final ChannelHandler channelHandlerCallback = channelHandler.get(subchannel);
 			
-			if(orderSnapshotLatch != null) {
-				orderSnapshotLatch.countDown();
+			try {
+				channelHandlerCallback.handleChannelData(this, jsonArray);
+			} catch (APIException e) {
+				logger.error("Got exception while handling callback", e);
 			}
-		}
-	}
-
-	/**
-	 * Handle a single order callback
-	 * @param orderArray
-	 */
-	private void handleOrderCallback(final JSONArray order) {		
-		final ExchangeOrder exchangeOrder = new ExchangeOrder();
-		exchangeOrder.setOrderId(order.getLong(0));
-		exchangeOrder.setGroupId(order.optInt(1, -1));
-		exchangeOrder.setCid(order.getLong(2));
-		exchangeOrder.setSymbol(order.getString(3));
-		exchangeOrder.setCreated(order.getLong(4));
-		exchangeOrder.setUpdated(order.getLong(5));
-		exchangeOrder.setAmount(order.getDouble(6));
-		exchangeOrder.setAmountAtCreation(order.getDouble(7));
-		exchangeOrder.setOrderType(BitfinexOrderType.fromString(order.getString(8)));
-		
-		final ExchangeOrderState orderState = ExchangeOrderState.fromString(order.getString(13));
-		exchangeOrder.setState(orderState);
-		
-		exchangeOrder.setPrice(order.getDouble(16));
-		exchangeOrder.setPriceAvg(order.optDouble(17, -1));
-		exchangeOrder.setPriceTrailing(order.optDouble(18, -1));
-		exchangeOrder.setPriceAuxLimit(order.optDouble(19, -1));
-		exchangeOrder.setNotify(order.getInt(23) == 1 ? true : false);
-		exchangeOrder.setHidden(order.getInt(24) == 1 ? true : false);
-
-		synchronized (orders) {
-			// Replace order 
-			orders.removeIf(o -> o.getOrderId() == exchangeOrder.getOrderId());
-			
-			// Remove canceled orders
-			if(exchangeOrder.getState() != ExchangeOrderState.STATE_CANCELED) {
-				orders.add(exchangeOrder);
-			}
-						
-			orders.notifyAll();
-		}
-		
-		// Notify callbacks
-		synchronized (orderCallbacks) {
-			orderCallbacks.forEach(c -> c.accept(exchangeOrder));
-		}
-	}
-
-	/**
-	 * Handle the wallets callback
-	 * @param jsonArray
-	 */
-	private void handleWalletsCallback(final JSONArray jsonArray) {
-		
-		final JSONArray wallets = jsonArray.getJSONArray(2);
-		
-		// Snapshot or update
-		if(! (wallets.get(0) instanceof JSONArray)) {
-			handleWalletcallback(wallets);
-		} else {
-			for(int walletPos = 0; walletPos < wallets.length(); walletPos++) {
-				final JSONArray walletArray = wallets.getJSONArray(walletPos);
-				handleWalletcallback(walletArray);
-			}
-		}
-	}
-
-	/**
-	 * Handle the callback for a single wallet
-	 * @param walletArray
-	 */
-	private void handleWalletcallback(final JSONArray walletArray) {
-		final String walletType = walletArray.getString(0);
-		final String currency = walletArray.getString(1);
-		final double balance = walletArray.getDouble(2);
-		final float unsettledInterest = walletArray.getFloat(3);
-		final float balanceAvailable = walletArray.optFloat(4, -1);
-		
-		final Wallet wallet = new Wallet(walletType, currency, balance, unsettledInterest, balanceAvailable);
-
-		synchronized (walletTable) {
-			walletTable.put(walletType, currency, wallet);
-			walletTable.notifyAll();
 		}
 	}
 
@@ -881,6 +755,15 @@ public class BitfinexApiBroker {
 			return Collections.unmodifiableCollection(walletTable.values());
 		}
 	}
+	
+	/**
+	 * Get all wallets
+	 * @return 
+	 * @throws APIException 
+	 */
+	public Table<String, String, Wallet> getWalletTable() throws APIException {
+		return walletTable;
+	}
 
 	/**
 	 * Throw a new exception if called on a unauthenticated connection
@@ -902,7 +785,7 @@ public class BitfinexApiBroker {
 		throwExceptionIfUnauthenticated();
 		
 		synchronized (orders) {
-			return Collections.unmodifiableList(orders);
+			return orders;
 		}
 	}
 	
@@ -981,4 +864,19 @@ public class BitfinexApiBroker {
 		return orderbookManager.removeTradingOrderbookCallback(symbol, callback);
 	}
 
+	/**
+	 * Get the snapshot latch
+	 * @return
+	 */
+	public CountDownLatch getOrderSnapshotLatch() {
+		return orderSnapshotLatch;
+	}
+	
+	/**
+	 * Get the order callbacks
+	 * @return
+	 */
+	public List<Consumer<ExchangeOrder>> getOrderCallbacks() {
+		return orderCallbacks;
+	}
 }
