@@ -120,7 +120,9 @@ public class DonchianBot implements Runnable {
 				Thread.sleep(100);
 			}
 
-			bitfinexApiBroker.registerTickCallback(currency.toBitfinexString(), (s, c) -> handleTickCallback(s, c));
+			bitfinexApiBroker
+				.getTickerManager()
+				.registerTickCallback(currency.toBitfinexString(), (s, c) -> handleTickCallback(s, c));
 		}
 	}
 	

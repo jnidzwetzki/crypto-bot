@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.achfrag.trading.crypto.bitfinex.channel.ChannelHandler;
@@ -34,10 +33,8 @@ import org.achfrag.trading.crypto.bitfinex.commands.SubscribeTickerCommand;
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexOrder;
-import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.trading.crypto.bitfinex.entity.OrderBookFrequency;
 import org.achfrag.trading.crypto.bitfinex.entity.OrderBookPrecision;
-import org.achfrag.trading.crypto.bitfinex.entity.TradingOrderbookEntry;
 import org.achfrag.trading.crypto.bitfinex.entity.Wallet;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -792,52 +789,6 @@ public class BitfinexApiBroker implements Closeable {
 	}
 
 	/**
-	 * Register a tick callback
-	 * @param symbol
-	 * @param callback
-	 * @return
-	 * @throws APIException
-	 */
-	public void registerTickCallback(String symbol, BiConsumer<String, Tick> callback) throws APIException {
-		tickerManager.registerTickCallback(symbol, callback);
-	}
-
-	/**
-	 * Remove a tick callback
-	 * @param symbol
-	 * @param callback
-	 * @return
-	 * @throws APIException
-	 */
-	public boolean removeTickCallback(String symbol, BiConsumer<String, Tick> callback) throws APIException {
-		return tickerManager.removeTickCallback(symbol, callback);
-	}
-
-	/**
-	 * Register a new trading orderbook callback
-	 * @param symbol
-	 * @param callback
-	 * @throws APIException
-	 */
-	public void registerTradingOrderbookCallback(final String symbol, 
-			final BiConsumer<String, TradingOrderbookEntry> callback) throws APIException {
-		
-		orderbookManager.registerTradingOrderbookCallback(symbol, callback);
-	}
-
-	/**
-	 * Remove a trading orderbook callback
-	 * @param symbol
-	 * @param callback
-	 * @return
-	 * @throws APIException
-	 */
-	public boolean removeTradingOrderbookCallback(final String symbol,
-			final BiConsumer<String, TradingOrderbookEntry> callback) throws APIException {
-		return orderbookManager.removeTradingOrderbookCallback(symbol, callback);
-	}
-
-	/**
 	 * Get the snapshot latch
 	 * @return
 	 */
@@ -860,21 +811,13 @@ public class BitfinexApiBroker implements Closeable {
 	public OrderManager getOrderManager() {
 		return orderManager;
 	}
-
+	
 	/**
-	 * Register a new order callback
-	 * @param callback
-	 */
-	public void registerOrderCallback(Consumer<ExchangeOrder> callback) {
-		orderManager.registerOrderCallback(callback);
-	}
-
-	/**
-	 * Remove the order callback
-	 * @param callback
+	 * Get the orderbook manager
 	 * @return
 	 */
-	public boolean removeOrderCallback(Consumer<ExchangeOrder> callback) {
-		return orderManager.removeOrderCallback(callback);
+	public OrderbookManager getOrderbookManager() {
+		return orderbookManager;
 	}
+
 }

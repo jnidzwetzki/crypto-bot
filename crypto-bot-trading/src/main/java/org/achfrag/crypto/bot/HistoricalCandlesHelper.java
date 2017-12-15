@@ -73,7 +73,7 @@ public class HistoricalCandlesHelper {
 			
 			final String barSymbol = currency.toBifinexCandlestickString(timeframe);
 			
-			bitfinexApiBroker.registerTickCallback(barSymbol, callback);
+			bitfinexApiBroker.getTickerManager().registerTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new SubscribeCandlesCommand(currency, timeframe));
 
 			// Wait for 100 tics or 10 seconds. All snapshot ticks are handled in 
@@ -81,7 +81,7 @@ public class HistoricalCandlesHelper {
 			// call removeTickCallback.
 			tickCountdown.await(10, TimeUnit.SECONDS);
 			
-			bitfinexApiBroker.removeTickCallback(barSymbol, callback);
+			bitfinexApiBroker.getTickerManager().removeTickCallback(barSymbol, callback);
 			bitfinexApiBroker.sendCommand(new UnsubscribeCandlesCommand(currency, timeframe));
 			
 			logger.info("Loaded ticks for symbol {} {}", bitfinexString,
