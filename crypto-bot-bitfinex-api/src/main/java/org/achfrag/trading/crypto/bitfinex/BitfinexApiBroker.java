@@ -196,6 +196,10 @@ public class BitfinexApiBroker implements Closeable {
 		channelHandler.put("ou", new OrderHandler());
 		// Order cancelation
 		channelHandler.put("oc", new OrderHandler());
+		// Trade executed
+		channelHandler.put("te", new DoNothingHandler());
+		// Trade update
+		channelHandler.put("tu", new DoNothingHandler());
 	}
 	
 	public BitfinexApiBroker(final String apiKey, final String apiSecret) {
