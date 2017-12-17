@@ -2,7 +2,7 @@ package org.achfrag.trading.crypto.bitfinex.entity;
 
 public enum ExchangeOrderState {
 	
-	STATE_ACTIV("ACTIVE"),
+	STATE_ACTIVE("ACTIVE"),
 	STATE_EXECUTED("EXECUTED"),
 	STATE_PARTIALLY_FILLED("PARTIALLY FILLED"),
 	STATE_CANCELED("CANCELED"),
@@ -20,7 +20,7 @@ public enum ExchangeOrderState {
 	
 	public static ExchangeOrderState fromString(final String string) {
 		for (ExchangeOrderState state : ExchangeOrderState.values()) {
-			if (state.getBitfinexString().equalsIgnoreCase(string)) {
+			if (state.getBitfinexString().startsWith(string)) {
 				return state;
 			}
 		}
