@@ -279,7 +279,7 @@ public class DonchianBot implements Runnable {
 
 		final DonchianChannelLower donchianChannelLower = new DonchianChannelLower(minPrice, 48);
 		Decimal newStopLoss = donchianChannelLower.getValue(currencyTimeSeries.getEndIndex());
-		System.out.println("Low is at: " + newStopLoss);
+		logger.info("Low is at: {}", newStopLoss);
 
 		final double newStopLossValue = Math.round(newStopLoss.toDouble() - (newStopLoss.toDouble() / 100 * 0.2));
 		logger.info("Current stop-loss value is {}", newStopLossValue);
