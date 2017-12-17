@@ -28,8 +28,7 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 			orders.clear();	
 		}
 	}
-	
-	
+
 	/**
 	 * Get the list with exchange orders
 	 * @return

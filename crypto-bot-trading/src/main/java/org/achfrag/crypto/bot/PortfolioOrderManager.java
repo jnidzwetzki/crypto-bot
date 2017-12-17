@@ -53,7 +53,7 @@ public class PortfolioOrderManager {
 		final OrderManager orderManager = bitfinexApiBroker.getOrderManager();
 		
 		if(orderManager != null) {
-			orderManager.registerOrderCallback((o) -> handleOrderCallback(o));
+			orderManager.registerCallback((o) -> handleOrderCallback(o));
 		}
 	}
 	
@@ -175,7 +175,7 @@ public class PortfolioOrderManager {
 			}
 		};
 		
-		bitfinexApiBroker.getOrderManager().registerOrderCallback(ordercallback);
+		bitfinexApiBroker.getOrderManager().registerCallback(ordercallback);
 		
 		try {
 			bitfinexApiBroker.cancelOrder(id);
@@ -183,7 +183,7 @@ public class PortfolioOrderManager {
 		} catch (Exception e) {
 			throw e;
 		} finally {
-			bitfinexApiBroker.getOrderManager().removeOrderCallback(ordercallback);
+			bitfinexApiBroker.getOrderManager().removeCallback(ordercallback);
 		}
 		
 	}

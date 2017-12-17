@@ -21,6 +21,7 @@ import org.achfrag.trading.crypto.bitfinex.channel.ChannelHandler;
 import org.achfrag.trading.crypto.bitfinex.channel.DoNothingHandler;
 import org.achfrag.trading.crypto.bitfinex.channel.HeartbeatHandler;
 import org.achfrag.trading.crypto.bitfinex.channel.OrderHandler;
+import org.achfrag.trading.crypto.bitfinex.channel.PositionHandler;
 import org.achfrag.trading.crypto.bitfinex.channel.WalletHandler;
 import org.achfrag.trading.crypto.bitfinex.commands.AbstractAPICommand;
 import org.achfrag.trading.crypto.bitfinex.commands.AuthCommand;
@@ -78,6 +79,11 @@ public class BitfinexApiBroker implements Closeable {
 	 * The orderbook manager
 	 */
 	private final OrderbookManager orderbookManager;
+	
+	/**
+	 * The position manager
+	 */
+	private final PositionManager positionManager;
 	
 	/**
 	 * The order manager
@@ -148,6 +154,7 @@ public class BitfinexApiBroker implements Closeable {
 		this.tickerManager = new TickerManager(executorService);
 		this.orderbookManager = new OrderbookManager(executorService);
 		this.orderManager = new OrderManager(executorService);
+		this.positionManager = new PositionManager(executorService);
 		this.walletTable = HashBasedTable.create();
 		this.authenticated = false;
 		this.channelHandler = new HashMap<>();
@@ -161,8 +168,14 @@ public class BitfinexApiBroker implements Closeable {
 	private void setupChannelHandler() {
 		// Heartbeat
 		channelHandler.put("hb", new HeartbeatHandler());
-		// Positions
-		channelHandler.put("ps", new DoNothingHandler());
+		// Position snapshot
+		channelHandler.put("ps", new PositionHandler());
+		// Position new
+		channelHandler.put("pn", new PositionHandler());
+		// Position updated
+		channelHandler.put("pu", new PositionHandler());
+		// Position caneled
+		channelHandler.put("pc", new PositionHandler());
 		// Founding offers
 		channelHandler.put("fos", new DoNothingHandler());
 		// Founding credits
@@ -820,4 +833,11 @@ public class BitfinexApiBroker implements Closeable {
 		return orderbookManager;
 	}
 
+	/**
+	 * Get the position manager
+	 * @return
+	 */
+	public PositionManager getPositionManager() {
+		return positionManager;
+	}
 }

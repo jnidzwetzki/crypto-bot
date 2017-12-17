@@ -10,7 +10,7 @@ public abstract class AbstractSimpleCallbackManager<T> {
 	/**
 	 * The order callbacks
 	 */
-	private final List<Consumer<T>> orderCallbacks;
+	private final List<Consumer<T>> callbacks;
 	
 	/**
 	 * The executor service
@@ -19,18 +19,17 @@ public abstract class AbstractSimpleCallbackManager<T> {
 	
 	
 	public AbstractSimpleCallbackManager(ExecutorService executorService) {
-		this.orderCallbacks = new ArrayList<>();
+		this.callbacks = new ArrayList<>();
 		this.executorService = executorService;
 	}
-	
 	
 	/**
 	 * Add a order callback
 	 * @param callback
 	 */
-	public void registerOrderCallback(final Consumer<T> callback) {
-		synchronized (orderCallbacks) {
-			orderCallbacks.add(callback);
+	public void registerCallback(final Consumer<T> callback) {
+		synchronized (callbacks) {
+			callbacks.add(callback);
 		}
 	}
 	
@@ -39,9 +38,9 @@ public abstract class AbstractSimpleCallbackManager<T> {
 	 * @param callback
 	 * @return
 	 */
-	public boolean removeOrderCallback(final Consumer<T> callback) {
-		synchronized (orderCallbacks) {
-			return orderCallbacks.remove(callback);
+	public boolean removeCallback(final Consumer<T> callback) {
+		synchronized (callbacks) {
+			return callbacks.remove(callback);
 		}
 	}
 	
@@ -52,16 +51,16 @@ public abstract class AbstractSimpleCallbackManager<T> {
 	public void notifyCallbacks(final T exchangeOrder) {
 
 		// Notify callbacks async		
-		if(orderCallbacks == null) {
+		if(callbacks == null) {
 			return;
 		}
 				
-		synchronized(orderCallbacks) {
-			if(orderCallbacks.isEmpty()) {
+		synchronized(callbacks) {
+			if(callbacks.isEmpty()) {
 				return;
 			}
 			
-			orderCallbacks.forEach((c) -> {
+			callbacks.forEach((c) -> {
 				final Runnable runnable = () -> c.accept(exchangeOrder);
 				executorService.submit(runnable);
 			});
