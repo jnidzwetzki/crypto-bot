@@ -3,32 +3,20 @@ package org.achfrag.trading.crypto.bitfinex;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
 
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
 import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrderState;
 
-public class OrderManager {
+public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 
-	/**
-	 * The order callbacks
-	 */
-	private final List<Consumer<ExchangeOrder>> orderCallbacks;
-	
 	/**
 	 * The orders
 	 */
 	private final List<ExchangeOrder> orders;
 
-	/**
-	 * The executor service
-	 */
-	private final ExecutorService executorService;
-	
-	public OrderManager(ExecutorService executorService) {
-		this.executorService = executorService;
-		this.orderCallbacks = new ArrayList<>();
+	public OrderManager(final ExecutorService executorService) {
+		super(executorService);
 		this.orders = new ArrayList<>();
 	}
 	
@@ -54,27 +42,6 @@ public class OrderManager {
 	}
 	
 	/**
-	 * Add a order callback
-	 * @param callback
-	 */
-	public void registerOrderCallback(final Consumer<ExchangeOrder> callback) {
-		synchronized (orderCallbacks) {
-			orderCallbacks.add(callback);
-		}
-	}
-	
-	/**
-	 * Remove a order callback
-	 * @param callback
-	 * @return
-	 */
-	public boolean removeOrderCallback(final Consumer<ExchangeOrder> callback) {
-		synchronized (orderCallbacks) {
-			return orderCallbacks.remove(callback);
-		}
-	}
-	
-	/**
 	 * Update a exchange order
 	 * @param exchangeOrder
 	 */
@@ -92,20 +59,6 @@ public class OrderManager {
 			orders.notifyAll();
 		}
 		
-		// Notify callbacks async		
-		if(orderCallbacks == null) {
-			return;
-		}
-				
-		synchronized(orderCallbacks) {
-			if(orderCallbacks.isEmpty()) {
-				return;
-			}
-			
-			orderCallbacks.forEach((c) -> {
-				final Runnable runnable = () -> c.accept(exchangeOrder);
-				executorService.submit(runnable);
-			});
-		}
+		notifyCallbacks(exchangeOrder);
 	}
 }
