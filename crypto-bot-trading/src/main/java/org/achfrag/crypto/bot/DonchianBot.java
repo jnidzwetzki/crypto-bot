@@ -20,6 +20,7 @@ import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
 import org.achfrag.trading.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.trading.crypto.bitfinex.entity.Wallet;
 import org.achfrag.trading.crypto.bitfinex.util.TickMerger;
+import org.bboxdb.commons.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.Decimal;
@@ -56,6 +57,16 @@ public class DonchianBot implements Runnable {
 	protected final PortfolioOrderManager orderManager;
 
 	/**
+	 * The channel period in
+	 */
+	private int periodIn;
+
+	/**
+	 * The channel period out
+	 */
+	private int periodOut;
+	
+	/**
 	 * The timeframe to trade
 	 */
 	private static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
@@ -69,9 +80,10 @@ public class DonchianBot implements Runnable {
 	 * Simulate
 	 */
 	public final static boolean SIMULATION = false;
-
 	
-	public DonchianBot() {
+	public DonchianBot(final int periodIn, final int periodOut) {
+		this.periodIn = periodIn;
+		this.periodOut = periodOut;
 		this.tickMerger = new HashMap<>();
 		this.timeSeries = new HashMap<>();		
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD);
@@ -193,7 +205,7 @@ public class DonchianBot implements Runnable {
 		TimeSeries currencyTimeSeries = timeSeries.get(symbol);
 		final MaxPriceIndicator maxPrice = new MaxPriceIndicator(currencyTimeSeries);
 
-		final DonchianChannelUpper donchianChannelUpper = new DonchianChannelUpper(maxPrice, 96);
+		final DonchianChannelUpper donchianChannelUpper = new DonchianChannelUpper(maxPrice, periodIn);
 		final Decimal upperValue = donchianChannelUpper.getValue(currencyTimeSeries.getEndIndex());
 
 		final double adjustedUpper = Math.round(upperValue.toDouble() + (upperValue.toDouble() / 100 * 0.5));
@@ -277,7 +289,7 @@ public class DonchianBot implements Runnable {
 		
 		final MinPriceIndicator minPrice = new MinPriceIndicator(currencyTimeSeries);
 
-		final DonchianChannelLower donchianChannelLower = new DonchianChannelLower(minPrice, 48);
+		final DonchianChannelLower donchianChannelLower = new DonchianChannelLower(minPrice, periodOut);
 		Decimal newStopLoss = donchianChannelLower.getValue(currencyTimeSeries.getEndIndex());
 		logger.info("Low is at: {}", newStopLoss);
 
@@ -340,7 +352,16 @@ public class DonchianBot implements Runnable {
 	 * @param args
 	 */
 	public static void main(final String[] args) {
-		final DonchianBot donchianBot = new DonchianBot();
+		
+		if(args.length != 2) {
+			System.err.println("Usage: class <period-in> <period-out>");
+			System.exit(-1);
+		}
+		
+		final int periodIn = MathUtil.tryParseIntOrExit(args[0], () -> "Unable to parse period in");
+		final int periodOut = MathUtil.tryParseIntOrExit(args[1], () -> "Unable to parse period out");
+
+		final DonchianBot donchianBot = new DonchianBot(periodIn, periodOut);
 		donchianBot.run();
 	}
 
