@@ -1,5 +1,7 @@
 package org.achfrag.trading.crypto.bitfinex.entity;
 
+import java.util.Objects;
+
 public enum ExchangeOrderState {
 	
 	STATE_ACTIVE("ACTIVE"),
@@ -19,11 +21,15 @@ public enum ExchangeOrderState {
 	}
 	
 	public static ExchangeOrderState fromString(final String string) {
+		
+		Objects.requireNonNull(string);
+		
 		for (ExchangeOrderState state : ExchangeOrderState.values()) {
-			if (state.getBitfinexString().startsWith(string)) {
+			if (string.startsWith(state.getBitfinexString())) {
 				return state;
 			}
 		}
+		
 		throw new IllegalArgumentException("Unable to find order type for: " + string);
 	}
 }
