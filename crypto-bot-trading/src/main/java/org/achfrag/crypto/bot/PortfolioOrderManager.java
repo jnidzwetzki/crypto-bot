@@ -176,7 +176,7 @@ public class PortfolioOrderManager {
 		final CountDownLatch waitLatch = new CountDownLatch(1);
 		
 		final Consumer<ExchangeOrder> ordercallback = (o) -> {
-			if(o.getOrderId() == order.getId()) {
+			if(o.getCid() == order.getCid()) {
 				waitLatch.countDown();
 			}
 		};

@@ -37,7 +37,7 @@ public abstract class PortfolioManager {
 	/**
 	 * Simulate or real trading
 	 */
-	public final static boolean SIMULATION = true;
+	public final static boolean SIMULATION = false;
 	
 	/**
 	 * The Logger
@@ -192,7 +192,7 @@ public abstract class PortfolioManager {
 			
 			// Check old orders
 			if(order != null) {
-				if(order.getPrice() != exitPrice) {
+				if(order.getPrice() < exitPrice) {
 					logger.info("Exit price has moved form {} to {}, canceling order", 
 							order.getPrice(), exitPrice);
 					
