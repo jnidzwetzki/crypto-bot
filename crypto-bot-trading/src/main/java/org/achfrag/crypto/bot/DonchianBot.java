@@ -138,11 +138,15 @@ public class DonchianBot implements Runnable {
 	 * @param symbol
 	 * @param tick
 	 */
-	private void barDoneCallback(final String symbol, final Tick tick) {		
+	private synchronized void barDoneCallback(final String symbol, final Tick tick) {	
+		
+		final TimeSeries symbolTimeSeries = timeSeries.get(symbol);
+
 		try {
-			timeSeries.get(symbol).addTick(tick);
+			symbolTimeSeries.addTick(tick);
 		} catch(Throwable e) {
-			logger.error("Unable to add {} to symbol {}", tick, symbol);
+			logger.error("Unable to add {} to symbol {}, last bar is {}", 
+					tick, symbol, symbolTimeSeries.getLastTick());
 		}
 		
 		logger.info("Newest bar is {}", tick);
