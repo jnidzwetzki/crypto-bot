@@ -42,4 +42,14 @@ public class PositionManager extends AbstractSimpleCallbackManager<Position> {
 		notifyCallbacks(position);
 	}
 	
+	/**
+	 * Get the positions
+	 * @return
+	 */
+	public List<Position> getPositions() {
+		synchronized (positions) {
+			return positions;
+		}
+	}
+	
 }
