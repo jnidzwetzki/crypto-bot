@@ -125,6 +125,11 @@ public abstract class PortfolioManager {
 		
 		final double positionSizeUSD = positionSizeInUSD();
 		
+		if(positionSizeUSD < 20) {
+			logger.info("Dont place entry orders, USD per position is too small {}", positionSizeUSD);
+			return;
+		}
+		
 		// Check current limits and position sizes
 		for(final BitfinexCurrencyPair currency : entries.keySet()) {
 			final ExchangeOrder order = getOpenOrderForSymbol(currency.toBitfinexString());
