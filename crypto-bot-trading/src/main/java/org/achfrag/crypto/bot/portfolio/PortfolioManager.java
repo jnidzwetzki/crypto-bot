@@ -231,7 +231,7 @@ public abstract class PortfolioManager {
 						orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
 					}
 				} else {
-					logger.info("Old order price for {} is fine", currency, exitPrice);
+					logger.info("Old order price for {} is fine: {}", currency, exitPrice);
 					continue;
 				}
 			} 
