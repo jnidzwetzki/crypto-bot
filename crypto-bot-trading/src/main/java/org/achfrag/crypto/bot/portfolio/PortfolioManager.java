@@ -195,11 +195,12 @@ public abstract class PortfolioManager {
 			// Check old orders
 			if(order != null) {
 				if(order.getPrice() < exitPrice) {
-					logger.info("Exit price has moved form {} to {}, canceling order", 
-							order.getPrice(), exitPrice);
+					logger.info("Exit price for {} has moved form {} to {}, canceling old order", 
+							currency, order.getPrice(), exitPrice);
 					
 					orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
 				} else {
+					logger.info("Old order price for {} is fine", currency, exitPrice);
 					continue;
 				}
 			} 
