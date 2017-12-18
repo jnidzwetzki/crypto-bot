@@ -86,7 +86,10 @@ public class DonchianBot implements Runnable {
 		this.periodOut = periodOut;
 		this.tickMerger = new HashMap<>();
 		this.timeSeries = new HashMap<>();		
+		
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD);
+		//		BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD);
+		
 		this.bitfinexApiBroker = BitfinexClientFactory.buildBifinexClient();
 		this.orderManager = new PortfolioOrderManager(bitfinexApiBroker);
 	}
@@ -194,6 +197,61 @@ public class DonchianBot implements Runnable {
 	}
 
 	/**
+	 * Get the upper channel value
+	 * @param currencyPair
+	 * @return
+	 */
+	private Decimal getUpperChannelValue(final BitfinexCurrencyPair currencyPair) {
+		final String symbol = currencyPair.toBitfinexString();
+		final TimeSeries currencyTimeSeries = timeSeries.get(symbol);
+		final MaxPriceIndicator maxPrice = new MaxPriceIndicator(currencyTimeSeries);
+
+		final DonchianChannelUpper donchianChannelUpper = new DonchianChannelUpper(maxPrice, periodIn);
+		return donchianChannelUpper.getValue(currencyTimeSeries.getEndIndex());
+	}
+	
+	/**
+	 * Get the lower channel value
+	 * @param currencyPair
+	 * @return
+	 */
+	private Decimal getLowerChannelValue(final BitfinexCurrencyPair currencyPair) {
+		final String symbol = currencyPair.toBitfinexString();
+		final TimeSeries currencyTimeSeries = timeSeries.get(symbol);
+		
+		final MinPriceIndicator minPrice = new MinPriceIndicator(currencyTimeSeries);
+
+		final DonchianChannelLower donchianChannelLower = new DonchianChannelLower(minPrice, periodOut);
+		return donchianChannelLower.getValue(currencyTimeSeries.getEndIndex());
+	}
+
+	/**
+	 * Calculate the positon size
+	 * @param upperValue
+	 * @return
+	 * @throws APIException 
+	 */
+	private double calculatePositionSize(final Decimal upperValue) throws APIException {
+		final Wallet wallet = getExchangeWallet("USD");
+		return (wallet.getBalance() / upperValue.toDouble()) * 0.9;
+	}
+	
+	/**
+	 * Get the exchange wallet
+	 * @param currency 
+	 * @return
+	 * @throws APIException 
+	 */
+	private Wallet getExchangeWallet(final String currency) throws APIException {
+		return bitfinexApiBroker.getWallets()
+			.stream()
+			.filter(w -> w.getWalletType().equals(Wallet.WALLET_TYPE_EXCHANGE))
+			.filter(w -> w.getCurreny().equals(currency))
+			.findFirst()
+			.orElse(null);
+	}
+	
+	/**
 	 * Find a good entry order
 	 * @param currencyPair
 	 * @throws APIException 
@@ -201,12 +259,7 @@ public class DonchianBot implements Runnable {
 	private void moveEntryOrder(final BitfinexCurrencyPair currencyPair) throws APIException {
 		final ExchangeOrder entryOrder = getStopOrder(currencyPair.toBitfinexString());		
 		
-		String symbol = currencyPair.toBitfinexString();
-		TimeSeries currencyTimeSeries = timeSeries.get(symbol);
-		final MaxPriceIndicator maxPrice = new MaxPriceIndicator(currencyTimeSeries);
-
-		final DonchianChannelUpper donchianChannelUpper = new DonchianChannelUpper(maxPrice, periodIn);
-		final Decimal upperValue = donchianChannelUpper.getValue(currencyTimeSeries.getEndIndex());
+		final Decimal upperValue = getUpperChannelValue(currencyPair);
 
 		final double adjustedUpper = Math.round(upperValue.toDouble() + (upperValue.toDouble() / 100 * 0.5));
 		logger.info("Calculated upper is at: {} / entry order is {}", adjustedUpper, entryOrder);
@@ -249,32 +302,6 @@ public class DonchianBot implements Runnable {
 	}
 
 	/**
-	 * Calculate the positon size
-	 * @param upperValue
-	 * @return
-	 * @throws APIException 
-	 */
-	private double calculatePositionSize(final Decimal upperValue) throws APIException {
-		final Wallet wallet = getExchangeWallet("USD");
-		return (wallet.getBalance() / upperValue.toDouble()) * 0.9;
-	}
-	
-	/**
-	 * Get the exchange wallet
-	 * @param currency 
-	 * @return
-	 * @throws APIException 
-	 */
-	private Wallet getExchangeWallet(final String currency) throws APIException {
-		return bitfinexApiBroker.getWallets()
-			.stream()
-			.filter(w -> w.getWalletType().equals(Wallet.WALLET_TYPE_EXCHANGE))
-			.filter(w -> w.getCurreny().equals(currency))
-			.findFirst()
-			.orElse(null);
-	}
-
-	/**
 	 * Move the stop loss order up
 	 * @param symbol
 	 * @param newStopLoss
@@ -284,19 +311,13 @@ public class DonchianBot implements Runnable {
 	private void moveStopLossOrder(BitfinexCurrencyPair currencyPair) 
 			throws APIException, InterruptedException {
 		
-		final String symbol = currencyPair.toBitfinexString();
-		final TimeSeries currencyTimeSeries = timeSeries.get(symbol);
-		
-		final MinPriceIndicator minPrice = new MinPriceIndicator(currencyTimeSeries);
+		final ExchangeOrder openOrder = getStopOrder(currencyPair.toBitfinexString());
 
-		final DonchianChannelLower donchianChannelLower = new DonchianChannelLower(minPrice, periodOut);
-		Decimal newStopLoss = donchianChannelLower.getValue(currencyTimeSeries.getEndIndex());
+		final Decimal newStopLoss = getLowerChannelValue(currencyPair);
 		logger.info("Low is at: {}", newStopLoss);
 
 		final double newStopLossValue = Math.round(newStopLoss.toDouble() - (newStopLoss.toDouble() / 100 * 0.2));
 		logger.info("Current stop-loss value is {}", newStopLossValue);
-		
-		final ExchangeOrder openOrder = getStopOrder(symbol);
 		
 		if(openOrder != null && openOrder.getPrice() >= newStopLossValue) {
 			logger.info("Stop loss is already set to {} (calculated {})", 
