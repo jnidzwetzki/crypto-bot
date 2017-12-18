@@ -41,6 +41,11 @@ public abstract class PortfolioManager {
 	private static final double USD_INVESTMENT_THRESHOLD = 20;
 	
 	/**
+	 * The threshold for invested / not invested
+	 */
+	private static final double INVESTED_THRESHOLD = 0.002;
+
+	/**
 	 * Simulate or real trading
 	 */
 	public final static boolean SIMULATION = false;
@@ -391,7 +396,7 @@ public abstract class PortfolioManager {
 			return false;
 		}
 		
-		if(wallet.getBalance() > 0.002) {
+		if(wallet.getBalance() > INVESTED_THRESHOLD) {
 			return true;
 		}
 		
