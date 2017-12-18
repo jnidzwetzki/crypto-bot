@@ -1,5 +1,6 @@
 package org.achfrag.crypto.bot;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +62,7 @@ public class DonchianBot implements Runnable {
 	/**
 	 * The portfolio manager
 	 */
-	private final PortfolioManager portfolioManager;
+	private final List<PortfolioManager> portfolioManagers;
 	
 	/**
 	 * The timeframe to trade
@@ -82,8 +83,10 @@ public class DonchianBot implements Runnable {
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD,
 				BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD);
 		
+		this.portfolioManagers = new ArrayList<>();
+		
 		this.bitfinexApiBroker = BitfinexClientFactory.buildBifinexClient();
-		this.portfolioManager = new BasePortfolioManager(bitfinexApiBroker);
+		portfolioManagers.add(new BasePortfolioManager(bitfinexApiBroker));
 	}
 
 	@Override
@@ -179,6 +182,21 @@ public class DonchianBot implements Runnable {
 	 */
 	private void executeSystem() {
 		
+		for(final PortfolioManager portfolioManager : portfolioManagers) {
+			applySystemToPortfolioManager(portfolioManager);
+			
+			if(Thread.interrupted()) {
+				return;
+			}
+		}
+		
+	}
+
+	/**
+	 * Apply the orders to the portfolio manager
+	 * @param portfolioManager
+	 */
+	private void applySystemToPortfolioManager(final PortfolioManager portfolioManager) {
 		try {	
 			final Map<BitfinexCurrencyPair, Double> entries = new HashMap<>();
 			final Map<BitfinexCurrencyPair, Double> exits = new HashMap<>();
@@ -218,7 +236,6 @@ public class DonchianBot implements Runnable {
 		} catch (InterruptedException e) {
 			logger.error("Got interrupted exception");
 			Thread.currentThread().interrupt();
-			return;
 		}
 	}
 
