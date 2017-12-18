@@ -1,5 +1,7 @@
 package org.achfrag.trading.crypto.bitfinex.channel;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
 import org.achfrag.trading.crypto.bitfinex.entity.Wallet;
@@ -23,6 +25,21 @@ public class WalletHandler implements ChannelHandler {
 				final JSONArray walletArray = wallets.getJSONArray(walletPos);
 				handleWalletcallback(bitfinexApiBroker, walletArray);
 			}
+		}
+		
+		notifyLatch(bitfinexApiBroker);
+	}
+
+	/**
+	 * Notify the wallet latch
+	 * @param bitfinexApiBroker
+	 */
+	private void notifyLatch(final BitfinexApiBroker bitfinexApiBroker) {
+		
+		final CountDownLatch walletSnapshotLatch = bitfinexApiBroker.getWalletSnapshotLatch();
+		
+		if(walletSnapshotLatch != null) {
+			walletSnapshotLatch.countDown();
 		}
 	}
 

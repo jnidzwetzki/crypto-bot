@@ -121,6 +121,16 @@ public class BitfinexApiBroker implements Closeable {
 	private CountDownLatch orderSnapshotLatch;
 	
 	/**
+	 * The wallet snapshot latch
+	 */
+	private CountDownLatch walletSnapshotLatch;
+	
+	/**
+	 * The position snapshot latch
+	 */
+	private CountDownLatch positionSnapshotLatch;
+	
+	/**
 	 * Is the connection authenticated?
 	 */
 	private boolean authenticated;
@@ -235,6 +245,8 @@ public class BitfinexApiBroker implements Closeable {
 	private void executeAuthentification() throws InterruptedException, APIException {
 		authenticatedLatch = new CountDownLatch(1);
 		orderSnapshotLatch = new CountDownLatch(1);
+		positionSnapshotLatch = new CountDownLatch(1);
+		walletSnapshotLatch = new CountDownLatch(1);
 
 		if(isAuthenticatedConnection()) {
 			sendCommand(new AuthCommand());
@@ -246,7 +258,16 @@ public class BitfinexApiBroker implements Closeable {
 			}
 			
 			// Wait for order snapshot
+			logger.info("Waiting for order snapshot");
 			orderSnapshotLatch.await(10, TimeUnit.SECONDS);
+			
+			// Wait for position snapshot
+			logger.info("Waiting for position snapshot");
+			positionSnapshotLatch.await(10, TimeUnit.SECONDS);
+			
+			// Wait for wallet snapshot
+			logger.info("Waiting for wallet snapshot");
+			walletSnapshotLatch.await(10, TimeUnit.SECONDS);
 		}
 	}
 
@@ -813,6 +834,22 @@ public class BitfinexApiBroker implements Closeable {
 	 */
 	public CountDownLatch getOrderSnapshotLatch() {
 		return orderSnapshotLatch;
+	}
+	
+	/**
+	 * Get the position snapshot latch
+	 * @return
+	 */
+	public CountDownLatch getPositionSnapshotLatch() {
+		return positionSnapshotLatch;
+	}
+	
+	/**
+	 * Get the wallet snapshot latch
+	 * @return
+	 */
+	public CountDownLatch getWalletSnapshotLatch() {
+		return walletSnapshotLatch;
 	}
 	
 	/**

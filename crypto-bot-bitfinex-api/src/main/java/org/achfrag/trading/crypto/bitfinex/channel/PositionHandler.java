@@ -27,6 +27,7 @@ public class PositionHandler implements ChannelHandler {
 		
 		// No positons active
 		if(positions.length() == 0) {
+			notifyLatch(bitfinexApiBroker);
 			return;
 		}
 		
@@ -38,13 +39,23 @@ public class PositionHandler implements ChannelHandler {
 				final JSONArray orderArray = positions.getJSONArray(orderPos);
 				handlePositionCallback(bitfinexApiBroker, orderArray);
 			}
-			
-			// All snapshots are completes
-			final CountDownLatch orderSnapshotLatch = bitfinexApiBroker.getOrderSnapshotLatch();
-			if(orderSnapshotLatch != null) {
-				orderSnapshotLatch.countDown();
-			}
 		}		
+		
+		notifyLatch(bitfinexApiBroker);
+	}
+
+	/**
+	 * Notify the snapshot latch
+	 * @param bitfinexApiBroker
+	 */
+	private void notifyLatch(final BitfinexApiBroker bitfinexApiBroker) {
+		
+		// All snapshots are completes
+		final CountDownLatch positionSnapshotLatch = bitfinexApiBroker.getPositionSnapshotLatch();
+		
+		if(positionSnapshotLatch != null) {
+			positionSnapshotLatch.countDown();
+		}
 	}
 
 	/**

@@ -28,6 +28,7 @@ public class OrderHandler implements ChannelHandler {
 		
 		// No orders active
 		if(orders.length() == 0) {
+			notifyOrdetLatch(bitfinexApiBroker);
 			return;
 		}
 		
@@ -40,11 +41,21 @@ public class OrderHandler implements ChannelHandler {
 				handleOrderCallback(bitfinexApiBroker, orderArray);
 			}
 			
-			// All snapshots are completes
-			final CountDownLatch orderSnapshotLatch = bitfinexApiBroker.getOrderSnapshotLatch();
-			if(orderSnapshotLatch != null) {
-				orderSnapshotLatch.countDown();
-			}
+			notifyOrdetLatch(bitfinexApiBroker);
+		}
+	}
+
+	/**
+	 * Notify the order latch
+	 * @param bitfinexApiBroker
+	 */
+	private void notifyOrdetLatch(final BitfinexApiBroker bitfinexApiBroker) {
+		
+		// All snapshots are completes
+		final CountDownLatch orderSnapshotLatch = bitfinexApiBroker.getOrderSnapshotLatch();
+		
+		if(orderSnapshotLatch != null) {
+			orderSnapshotLatch.countDown();
 		}
 	}
 
