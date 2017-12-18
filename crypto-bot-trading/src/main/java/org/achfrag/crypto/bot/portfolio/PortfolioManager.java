@@ -318,8 +318,8 @@ public abstract class PortfolioManager {
 		
 		return openOrders.stream()
 			.filter(e -> e.getOrderType() == getOrderType())
-			.filter(e -> e.getSymbol().equals(symbol))
 			.filter(e -> e.getState() == ExchangeOrderState.STATE_ACTIVE)
+			.filter(e -> e.getSymbol().equals(symbol))
 			.findAny()
 			.orElse(null);
 	}
@@ -334,6 +334,7 @@ public abstract class PortfolioManager {
 		
 		return openOrders.stream()
 			.filter(e -> e.getOrderType() == getOrderType())
+			.filter(e -> e.getState() == ExchangeOrderState.STATE_ACTIVE)
 			.filter(e -> e.getAmount() > 0)
 			.collect(Collectors.toList());
 	}
@@ -348,6 +349,7 @@ public abstract class PortfolioManager {
 		
 		return openOrders.stream()
 			.filter(e -> e.getOrderType() == getOrderType())
+			.filter(e -> e.getState() == ExchangeOrderState.STATE_ACTIVE)
 			.filter(e -> e.getAmount() <= 0)
 			.collect(Collectors.toList());
 	}
