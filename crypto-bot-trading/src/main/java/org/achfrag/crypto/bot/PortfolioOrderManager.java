@@ -184,6 +184,7 @@ public class PortfolioOrderManager {
 		bitfinexApiBroker.getOrderManager().registerCallback(ordercallback);
 		
 		try {
+			logger.info("Place new order: {}", order);
 			bitfinexApiBroker.placeOrder(order);
 			
 			waitLatch.await(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
@@ -221,6 +222,7 @@ public class PortfolioOrderManager {
 		bitfinexApiBroker.getOrderManager().registerCallback(ordercallback);
 		
 		try {
+			logger.info("Cancel order: {}", id);
 			bitfinexApiBroker.cancelOrder(id);
 			waitLatch.await(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
 			
