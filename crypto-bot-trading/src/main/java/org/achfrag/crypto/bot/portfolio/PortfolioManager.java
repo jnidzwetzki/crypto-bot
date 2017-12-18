@@ -36,6 +36,11 @@ public abstract class PortfolioManager {
 	private int positionsForCapitalAllocation;
 	
 	/**
+	 * The investment threshold
+	 */
+	private static final double USD_INVESTMENT_THRESHOLD = 20;
+	
+	/**
 	 * Simulate or real trading
 	 */
 	public final static boolean SIMULATION = false;
@@ -125,8 +130,10 @@ public abstract class PortfolioManager {
 		
 		final double positionSizeUSD = positionSizeInUSD();
 		
-		if(positionSizeUSD < 20) {
-			logger.info("Dont place entry orders, USD per position is too small {}", positionSizeUSD);
+		if(positionSizeUSD < USD_INVESTMENT_THRESHOLD) {
+			logger.info("Dont place entry orders, USD per position is too small {} < {}", 
+					positionSizeUSD, USD_INVESTMENT_THRESHOLD);
+			
 			return;
 		}
 		
