@@ -12,6 +12,7 @@ import org.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexOrder;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexOrderType;
 import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
+import org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrderState;
 import org.achfrag.trading.crypto.bitfinex.entity.Wallet;
 import org.bboxdb.commons.MathUtil;
 import org.slf4j.Logger;
@@ -253,6 +254,7 @@ public abstract class PortfolioManager {
 		return openOrders.stream()
 			.filter(e -> e.getOrderType() == getOrderType())
 			.filter(e -> e.getSymbol().equals(symbol))
+			.filter(e -> e.getState() == ExchangeOrderState.STATE_ACTIVE)
 			.findAny()
 			.orElse(null);
 	}
