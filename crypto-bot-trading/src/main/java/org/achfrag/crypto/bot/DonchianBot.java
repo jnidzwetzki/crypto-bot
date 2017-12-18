@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.achfrag.crypto.bot.portfolio.BasePortfolioManager;
+import org.achfrag.crypto.bot.portfolio.PortfolioManager;
 import org.achfrag.crypto.strategy.indicator.DonchianChannelLower;
 import org.achfrag.crypto.strategy.indicator.DonchianChannelUpper;
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
@@ -59,7 +61,7 @@ public class DonchianBot implements Runnable {
 	/**
 	 * The portfolio manager
 	 */
-	private final BasePortfolioManager portfolioManager;
+	private final PortfolioManager portfolioManager;
 	
 	/**
 	 * The timeframe to trade

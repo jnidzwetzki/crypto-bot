@@ -1,9 +1,10 @@
-package org.achfrag.crypto.bot;
+package org.achfrag.crypto.bot.portfolio;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.achfrag.crypto.bot.PortfolioOrderManager;
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.trading.crypto.bitfinex.BitfinexOrderBuilder;
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
@@ -16,7 +17,7 @@ import org.bboxdb.commons.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BasePortfolioManager {
+public abstract class PortfolioManager {
 	
 	/**
 	 * The maximal investmet rate
@@ -41,9 +42,9 @@ public class BasePortfolioManager {
 	/**
 	 * The Logger
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(BasePortfolioManager.class);
+	private final static Logger logger = LoggerFactory.getLogger(PortfolioManager.class);
 
-	public BasePortfolioManager(BitfinexApiBroker bitfinexApiBroker) {
+	public PortfolioManager(BitfinexApiBroker bitfinexApiBroker) {
 		this.bitfinexApiBroker = bitfinexApiBroker;
 		this.orderManager = new PortfolioOrderManager(bitfinexApiBroker);
 	}
@@ -201,7 +202,7 @@ public class BasePortfolioManager {
 				}
 			} 
 			
-			final double positionSize = getPositionSizeForCurrency(currency.getCurrency1());
+			final double positionSize = getOpenPositionSizeForCurrency(currency.getCurrency1());
 		
 			// * -1.0 for sell order
 			final double positionSizeSell = positionSize * -1.0;
@@ -239,22 +240,6 @@ public class BasePortfolioManager {
 		return MathUtil.round(positionSize, 6);
 	}
 
-	/**
-	 * Get the used wallet type 
-	 * @return
-	 */
-	private String getWalletType() {
-		return Wallet.WALLET_TYPE_EXCHANGE;
-	}
-	
-	/**
-	 * Get the used order type
-	 * @return 
-	 */
-	public BitfinexOrderType getOrderType() {
-		return BitfinexOrderType.EXCHANGE_STOP;
-	}
-	
 	/**
 	 * Get the open stop loss order
 	 * @param symbol
@@ -300,17 +285,6 @@ public class BasePortfolioManager {
 			.filter(e -> e.getAmount() <= 0)
 			.collect(Collectors.toList());
 	}
-	
-	/**
-	 * Get the position size for the symbol
-	 * @param symbol
-	 * @return
-	 * @throws APIException 
-	 */
-	private double getPositionSizeForCurrency(final String currency) throws APIException {
-		final Wallet wallet = getWalletForCurrency(currency);
-		return wallet.getBalance();
-	}
  	
 	/**
 	 * Get the exchange wallet
@@ -318,7 +292,7 @@ public class BasePortfolioManager {
 	 * @return
 	 * @throws APIException 
 	 */
-	private Wallet getWalletForCurrency(final String currency) throws APIException {
+	protected Wallet getWalletForCurrency(final String currency) throws APIException {
 		return bitfinexApiBroker.getWallets()
 			.stream()
 			.filter(w -> w.getWalletType().equals(getWalletType()))
@@ -349,4 +323,27 @@ public class BasePortfolioManager {
 		return false;
 	}
 	
+	/*
+	 * Abstract methods
+	 */
+	
+	/**
+	 * Get the used wallet type 
+	 * @return
+	 */
+	protected abstract String getWalletType();
+	
+	/**
+	 * Get the type for the orders
+	 */
+	protected abstract BitfinexOrderType getOrderType();
+
+	/**
+	 * Get the position size for the symbol
+	 * @param symbol
+	 * @return
+	 * @throws APIException 
+	 */
+	protected abstract double getOpenPositionSizeForCurrency(final String currency) throws APIException;
+
 }
