@@ -186,6 +186,20 @@ public abstract class PortfolioManager {
 		
 		logger.info("Process exit orders {}", exits);
 		
+		cleanupOldExitOrders(exits);
+		
+		placeNewExitOrders(exits);
+	}
+
+	/**
+	 * Place the exit orders
+	 * @param exits
+	 * @throws APIException
+	 * @throws InterruptedException
+	 */
+	private void placeNewExitOrders(final Map<BitfinexCurrencyPair, Double> exits)
+			throws APIException, InterruptedException {
+		
 		for(final BitfinexCurrencyPair currency : exits.keySet()) {
 			final ExchangeOrder order = getOpenOrderForSymbol(currency.toBitfinexString());
 			final double exitPrice = exits.get(currency);
@@ -196,7 +210,9 @@ public abstract class PortfolioManager {
 					logger.info("Exit price for {} has moved form {} to {}, canceling old order", 
 							currency, order.getPrice(), exitPrice);
 					
-					orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
+					if(! SIMULATION) {
+						orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
+					}
 				} else {
 					logger.info("Old order price for {} is fine", currency, exitPrice);
 					continue;
@@ -218,6 +234,50 @@ public abstract class PortfolioManager {
 				orderManager.placeOrderAndWaitUntilActive(newOrder);
 			}
 		}
+	}
+
+	/**
+	 * Cleanup the old exit orders (remove duplicates, unknwon orders)
+	 * @param exits
+	 * @throws APIException
+	 * @throws InterruptedException
+	 */
+	private void cleanupOldExitOrders(final Map<BitfinexCurrencyPair, Double> exits)
+			throws APIException, InterruptedException {
+	
+		final List<ExchangeOrder> oldExitOrders = getAllOpenExitOrders();
+	
+		// Remove unknown orders
+		for(final ExchangeOrder order : oldExitOrders) {
+			final BitfinexCurrencyPair symbol = BitfinexCurrencyPair.fromSymbolString(order.getSymbol());
+			
+			if(! exits.containsKey(symbol)) {
+				logger.error("Found old and unknown order {}, canceling", order);
+				
+				if(! SIMULATION) {
+					orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
+				}
+			}
+		}
+		
+		// Remove duplicates
+		final Map<String, List<ExchangeOrder>> oldOrders = oldExitOrders.stream()
+			             .collect(Collectors.groupingBy(ExchangeOrder::getSymbol));
+		
+		for(final String symbol : oldOrders.keySet()) {
+			final List<ExchangeOrder> symbolOrderList = oldOrders.get(symbol);
+			if(symbolOrderList.size() > 1) {
+				logger.error("Found duplicates {}", symbolOrderList);
+				
+				for(final ExchangeOrder order : symbolOrderList) {
+					if(! SIMULATION) {
+						orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
+					}
+				}
+			}
+		}
+		
+		
 	}
 	
 	/**
