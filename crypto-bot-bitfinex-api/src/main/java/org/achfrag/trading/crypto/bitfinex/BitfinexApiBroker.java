@@ -200,6 +200,8 @@ public class BitfinexApiBroker implements Closeable {
 		channelHandler.put("te", new DoNothingHandler());
 		// Trade update
 		channelHandler.put("tu", new DoNothingHandler());
+		// General notification 
+		channelHandler.put("n", new DoNothingHandler());
 	}
 	
 	public BitfinexApiBroker(final String apiKey, final String apiSecret) {
