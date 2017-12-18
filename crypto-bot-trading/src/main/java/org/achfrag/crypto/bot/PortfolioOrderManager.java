@@ -3,6 +3,7 @@ package org.achfrag.crypto.bot;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.achfrag.crypto.util.HibernateUtil;
@@ -43,6 +44,11 @@ public class PortfolioOrderManager {
 	 */
 	private static final String OPEN_TRADES_QUERY = "from Trade t where t.tradeState = '" + TradeState.OPEN.name() + "'";
 
+	/**
+	 * The order timeout
+	 */
+	private final long TIMEOUT_IN_SECONDS = 120;
+	
 	public PortfolioOrderManager(final BitfinexApiBroker bitfinexApiBroker) {
 		this.bitfinexApiBroker = Objects.requireNonNull(bitfinexApiBroker);
 		
@@ -160,6 +166,43 @@ public class PortfolioOrderManager {
 	 * @param id
 	 * @throws APIException, InterruptedException 
 	 */
+	public void placeOrderAndWaitUntilActive(final BitfinexOrder order) throws APIException, InterruptedException {
+		
+		if(! bitfinexApiBroker.isAuthenticated()) {
+			logger.error("Unable to cancel order {}, conecction is not authenticated", order);
+			return;
+		}
+		
+		final CountDownLatch waitLatch = new CountDownLatch(1);
+		
+		final Consumer<ExchangeOrder> ordercallback = (o) -> {
+			if(o.getOrderId() == order.getId()) {
+				waitLatch.countDown();
+			}
+		};
+		
+		bitfinexApiBroker.getOrderManager().registerCallback(ordercallback);
+		
+		try {
+			bitfinexApiBroker.placeOrder(order);
+			
+			waitLatch.await(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
+			
+			if(waitLatch.getCount() != 0) {
+				throw new APIException("Timeout while waiting for order");
+			}		
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			bitfinexApiBroker.getOrderManager().removeCallback(ordercallback);
+		}
+	}
+	
+	/**
+	 * Cancel a order
+	 * @param id
+	 * @throws APIException, InterruptedException 
+	 */
 	public void cancelOrderAndWaitForCompletion(final long id) throws APIException, InterruptedException {
 		
 		if(! bitfinexApiBroker.isAuthenticated()) {
@@ -179,12 +222,16 @@ public class PortfolioOrderManager {
 		
 		try {
 			bitfinexApiBroker.cancelOrder(id);
-			waitLatch.await();
+			waitLatch.await(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
+			
+			if(waitLatch.getCount() != 0) {
+				throw new APIException("Timeout while waiting for order");
+			}
+			
 		} catch (Exception e) {
 			throw e;
 		} finally {
 			bitfinexApiBroker.getOrderManager().removeCallback(ordercallback);
 		}
-		
 	}
 }
