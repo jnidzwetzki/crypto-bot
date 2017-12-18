@@ -211,8 +211,7 @@ public class DonchianBot implements Runnable {
 				}
 			}
 			
-			portfolioManager.placeEntryOrders(entries);
-			portfolioManager.placeExitOrders(exits);
+			portfolioManager.syncOrders(entries, exits);
 
 		} catch (APIException e) {
 			logger.error("Got exception while executing trading system", e);

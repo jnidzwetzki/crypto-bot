@@ -1,16 +1,18 @@
 package org.achfrag.crypto.bot.portfolio;
 
+import java.util.List;
 import java.util.Map;
 
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.trading.crypto.bitfinex.entity.APIException;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import org.achfrag.trading.crypto.bitfinex.entity.BitfinexOrderType;
+import org.achfrag.trading.crypto.bitfinex.entity.Position;
 import org.achfrag.trading.crypto.bitfinex.entity.Wallet;
 
-public class BasePortfolioManager extends PortfolioManager {
+public class MarginPortfolioManager extends PortfolioManager {
 
-	public BasePortfolioManager(final BitfinexApiBroker bitfinexApiBroker) {
+	public MarginPortfolioManager(final BitfinexApiBroker bitfinexApiBroker) {
 		super(bitfinexApiBroker);
 	}
 
@@ -20,7 +22,7 @@ public class BasePortfolioManager extends PortfolioManager {
 	 */
 	@Override
 	protected String getWalletType() {
-		return Wallet.WALLET_TYPE_EXCHANGE;
+		return Wallet.WALLET_TYPE_MARGIN;
 	}
 	
 	/**
@@ -29,7 +31,7 @@ public class BasePortfolioManager extends PortfolioManager {
 	 */
 	@Override
 	protected BitfinexOrderType getOrderType() {
-		return BitfinexOrderType.EXCHANGE_STOP;
+		return BitfinexOrderType.STOP;
 	}
 	
 	/**
@@ -40,8 +42,18 @@ public class BasePortfolioManager extends PortfolioManager {
 	 */
 	@Override
 	protected double getOpenPositionSizeForCurrency(final String currency) throws APIException {
-		final Wallet wallet = getWalletForCurrency(currency);
-		return wallet.getBalance();
+		final List<Position> positions = bitfinexApiBroker.getPositionManager().getPositions();
+		
+		final Position position = positions.stream()
+				.filter(p -> p.getCurreny().getCurrency1().equals(currency))
+				.findAny()
+				.orElse(null);
+		
+		if(position == null) {
+			return 0;
+		}
+		
+		return position.getAmount();
 	}
 	
 	/**
@@ -49,14 +61,12 @@ public class BasePortfolioManager extends PortfolioManager {
 	 * @param entries
 	 * @return
 	 */
-	@Override
 	protected int calculateTotalPositionsForCapitalAllocation(
 			final Map<BitfinexCurrencyPair, Double> entries, 
 			final Map<BitfinexCurrencyPair, Double> exits) {		
 		
-		// Executed orders are moved to an extra wallet.
-		// So we need only to split the balance of the USD wallet 
-		return entries.size();
+
+		return entries.size() + exits.size();
 	}
 	
 	/**
@@ -64,6 +74,7 @@ public class BasePortfolioManager extends PortfolioManager {
 	 */
 	@Override
 	protected double getInvestmentRate() {
-		return 0.9;
+		return 2.0;
 	}
+	
 }

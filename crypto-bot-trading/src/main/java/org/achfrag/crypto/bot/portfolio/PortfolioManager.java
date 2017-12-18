@@ -18,21 +18,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class PortfolioManager {
-	
-	/**
-	 * The maximal investmet rate
-	 */
-	private final static double MAX_INVESTMENT_RATE = 0.9;
-	
+
 	/**
 	 * The bitfinex api broker
 	 */
-	private BitfinexApiBroker bitfinexApiBroker;
+	protected BitfinexApiBroker bitfinexApiBroker;
 	
 	/**
 	 * The order manager
 	 */
 	protected final PortfolioOrderManager orderManager;
+	
+	/**
+	 * The positions for capital allocation
+	 */
+	private int positionsForCapitalAllocation;
 	
 	/**
 	 * Simulate or real trading
@@ -48,13 +48,22 @@ public abstract class PortfolioManager {
 		this.bitfinexApiBroker = bitfinexApiBroker;
 		this.orderManager = new PortfolioOrderManager(bitfinexApiBroker);
 	}
-
+	
+	public void syncOrders(final Map<BitfinexCurrencyPair, Double> entries, 
+			final Map<BitfinexCurrencyPair, Double> exits) throws InterruptedException, APIException {
+		
+		positionsForCapitalAllocation = calculateTotalPositionsForCapitalAllocation(entries, exits);
+		
+		placeEntryOrders(entries);
+		placeExitOrders(exits);
+	}
+	
 	/**
 	 * Place the entry orders for the market
 	 * @param currencyPair
 	 * @throws APIException 
 	 */
-	public void placeEntryOrders(final Map<BitfinexCurrencyPair, Double> entries) 
+	private void placeEntryOrders(final Map<BitfinexCurrencyPair, Double> entries) 
 			throws InterruptedException, APIException {
 		
 		logger.info("Processing entry orders {}", entries);
@@ -78,7 +87,7 @@ public abstract class PortfolioManager {
 	private void cancelOldChangedOrders(final Map<BitfinexCurrencyPair, Double> entries)
 			throws APIException, InterruptedException {
 		
-		final double positionSizeUSD = positionSizeInUSD(entries.size());
+		final double positionSizeUSD = positionSizeInUSD();
 		
 		// Check current limits and position sizes
 		for(final BitfinexCurrencyPair currency : entries.keySet()) {
@@ -113,7 +122,7 @@ public abstract class PortfolioManager {
 	 */
 	private void placeNewEntryOrders(final Map<BitfinexCurrencyPair, Double> entries) throws APIException, InterruptedException {
 		
-		final double positionSizeUSD = positionSizeInUSD(entries.size());
+		final double positionSizeUSD = positionSizeInUSD();
 		
 		// Check current limits and position sizes
 		for(final BitfinexCurrencyPair currency : entries.keySet()) {
@@ -171,22 +180,10 @@ public abstract class PortfolioManager {
 	 * Place the stop loss orders
 	 * @param exits
 	 */
-	public void placeExitOrders(final Map<BitfinexCurrencyPair, Double> exits) 
+	private void placeExitOrders(final Map<BitfinexCurrencyPair, Double> exits) 
 			throws InterruptedException, APIException {
 		
 		logger.info("Process exit orders {}", exits);
-		
-		moveExitOrders(exits);
-	}
-
-	/**
-	 * Move the exit orders
-	 * @param exits
-	 * @throws APIException
-	 * @throws InterruptedException
-	 */
-	private void moveExitOrders(final Map<BitfinexCurrencyPair, Double> exits)
-			throws APIException, InterruptedException {
 		
 		for(final BitfinexCurrencyPair currency : exits.keySet()) {
 			final ExchangeOrder order = getOpenOrderForSymbol(currency.toBitfinexString());
@@ -226,9 +223,9 @@ public abstract class PortfolioManager {
 	 * Calculate the positions size in USD
 	 * @return
 	 */
-	private double positionSizeInUSD(final int positions) throws APIException {
+	private double positionSizeInUSD() throws APIException {
 		final Wallet wallet = getWalletForCurrency("USD");
-		return (wallet.getBalance() * MAX_INVESTMENT_RATE) / positions;
+		return (wallet.getBalance() * getInvestmentRate()) / positionsForCapitalAllocation;
 	}
 
 	/**
@@ -347,5 +344,20 @@ public abstract class PortfolioManager {
 	 * @throws APIException 
 	 */
 	protected abstract double getOpenPositionSizeForCurrency(final String currency) throws APIException;
+
+	/**
+	 * Caluclate the amount of open positions
+	 * @param entries
+	 * @return
+	 */
+	protected abstract int calculateTotalPositionsForCapitalAllocation(
+			final Map<BitfinexCurrencyPair, Double> entries, 
+			final Map<BitfinexCurrencyPair, Double> exits);
+	
+	/**
+	 * Get the investment rate
+	 * @return
+	 */
+	protected abstract double getInvestmentRate();
 
 }
