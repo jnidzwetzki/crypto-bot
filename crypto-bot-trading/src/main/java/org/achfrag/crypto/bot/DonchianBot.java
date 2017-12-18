@@ -206,7 +206,7 @@ public class DonchianBot implements Runnable {
 					}
 					
 				} else {
-					final double exitPrice = adjustExitPrice(upperValue);
+					final double exitPrice = adjustExitPrice(lowerValue);
 					exits.put(currencyPair, exitPrice);
 				}
 			}

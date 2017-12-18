@@ -78,7 +78,7 @@ public abstract class PortfolioManager {
 	private void cancelOldChangedOrders(final Map<BitfinexCurrencyPair, Double> entries)
 			throws APIException, InterruptedException {
 		
-		final double positionSize = positionSizeInUSD(entries.size());
+		final double positionSizeUSD = positionSizeInUSD(entries.size());
 		
 		// Check current limits and position sizes
 		for(final BitfinexCurrencyPair currency : entries.keySet()) {
@@ -88,13 +88,15 @@ public abstract class PortfolioManager {
 			if(order == null) {
 				continue;
 			}
-			
+
 			final double entryPrice = entries.get(currency);
-			
+			final double positionSize = calculatePositionSize(entryPrice, positionSizeUSD);
+
 			if(order.getAmount() == positionSize && order.getPrice() == entryPrice) {
 				logger.info("Order for {} is fine", currency);
 			} else {
-				logger.info("Cancel entry order for {}, values have changed", currency);	
+				logger.info("Cancel entry order for {}, values changed (amount: {} / {}} (price: {} / {})", 
+						currency, order.getAmount(), positionSize, order.getPrice(), entryPrice);	
 
 				if(! SIMULATION) {
 					orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
@@ -208,8 +210,8 @@ public abstract class PortfolioManager {
 			final double positionSizeSell = positionSize * -1.0;
 			
 			final BitfinexOrder newOrder = BitfinexOrderBuilder
-					.create(currency, getOrderType(), positionSize)
-					.withPrice(positionSizeSell)
+					.create(currency, getOrderType(), positionSizeSell)
+					.withPrice(exitPrice)
 					.setPostOnly()
 					.build();
 	
@@ -227,7 +229,6 @@ public abstract class PortfolioManager {
 		final Wallet wallet = getWalletForCurrency("USD");
 		return (wallet.getBalance() * MAX_INVESTMENT_RATE) / positions;
 	}
-	
 
 	/**
 	 * Calculate the positon size
