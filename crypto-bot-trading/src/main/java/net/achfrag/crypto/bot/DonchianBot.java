@@ -284,7 +284,7 @@ public class DonchianBot implements Runnable {
 	 * @return
 	 */
 	private long adjustExitPrice(final double lowerValue) {
-		return Math.round(lowerValue - (lowerValue / 100 * 0.2));
+		return Math.round(lowerValue - (lowerValue / 100 * 0.8));
 	}
 
 	
