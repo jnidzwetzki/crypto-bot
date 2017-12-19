@@ -644,6 +644,7 @@ public class BitfinexApiBroker implements Closeable {
 			// Invalidate old data
 			tickerManager.invalidateTickerHeartbeat();
 			orderManager.clear();
+			positionManager.clear();
 			
 			websocketEndpoint.close();
 			websocketEndpoint.connect();
