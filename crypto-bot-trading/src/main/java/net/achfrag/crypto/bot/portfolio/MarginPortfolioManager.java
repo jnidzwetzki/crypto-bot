@@ -65,8 +65,8 @@ public class MarginPortfolioManager extends PortfolioManager {
 			final Map<BitfinexCurrencyPair, Double> entries, 
 			final Map<BitfinexCurrencyPair, Double> exits) {		
 		
-
-		return entries.size() + exits.size();
+		// Max is 50% capital per position
+		return Math.max(2, entries.size() + exits.size());
 	}
 	
 	/**

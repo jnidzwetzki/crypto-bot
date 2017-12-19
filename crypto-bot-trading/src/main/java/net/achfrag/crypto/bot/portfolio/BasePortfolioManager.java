@@ -56,7 +56,9 @@ public class BasePortfolioManager extends PortfolioManager {
 		
 		// Executed orders are moved to an extra wallet.
 		// So we need only to split the balance of the USD wallet 
-		return entries.size();
+		
+		// Max is 50% capital per position
+		return Math.max(2, entries.size());
 	}
 	
 	/**
