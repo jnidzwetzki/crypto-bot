@@ -15,7 +15,13 @@ public enum BitfinexCurrencyPair {
 	BCH_USD("BCH", "USD", 0.2),
 	
 	// XRP Cash
-	XRP_USD("XRP", "USD", 0.2);
+	XRP_USD("XRP", "USD", 0.2),
+	
+	// IOTA
+	IOTA_USD("IOTA", "USD", 0.2),
+	
+	// EOS
+	EOS_USD("EOS", "USD", 0.2);
 
 	/**
 	 * The name of the first curreny 

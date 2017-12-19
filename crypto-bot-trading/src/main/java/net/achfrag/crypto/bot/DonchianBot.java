@@ -84,7 +84,8 @@ public class DonchianBot implements Runnable {
 		
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD,
 				BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD, 
-				BitfinexCurrencyPair.BCH_USD, BitfinexCurrencyPair.XRP_USD);
+				BitfinexCurrencyPair.BCH_USD, BitfinexCurrencyPair.XRP_USD,
+				BitfinexCurrencyPair.IOTA_USD, BitfinexCurrencyPair.EOS_USD);
 		
 		this.portfolioManagers = new ArrayList<>();
 		
