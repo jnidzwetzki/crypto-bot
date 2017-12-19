@@ -15,6 +15,7 @@ public class ExchangeOrder {
 	@GeneratedValue
 	private long id;
 	
+	private String apikey;
 	private long orderId;
 	private int groupId;
 	private long cid;
@@ -172,15 +173,21 @@ public class ExchangeOrder {
 		this.hidden = hidden;
 	}
 
+	public String getApikey() {
+		return apikey;
+	}
+
+	public void setApikey(final String apikey) {
+		this.apikey = apikey;
+	}
+
 	@Override
 	public String toString() {
-		return "ExchangeOrder [id=" + id + ", orderId=" + orderId + ", groupId=" + groupId + ", cid=" + cid
-				+ ", symbol=" + symbol + ", created=" + created + ", updated=" + updated + ", amount=" + amount
-				+ ", amountAtCreation=" + amountAtCreation + ", orderType=" + orderType + ", state=" + state
+		return "ExchangeOrder [id=" + id + ", apikey=" + apikey + ", orderId=" + orderId + ", groupId=" + groupId
+				+ ", cid=" + cid + ", symbol=" + symbol + ", created=" + created + ", updated=" + updated + ", amount="
+				+ amount + ", amountAtCreation=" + amountAtCreation + ", orderType=" + orderType + ", state=" + state
 				+ ", price=" + price + ", priceAvg=" + priceAvg + ", priceTrailing=" + priceTrailing
 				+ ", priceAuxLimit=" + priceAuxLimit + ", notify=" + notify + ", hidden=" + hidden + "]";
 	}
-
-
 
 }

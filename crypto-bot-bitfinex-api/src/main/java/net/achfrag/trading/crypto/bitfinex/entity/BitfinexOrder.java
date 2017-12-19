@@ -19,6 +19,8 @@ public class BitfinexOrder {
 	
 	private final long cid;
 	
+	private String apikey;
+	
 	@Enumerated(EnumType.STRING)
 	private final BitfinexCurrencyPair symbol; 
 	
@@ -41,6 +43,7 @@ public class BitfinexOrder {
 		this.cid = MicroSecondTimestampProvider.getNewTimestamp();
 
 		this.symbol = null;
+		this.apikey = null;
 		this.type = null;
 		this.price = -1;
 		this.priceTrailing = -1;
@@ -71,9 +74,9 @@ public class BitfinexOrder {
 
 	@Override
 	public String toString() {
-		return "BitfinexOrder [cid=" + cid + ", symbol=" + symbol + ", type=" + type + ", price=" + price
-				+ ", priceTrailing=" + priceTrailing + ", priceAuxLimit=" + priceAuxLimit + ", amount=" + amount
-				+ ", postOnly=" + postOnly + ", hidden=" + hidden + ", groupId=" + groupId + "]";
+		return "BitfinexOrder [id=" + id + ", cid=" + cid + ", apikey=" + apikey + ", symbol=" + symbol + ", type="
+				+ type + ", price=" + price + ", priceTrailing=" + priceTrailing + ", priceAuxLimit=" + priceAuxLimit
+				+ ", amount=" + amount + ", postOnly=" + postOnly + ", hidden=" + hidden + ", groupId=" + groupId + "]";
 	}
 
 	public BitfinexCurrencyPair getSymbol() {
@@ -120,9 +123,16 @@ public class BitfinexOrder {
 		return id;
 	}
 
-	public void setId(long id) {
+	public void setId(final long id) {
 		this.id = id;
 	}
-	
+
+	public String getApikey() {
+		return apikey;
+	}
+
+	public void setApikey(final String apikey) {
+		this.apikey = apikey;
+	}
 	
 }

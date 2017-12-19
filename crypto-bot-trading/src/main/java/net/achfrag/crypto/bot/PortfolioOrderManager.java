@@ -174,6 +174,8 @@ public class PortfolioOrderManager {
 			return;
 		}
 		
+		order.setApikey(bitfinexApiBroker.getApiKey());
+		
 		final CountDownLatch waitLatch = new CountDownLatch(1);
 		
 		final Consumer<ExchangeOrder> ordercallback = (o) -> {

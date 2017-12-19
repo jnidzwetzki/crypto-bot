@@ -68,6 +68,7 @@ public class OrderHandler implements ChannelHandler {
 	 */
 	private void handleOrderCallback(BitfinexApiBroker bitfinexApiBroker, final JSONArray order) throws APIException {		
 		final ExchangeOrder exchangeOrder = new ExchangeOrder();
+		exchangeOrder.setApikey(bitfinexApiBroker.getApiKey());
 		exchangeOrder.setOrderId(order.getLong(0));
 		exchangeOrder.setGroupId(order.optInt(1, -1));
 		exchangeOrder.setCid(order.getLong(2));
