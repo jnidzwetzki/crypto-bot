@@ -31,9 +31,9 @@
         <!-- Drop and re-create the database schema on startup -->
         <property name="hbm2ddl.auto">update</property>
 
-        <mapping class="org.achfrag.trading.crypto.bitfinex.entity.BitfinexOrder"/>
-        <mapping class="org.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder"/>
-        <mapping class="org.achfrag.trading.crypto.bitfinex.entity.Trade"/>
+        <mapping class="net.achfrag.trading.crypto.bitfinex.entity.BitfinexOrder"/>
+        <mapping class="net.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder"/>
+        <mapping class="net.achfrag.trading.crypto.bitfinex.entity.Trade"/>
 
     </session-factory>
 

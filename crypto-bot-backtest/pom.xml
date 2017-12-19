@@ -9,7 +9,7 @@
 	<url>https://github.com/jnidzwetzki/crypto-bot</url>
 
 	<parent>
-		<groupId>org.achfrag.trading</groupId>
+		<groupId>net.achfrag.trading</groupId>
 		<artifactId>crypto-bot-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
@@ -79,17 +79,6 @@
 					<source>1.8</source>
 					<target>1.8</target>
 				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.2.1</version>
-
-				<configuration>
-					<mainClass>org.achfrag.crypto.bot.DonchianBot</mainClass>
-				</configuration>
-
 			</plugin>
 		</plugins>
 	</build>

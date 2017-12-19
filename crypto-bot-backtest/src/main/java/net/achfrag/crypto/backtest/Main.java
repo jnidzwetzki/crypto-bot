@@ -10,8 +10,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.achfrag.trading.crypto.bitfinex.entity.Timeframe;
-import org.achfrag.trading.crypto.bitfinex.util.TickMerger;
 import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Strategy;
@@ -25,6 +23,8 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import net.achfrag.crypto.strategy.DonchianChannelStrategy;
 import net.achfrag.crypto.strategy.EMAStrategy03;
 import net.achfrag.crypto.strategy.TradeStrategyFactory;
+import net.achfrag.trading.crypto.bitfinex.entity.Timeframe;
+import net.achfrag.trading.crypto.bitfinex.util.TickMerger;
 
 public class Main implements Runnable {
 
