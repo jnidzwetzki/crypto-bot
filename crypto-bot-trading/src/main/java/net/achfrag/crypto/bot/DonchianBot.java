@@ -44,12 +44,7 @@ public class DonchianBot implements Runnable {
 	 * The traded currencies
 	 */
 	private final List<BitfinexCurrencyPair> tradedCurrencies;
-
-	/**
-	 * The bitfinex api broker
-	 */
-	private final BitfinexApiBroker bitfinexApiBroker; 
-
+	
 	/**
 	 * The channel period in
 	 */
@@ -66,6 +61,11 @@ public class DonchianBot implements Runnable {
 	private final List<PortfolioManager> portfolioManagers;
 	
 	/**
+	 * The API broker
+	 */
+	private final List<BitfinexApiBroker> apiBrokerList;
+	
+	/**
 	 * The timeframe to trade
 	 */
 	private static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
@@ -74,6 +74,7 @@ public class DonchianBot implements Runnable {
 	 * The Logger
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(DonchianBot.class);
+
 	
 	public DonchianBot(final int periodIn, final int periodOut) {
 		this.periodIn = periodIn;
@@ -86,17 +87,30 @@ public class DonchianBot implements Runnable {
 		
 		this.portfolioManagers = new ArrayList<>();
 		
-		this.bitfinexApiBroker = BitfinexClientFactory.buildBifinexClient();
-		portfolioManagers.add(new BasePortfolioManager(bitfinexApiBroker));
+		this.apiBrokerList = BitfinexClientFactory.buildBifinexClient();
+
+		if(apiBrokerList.isEmpty()) {
+			throw new IllegalArgumentException("Unable to get API clients");
+		}
+				
+		for(final BitfinexApiBroker bitfinexApiBroker : apiBrokerList) {
+			portfolioManagers.add(new BasePortfolioManager(bitfinexApiBroker));
+		}
 	}
 
 	@Override
 	public void run() {
 		try {
-			bitfinexApiBroker.connect();
+			logger.info("===============================================");
+			logger.info("Starting with {} API keys", apiBrokerList.size());
+			logger.info("===============================================");
+
+			for(final BitfinexApiBroker bitfinexApiBroker : apiBrokerList) {
+				bitfinexApiBroker.connect();
+			}
 			
 			final Map<String, TimeSeries> historicalCandles = HistoricalCandlesHelper
-					.requestHistoricalCandles(bitfinexApiBroker, TIMEFRAME, tradedCurrencies);
+					.requestHistoricalCandles(apiBrokerList.get(0), TIMEFRAME, tradedCurrencies);
 			timeSeries.putAll(historicalCandles);
 			
 			executeSystem();
@@ -123,15 +137,15 @@ public class DonchianBot implements Runnable {
 			tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
 		
 			final AbstractAPICommand subscribeCommandTicker = new SubscribeTickerCommand(currency);
-			bitfinexApiBroker.sendCommand(subscribeCommandTicker);
+			apiBrokerList.get(0).sendCommand(subscribeCommandTicker);
 
 			logger.info("Wait for ticker");
 
-			while (! bitfinexApiBroker.isTickerActive(currency)) {
+			while (! apiBrokerList.get(0).isTickerActive(currency)) {
 				Thread.sleep(100);
 			}
 
-			bitfinexApiBroker
+			apiBrokerList.get(0)
 				.getTickerManager()
 				.registerTickCallback(currency.toBitfinexString(), (s, c) -> handleTickCallback(s, c));
 		}

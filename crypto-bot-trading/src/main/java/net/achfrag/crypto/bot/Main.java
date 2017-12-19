@@ -64,10 +64,17 @@ public class Main implements Runnable {
 
 	
 	public Main() {
+		
+		final List<BitfinexApiBroker> connections = BitfinexClientFactory.buildBifinexClient();
+
+		if(connections.isEmpty()) {
+			throw new IllegalArgumentException("Unable to get API clients");
+		}
+		
+		this.bitfinexApiBroker = connections.get(0);
 		this.tickMerger = new HashMap<>();
 		this.timeSeries = new HashMap<>();
 		this.strategies = new HashMap<>();
-		this.bitfinexApiBroker = BitfinexClientFactory.buildBifinexClient();
 		this.orderManager = new PortfolioOrderManager(bitfinexApiBroker);
 		this.trades = new HashMap<>();
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD);
