@@ -304,6 +304,12 @@ public abstract class PortfolioManager {
 	 */
 	private double positionSizeInUSD() throws APIException {
 		final Wallet wallet = getWalletForCurrency("USD");
+		
+		// Wallet could be empty
+		if(wallet == null) {
+			return 0;
+		}
+		
 		return (wallet.getBalance() * getInvestmentRate()) / positionsForCapitalAllocation;
 	}
 
