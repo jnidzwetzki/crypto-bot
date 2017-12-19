@@ -1,4 +1,4 @@
-package org.achfrag.crypto.strategy.indicator;
+package net.achfrag.crypto.strategy.indicator;
 
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Indicator;
@@ -7,10 +7,10 @@ import org.ta4j.core.indicators.CachedIndicator;
 /**
  * Lower donchian channel indicator. 
  * <p>
- * Returns the lowest value of the time series within the tiemframe.
+ * Returns the highest value of the time series within the tiemframe.
  *
  */
-public class DonchianChannelLower extends CachedIndicator<Decimal> {
+public class DonchianChannelUpper extends CachedIndicator<Decimal> {
 
 	private static final long serialVersionUID = 6109484986843725281L;
 
@@ -24,7 +24,7 @@ public class DonchianChannelLower extends CachedIndicator<Decimal> {
      */
 	private int timeFrame;
 
-	public DonchianChannelLower(Indicator<Decimal> indicator, int timeFrame) {
+	public DonchianChannelUpper(Indicator<Decimal> indicator, int timeFrame) {
         super(indicator.getTimeSeries());
 		this.indicator = indicator;
 		this.timeFrame = timeFrame;
@@ -40,7 +40,7 @@ public class DonchianChannelLower extends CachedIndicator<Decimal> {
 		for(int pos = startIndex; pos <= index; pos++) {
 			final Decimal value = indicator.getValue(pos);
 			
-			if(value.isLessThanOrEqual(result)) {
+			if(value.isGreaterThan(result)) {
 				result = value;
 			}
 		}

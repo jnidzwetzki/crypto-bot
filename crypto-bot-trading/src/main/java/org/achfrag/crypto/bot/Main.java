@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.achfrag.crypto.strategy.EMAStrategy03;
-import org.achfrag.crypto.strategy.TradeStrategyFactory;
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.trading.crypto.bitfinex.BitfinexClientFactory;
 import org.achfrag.trading.crypto.bitfinex.TickerManager;
@@ -30,6 +28,9 @@ import org.ta4j.core.Order.OrderType;
 import org.ta4j.core.Strategy;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
+
+import net.achfrag.crypto.strategy.EMAStrategy03;
+import net.achfrag.crypto.strategy.TradeStrategyFactory;
 
 public class Main implements Runnable {
 

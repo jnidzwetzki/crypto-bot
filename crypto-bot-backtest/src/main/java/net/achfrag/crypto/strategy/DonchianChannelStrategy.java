@@ -1,7 +1,5 @@
-package org.achfrag.crypto.strategy;
+package net.achfrag.crypto.strategy;
 
-import org.achfrag.crypto.strategy.indicator.DonchianChannelLower;
-import org.achfrag.crypto.strategy.indicator.DonchianChannelUpper;
 import org.ta4j.core.BaseStrategy;
 import org.ta4j.core.Rule;
 import org.ta4j.core.Strategy;
@@ -9,6 +7,9 @@ import org.ta4j.core.TimeSeries;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.trading.rules.IsFallingRule;
 import org.ta4j.core.trading.rules.IsRisingRule;
+
+import net.achfrag.crypto.strategy.indicator.DonchianChannelLower;
+import net.achfrag.crypto.strategy.indicator.DonchianChannelUpper;
 
 public class DonchianChannelStrategy implements TradeStrategyFactory {
 

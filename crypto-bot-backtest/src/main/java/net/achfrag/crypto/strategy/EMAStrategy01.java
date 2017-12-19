@@ -1,4 +1,4 @@
-package org.achfrag.crypto.strategy;
+package net.achfrag.crypto.strategy;
 
 import org.ta4j.core.BaseStrategy;
 import org.ta4j.core.Decimal;

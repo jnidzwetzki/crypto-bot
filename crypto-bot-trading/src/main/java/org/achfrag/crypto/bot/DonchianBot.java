@@ -8,8 +8,6 @@ import java.util.Map;
 
 import org.achfrag.crypto.bot.portfolio.BasePortfolioManager;
 import org.achfrag.crypto.bot.portfolio.PortfolioManager;
-import org.achfrag.crypto.strategy.indicator.DonchianChannelLower;
-import org.achfrag.crypto.strategy.indicator.DonchianChannelUpper;
 import org.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import org.achfrag.trading.crypto.bitfinex.BitfinexClientFactory;
 import org.achfrag.trading.crypto.bitfinex.commands.AbstractAPICommand;
@@ -26,6 +24,9 @@ import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 import org.ta4j.core.indicators.helpers.MaxPriceIndicator;
 import org.ta4j.core.indicators.helpers.MinPriceIndicator;
+
+import net.achfrag.crypto.strategy.indicator.DonchianChannelLower;
+import net.achfrag.crypto.strategy.indicator.DonchianChannelUpper;
 
 public class DonchianBot implements Runnable {
 	

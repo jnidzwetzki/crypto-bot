@@ -1,4 +1,4 @@
-package org.achfrag.crypto.backtest;
+package net.achfrag.crypto.backtest;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,9 +10,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.achfrag.crypto.strategy.DonchianChannelStrategy;
-import org.achfrag.crypto.strategy.EMAStrategy03;
-import org.achfrag.crypto.strategy.TradeStrategyFactory;
 import org.achfrag.trading.crypto.bitfinex.entity.Timeframe;
 import org.achfrag.trading.crypto.bitfinex.util.TickMerger;
 import org.ta4j.core.BaseTimeSeries;
@@ -24,6 +21,10 @@ import org.ta4j.core.Trade;
 import org.ta4j.core.TradingRecord;
 import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+
+import net.achfrag.crypto.strategy.DonchianChannelStrategy;
+import net.achfrag.crypto.strategy.EMAStrategy03;
+import net.achfrag.crypto.strategy.TradeStrategyFactory;
 
 public class Main implements Runnable {
 
