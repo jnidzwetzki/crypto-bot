@@ -83,7 +83,8 @@ public class DonchianBot implements Runnable {
 		this.timeSeries = new HashMap<>();		
 		
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD,
-				BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD);
+				BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD, 
+				BitfinexCurrencyPair.BCH_USD, BitfinexCurrencyPair.XRP_USD);
 		
 		this.portfolioManagers = new ArrayList<>();
 		
@@ -234,9 +235,19 @@ public class DonchianBot implements Runnable {
 					// Filter entry orders to reduce captial allocation
 					final double upperChannelHalf = lowerValue + (channelSize / 2);
 					
+					// Filter channel size 
+					final double channelSizeInPerc = channelSize / upperValue * 100;
+
 					if(lastPrice > upperChannelHalf) {
-						final double entryPrice = adjustEntryPrice(upperValue);
-						entries.put(currencyPair, entryPrice);
+						
+						if(channelSizeInPerc < 20.0) {
+							final double entryPrice = adjustEntryPrice(upperValue);
+							entries.put(currencyPair, entryPrice);
+						} else {
+							logger.info("Entry order for {} suppressed because of channel size {}", 
+									currencyPair, channelSizeInPerc);
+						}
+
 					} else {
 						logger.info("Entry order for {} suppressed because price {} is to low {}", 
 								currencyPair, lastPrice, upperChannelHalf);
