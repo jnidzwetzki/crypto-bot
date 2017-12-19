@@ -156,7 +156,7 @@ public class BitfinexApiBroker implements Closeable {
 	/**
 	 * The Logger
 	 */
-	final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
+	private final static Logger logger = LoggerFactory.getLogger(BitfinexApiBroker.class);
 
 	public BitfinexApiBroker() {
 		this.executorService = Executors.newFixedThreadPool(10);
