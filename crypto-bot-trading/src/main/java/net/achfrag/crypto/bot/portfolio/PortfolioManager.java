@@ -404,6 +404,11 @@ public abstract class PortfolioManager {
 		return false;
 	}
 	
+	@Override
+	public String toString() {
+		return "Portfolio manager: " + bitfinexApiBroker.getApiKey();
+	}
+	
 	/*
 	 * Abstract methods
 	 */

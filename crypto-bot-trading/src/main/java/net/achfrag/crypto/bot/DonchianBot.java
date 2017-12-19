@@ -198,6 +198,10 @@ public class DonchianBot implements Runnable {
 	private void executeSystem() {
 		
 		for(final PortfolioManager portfolioManager : portfolioManagers) {
+			
+			logger.info("Apply orders to portfolio manager {}", portfolioManager);
+			logger.info("===============================================");
+
 			applySystemToPortfolioManager(portfolioManager);
 			
 			if(Thread.interrupted()) {
