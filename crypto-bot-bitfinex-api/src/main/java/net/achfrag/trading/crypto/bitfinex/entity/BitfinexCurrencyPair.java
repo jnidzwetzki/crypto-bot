@@ -18,7 +18,7 @@ public enum BitfinexCurrencyPair {
 	XRP_USD("XRP", "USD", 0.2),
 	
 	// IOTA
-	IOTA_USD("IOTA", "USD", 0.2),
+	IOTA_USD("IOT", "USD", 0.2),
 	
 	// EOS
 	EOS_USD("EOS", "USD", 0.2);
