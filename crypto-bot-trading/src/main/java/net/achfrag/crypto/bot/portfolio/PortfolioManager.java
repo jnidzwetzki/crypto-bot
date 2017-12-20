@@ -349,6 +349,9 @@ public abstract class PortfolioManager {
 		// Capital per position
 		final double capitalAvailablePerPosition = (wallet.getBalance() * investmentRate) / positionsForCapitalAllocation;
 		
+		logger.debug("Total portfolio value {}, capital per position {} ({} total pos)", 
+				totalPortfolioValueInUSD, capitalAvailablePerPosition, positionsForCapitalAllocation);
+		
 		// Max position size is determined by MAX_POSITION_SIZE
 		return Math.min(capitalAvailablePerPosition, 
 				totalPortfolioValueInUSD * MAX_SINGLE_POSITION_SIZE);
