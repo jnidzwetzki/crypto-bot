@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import org.bboxdb.commons.MathUtil;
 import org.slf4j.Logger;
@@ -66,6 +67,11 @@ public class DonchianBot implements Runnable {
 	private final List<BitfinexApiBroker> apiBrokerList;
 	
 	/**
+	 * The ticker latch
+	 */
+	private volatile CountDownLatch tickerLatch;
+	
+	/**
 	 * The timeframe to trade
 	 */
 	private static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
@@ -117,8 +123,16 @@ public class DonchianBot implements Runnable {
 			
 			registerTicker();
 
-			executeSystem();
-			
+			while(true) {
+				
+				if(tickerLatch != null) {
+					tickerLatch.await();
+				}
+				
+				executeSystem();
+				
+				tickerLatch = new CountDownLatch(tradedCurrencies.size());
+			}
 		} catch (Throwable e) {
 			logger.error("Got exception", e);
 		}
@@ -172,7 +186,10 @@ public class DonchianBot implements Runnable {
 		
 		logger.info("Newest bar is {}", tick);
 		
-		executeSystem();
+		// Notify portfolio manager about bar done
+		if(tickerLatch != null) {
+			tickerLatch.countDown();
+		}
 	}
 	
 	/**
