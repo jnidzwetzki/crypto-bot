@@ -219,43 +219,37 @@ public class DonchianBot implements Runnable {
 	 */
 	private void applySystemToPortfolioManager(final PortfolioManager portfolioManager) {
 		try {	
-			final Map<BitfinexCurrencyPair, Double> entries = new HashMap<>();
+			final Map<BitfinexCurrencyPair, CurrencyEntry> entries = new HashMap<>();
 			final Map<BitfinexCurrencyPair, Double> exits = new HashMap<>();
 			
 			for(final BitfinexCurrencyPair currencyPair : tradedCurrencies) {
 				
 				final boolean open = portfolioManager.isPositionOpen(currencyPair.getCurrency1());
 				
+				// The channel values
 				final double upperValue = getUpperChannelValue(currencyPair).toDouble();
 				final double lowerValue = getLowerChannelValue(currencyPair).toDouble();
 				final double channelSize = upperValue - lowerValue;
 				
+				// The prices
+				final double entryPrice = adjustEntryPrice(upperValue);
+				final double exitPrice = adjustExitPrice(lowerValue);
+
 				if(! open) {
 					final double lastPrice = getLastPriceForSymbol(currencyPair.toBitfinexString());
 					
-					// Filter entry orders to reduce captial allocation
+					// Filter entry orders to reduce capital allocation
 					final double upperChannelHalf = lowerValue + (channelSize / 2);
-					
-					// Filter channel size 
-					final double channelSizeInPerc = channelSize / upperValue * 100;
 
 					if(lastPrice > upperChannelHalf) {
-						
-						if(channelSizeInPerc < 20.0) {
-							final double entryPrice = adjustEntryPrice(upperValue);
-							entries.put(currencyPair, entryPrice);
-						} else {
-							logger.info("Entry order for {} suppressed because of channel size {}", 
-									currencyPair, channelSizeInPerc);
-						}
-
+						final CurrencyEntry currencyEntry = new CurrencyEntry(currencyPair, entryPrice, exitPrice);
+						entries.put(currencyPair, currencyEntry);
 					} else {
 						logger.info("Entry order for {} suppressed because price {} is to low {}", 
 								currencyPair, lastPrice, upperChannelHalf);
 					}
 					
 				} else {
-					final double exitPrice = adjustExitPrice(lowerValue);
 					exits.put(currencyPair, exitPrice);
 				}
 			}

@@ -3,6 +3,10 @@ package net.achfrag.crypto.bot.portfolio;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.achfrag.crypto.bot.CurrencyEntry;
 import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import net.achfrag.trading.crypto.bitfinex.entity.APIException;
 import net.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
@@ -11,6 +15,12 @@ import net.achfrag.trading.crypto.bitfinex.entity.Position;
 import net.achfrag.trading.crypto.bitfinex.entity.Wallet;
 
 public class MarginPortfolioManager extends PortfolioManager {
+	
+	/**
+	 * The Logger
+	 */
+	private final static Logger logger = LoggerFactory.getLogger(MarginPortfolioManager.class);
+
 
 	public MarginPortfolioManager(final BitfinexApiBroker bitfinexApiBroker) {
 		super(bitfinexApiBroker);
@@ -57,16 +67,15 @@ public class MarginPortfolioManager extends PortfolioManager {
 	}
 	
 	/**
-	 * Caluclate the amount of open positions
+	 * Calculate the amount of open positions
 	 * @param entries
 	 * @return
 	 */
 	protected int calculateTotalPositionsForCapitalAllocation(
-			final Map<BitfinexCurrencyPair, Double> entries, 
+			final Map<BitfinexCurrencyPair, CurrencyEntry> entries, 
 			final Map<BitfinexCurrencyPair, Double> exits) {		
 		
-		// Max is 50% capital per position
-		return Math.max(2, entries.size() + exits.size());
+		return entries.size() + exits.size();
 	}
 	
 	/**
@@ -75,6 +84,21 @@ public class MarginPortfolioManager extends PortfolioManager {
 	@Override
 	protected double getInvestmentRate() {
 		return 2.0;
+	}
+
+	@Override
+	protected double getTotalPortfolioValueInUSD() throws APIException {
+		final List<Wallet> wallets = getAllWallets();
+		
+		for(final Wallet wallet : wallets) {
+			if(wallet.getCurreny().equals("USD")) {
+				return wallet.getBalance();
+			}
+		}
+		
+		logger.error("Unable to find USD wallet");
+		
+		return 0;
 	}
 	
 }

@@ -8,6 +8,9 @@ import org.bboxdb.commons.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import net.achfrag.crypto.bot.CurrencyEntry;
 import net.achfrag.crypto.bot.PortfolioOrderManager;
 import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import net.achfrag.trading.crypto.bitfinex.BitfinexOrderBuilder;
@@ -47,6 +50,16 @@ public abstract class PortfolioManager {
 	private static final double INVESTED_THRESHOLD = 0.002;
 
 	/**
+	 * Maximum loss per position 
+	 */
+	private static final double MAX_LOSS_PER_POSITION = 0.05;
+	
+	/**
+	 * The maximum position size
+	 */
+	private static final double MAX_SINGLE_POSITION_SIZE = 0.5;
+	
+	/**
 	 * Simulate or real trading
 	 */
 	public final static boolean SIMULATION = false;
@@ -61,13 +74,25 @@ public abstract class PortfolioManager {
 		this.orderManager = new PortfolioOrderManager(bitfinexApiBroker);
 	}
 	
-	public void syncOrders(final Map<BitfinexCurrencyPair, Double> entries, 
+	public void syncOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries, 
 			final Map<BitfinexCurrencyPair, Double> exits) throws InterruptedException, APIException {
 		
-		positionsForCapitalAllocation = calculateTotalPositionsForCapitalAllocation(entries, exits);
+		updatePositionForCapitalAllocation(entries, exits);
 		
 		placeEntryOrders(entries);
 		placeExitOrders(exits);
+	}
+
+	/**
+	 * Update the positions for capital allocation
+	 * @param entries
+	 * @param exits
+	 */
+	@VisibleForTesting
+	public void updatePositionForCapitalAllocation(final Map<BitfinexCurrencyPair, CurrencyEntry> entries,
+			final Map<BitfinexCurrencyPair, Double> exits) {
+		
+		positionsForCapitalAllocation = calculateTotalPositionsForCapitalAllocation(entries, exits);
 	}
 	
 	/**
@@ -75,7 +100,7 @@ public abstract class PortfolioManager {
 	 * @param currencyPair
 	 * @throws APIException 
 	 */
-	private void placeEntryOrders(final Map<BitfinexCurrencyPair, Double> entries) 
+	private void placeEntryOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries) 
 			throws InterruptedException, APIException {
 		
 		logger.info("Processing entry orders {}", entries);
@@ -84,7 +109,7 @@ public abstract class PortfolioManager {
 		cancelRemovedEntryOrders(entries);
 		
 		// Cancel old and changed orders
-		cancelOldChangedOrders(entries);
+		cancelOldChangedEntryOrders(entries);
 		
 		// Place the new entry orders
 		placeNewEntryOrders(entries);
@@ -96,11 +121,9 @@ public abstract class PortfolioManager {
 	 * @throws APIException
 	 * @throws InterruptedException
 	 */
-	private void cancelOldChangedOrders(final Map<BitfinexCurrencyPair, Double> entries)
+	private void cancelOldChangedEntryOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries)
 			throws APIException, InterruptedException {
-		
-		final double positionSizeUSD = positionSizeInUSD();
-		
+
 		// Check current limits and position sizes
 		for(final BitfinexCurrencyPair currency : entries.keySet()) {
 			final ExchangeOrder order = getOpenOrderForSymbol(currency.toBitfinexString());
@@ -110,8 +133,9 @@ public abstract class PortfolioManager {
 				continue;
 			}
 
-			final double entryPrice = entries.get(currency);
-			final double positionSize = calculatePositionSize(entryPrice, positionSizeUSD);
+			final CurrencyEntry entry = entries.get(currency);
+			final double entryPrice = entry.getEntryPrice();
+			final double positionSize = calculatePositionSize(entry);
 
 			if(order.getAmount() == positionSize && order.getPrice() == entryPrice) {
 				logger.info("Order for {} is fine", currency);
@@ -132,9 +156,9 @@ public abstract class PortfolioManager {
 	 * @throws APIException 
 	 * @throws InterruptedException 
 	 */
-	private void placeNewEntryOrders(final Map<BitfinexCurrencyPair, Double> entries) throws APIException, InterruptedException {
+	private void placeNewEntryOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries) throws APIException, InterruptedException {
 		
-		final double positionSizeUSD = positionSizeInUSD();
+		final double positionSizeUSD = captialAvailablePerPosition();
 		
 		if(positionSizeUSD < USD_INVESTMENT_THRESHOLD) {
 			logger.info("Dont place entry orders, USD per position is too small {} < {}", 
@@ -146,9 +170,11 @@ public abstract class PortfolioManager {
 		// Check current limits and position sizes
 		for(final BitfinexCurrencyPair currency : entries.keySet()) {
 			final ExchangeOrder order = getOpenOrderForSymbol(currency.toBitfinexString());
-			final double entryPrice = entries.get(currency);
 			
-			final double positionSize = calculatePositionSize(entryPrice, positionSizeUSD);
+			final CurrencyEntry entry = entries.get(currency);
+			final double entryPrice = entry.getEntryPrice();
+			
+			final double positionSize = calculatePositionSize(entry);
 
 			// Old order present
 			if(order != null) {
@@ -176,7 +202,7 @@ public abstract class PortfolioManager {
 	 * @throws APIException
 	 * @throws InterruptedException
 	 */
-	private void cancelRemovedEntryOrders(final Map<BitfinexCurrencyPair, Double> entries)
+	private void cancelRemovedEntryOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries)
 			throws APIException, InterruptedException {
 		
 		final List<ExchangeOrder> entryOrders = getAllOpenEntryOrders();
@@ -255,7 +281,7 @@ public abstract class PortfolioManager {
 	}
 
 	/**
-	 * Cleanup the old exit orders (remove duplicates, unknwon orders)
+	 * Cleanup the old exit orders (remove duplicates, unknown orders)
 	 * @param exits
 	 * @throws APIException
 	 * @throws InterruptedException
@@ -302,7 +328,7 @@ public abstract class PortfolioManager {
 	 * Calculate the positions size in USD
 	 * @return
 	 */
-	private double positionSizeInUSD() throws APIException {
+	private double captialAvailablePerPosition() throws APIException {
 		final Wallet wallet = getWalletForCurrency("USD");
 		
 		// Wallet could be empty
@@ -310,17 +336,55 @@ public abstract class PortfolioManager {
 			return 0;
 		}
 		
-		return (wallet.getBalance() * getInvestmentRate()) / positionsForCapitalAllocation;
+		final double investmentRate = getInvestmentRate();
+
+		// The total portfolio value
+		final double totalPortfolioValueInUSD = getTotalPortfolioValueInUSD() * investmentRate;
+				
+		// Capital per position
+		final double capitalAvailablePerPosition = (wallet.getBalance() * investmentRate) / positionsForCapitalAllocation;
+		
+		// Max position size is determined by MAX_POSITION_SIZE
+		return Math.min(capitalAvailablePerPosition, 
+				totalPortfolioValueInUSD * MAX_SINGLE_POSITION_SIZE);
 	}
 
 	/**
-	 * Calculate the positon size
+	 * Calculate the position size
 	 * @param upperValue
 	 * @return
 	 * @throws APIException 
 	 */
-	private double calculatePositionSize(final double entryPrice, final double positionSizeInUSD)  {
-		final double positionSize = (positionSizeInUSD / entryPrice);
+	@VisibleForTesting
+	public double calculatePositionSize(final CurrencyEntry entry) throws APIException  {
+
+		/**
+		 * Calculate position size by max capital
+		 */
+		// Capital available per position
+		final double capitalAvailablePerPosition = captialAvailablePerPosition();
+						
+		// Max position size (capital)
+		final double positionSizePerCapital = (capitalAvailablePerPosition / entry.getEntryPrice());
+		
+		/**
+		 * Calculate position size by max loss
+		 */
+		// Max loss per position
+		final double maxLossPerPositon = entry.getEntryPrice() - entry.getStopLossPrice();
+		
+		// The total portfolio value
+		final double totalPortfolioValueInUSD = getTotalPortfolioValueInUSD();
+		
+		// Max position size per stop loss
+		final double positionSizePerLoss = totalPortfolioValueInUSD * MAX_LOSS_PER_POSITION / maxLossPerPositon;
+
+		// =============
+		logger.debug("Position size {} per capital is {}, position size per max loss is {}", 
+				entry.getCurrencyPair(), positionSizePerCapital, positionSizePerLoss);
+		
+		final double positionSize = Math.min(positionSizePerCapital, positionSizePerLoss);
+
 		return MathUtil.round(positionSize, 6);
 	}
 
@@ -389,6 +453,19 @@ public abstract class PortfolioManager {
 	}
 	
 	/**
+	 * Get all wallets
+	 * @param currency 
+	 * @return
+	 * @throws APIException 
+	 */
+	protected List<Wallet> getAllWallets() throws APIException {
+		return bitfinexApiBroker.getWallets()
+			.stream()
+			.filter(w -> w.getWalletType().equals(getWalletType()))
+			.collect(Collectors.toList());
+	}
+	
+	/**
 	 * Is the given position open
 	 * @param currency
 	 * @return
@@ -439,12 +516,12 @@ public abstract class PortfolioManager {
 	protected abstract double getOpenPositionSizeForCurrency(final String currency) throws APIException;
 
 	/**
-	 * Caluclate the amount of open positions
+	 * Calculate the amount of open positions
 	 * @param entries
 	 * @return
 	 */
 	protected abstract int calculateTotalPositionsForCapitalAllocation(
-			final Map<BitfinexCurrencyPair, Double> entries, 
+			final Map<BitfinexCurrencyPair, CurrencyEntry> entries, 
 			final Map<BitfinexCurrencyPair, Double> exits);
 	
 	/**
@@ -452,5 +529,11 @@ public abstract class PortfolioManager {
 	 * @return
 	 */
 	protected abstract double getInvestmentRate();
+	
+	/**
+	 * Get the total portfolio value in USD
+	 * @throws APIException 
+	 */
+	protected abstract double getTotalPortfolioValueInUSD() throws APIException;
 
 }
