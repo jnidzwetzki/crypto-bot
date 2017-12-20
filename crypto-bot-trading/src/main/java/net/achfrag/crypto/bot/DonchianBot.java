@@ -254,7 +254,7 @@ public class DonchianBot implements Runnable {
 					exits.put(currencyPair, exitPrice);
 				}
 			}
-			
+		
 			portfolioManager.syncOrders(entries, exits);
 
 		} catch (APIException e) {
@@ -299,8 +299,8 @@ public class DonchianBot implements Runnable {
 	 * @param upperValue
 	 * @return
 	 */
-	private long adjustEntryPrice(final double upperValue) {
-		return Math.round(upperValue + (upperValue / 100 * 0.5));
+	private double adjustEntryPrice(final double upperValue) {
+		return MathUtil.round(upperValue + (upperValue / 100.0 * 0.5), 2);
 	}
 	
 	/**
@@ -308,11 +308,10 @@ public class DonchianBot implements Runnable {
 	 * @param newStopLoss
 	 * @return
 	 */
-	private long adjustExitPrice(final double lowerValue) {
-		return Math.round(lowerValue - (lowerValue / 100 * 0.2));
+	private double adjustExitPrice(final double lowerValue) {
+		return  MathUtil.round(lowerValue - (lowerValue / 100.0 * 0.2), 2);
 	}
 
-	
 	/**
 	 * The main method
 	 * @param args
