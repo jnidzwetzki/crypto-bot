@@ -96,7 +96,7 @@ public class BasePortfolioManager extends PortfolioManager {
 					final double value = rate * wallet.getBalance();
 					totalValue = totalValue + value;
 				} else {
-					logger.error("Unable to find tick for {}", symbol);
+					logger.debug("Unable to find tick for {}, appraise wallet with 0 USD", symbol);
 				}
 			}
 		}

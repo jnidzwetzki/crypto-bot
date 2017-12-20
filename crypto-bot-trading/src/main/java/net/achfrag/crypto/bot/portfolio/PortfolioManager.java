@@ -176,6 +176,11 @@ public abstract class PortfolioManager {
 			
 			final double positionSize = calculatePositionSize(entry);
 
+			if(positionSize < currency.getMinimalOrderSize()) {
+				logger.info("Not placing order for {}, position size is too small {}", currency, positionSize);
+				continue;
+			}
+			
 			// Old order present
 			if(order != null) {
 				logger.info("Not placing a new order for {}, old order still active", currency);

@@ -115,9 +115,10 @@ public class DonchianBot implements Runnable {
 					.requestHistoricalCandles(apiBrokerList.get(0), TIMEFRAME, tradedCurrencies);
 			timeSeries.putAll(historicalCandles);
 			
+			registerTicker();
+
 			executeSystem();
 			
-			registerTicker();
 		} catch (Throwable e) {
 			logger.error("Got exception", e);
 		}
