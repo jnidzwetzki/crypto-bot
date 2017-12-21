@@ -137,7 +137,7 @@ public abstract class PortfolioManager {
 			final double entryPrice = entry.getEntryPrice();
 			final double positionSize = calculatePositionSize(entry);
 
-			if(order.getAmount() == positionSize && order.getPrice() == entryPrice) {
+			if(order.getAmount() == positionSize && order.getPrice() <= entryPrice) {
 				logger.info("Order for {} is fine", currency);
 			} else {
 				logger.info("Cancel entry order for {}, values changed (amount: {} / {}} (price: {} / {})", 
