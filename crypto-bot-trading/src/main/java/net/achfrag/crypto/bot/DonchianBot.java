@@ -150,17 +150,21 @@ public class DonchianBot implements Runnable {
 		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 
 			final String bitfinexString = currency.toBitfinexString();
-
-			tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
-		
-			final AbstractAPICommand subscribeCommandTicker = new SubscribeTickerCommand(currency);
-			apiBrokerList.get(0).sendCommand(subscribeCommandTicker);
-
-			logger.info("Wait for ticker");
-
-			while (! apiBrokerList.get(0).isTickerActive(currency)) {
-				Thread.sleep(100);
+			
+			// Subscribe ticket on all connections (needed for wallet in USD conversion)
+			for(final BitfinexApiBroker bitfinexApiBroker : apiBrokerList) {
+				final AbstractAPICommand subscribeCommandTicker = new SubscribeTickerCommand(currency);
+				bitfinexApiBroker.sendCommand(subscribeCommandTicker);
+	
+				logger.info("Wait for ticker");
+	
+				while (! bitfinexApiBroker.isTickerActive(currency)) {
+					Thread.sleep(100);
+				}
 			}
+
+			// Use only one connection for merging
+			tickMerger.put(bitfinexString, new TickMerger(bitfinexString, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
 
 			apiBrokerList.get(0)
 				.getTickerManager()
