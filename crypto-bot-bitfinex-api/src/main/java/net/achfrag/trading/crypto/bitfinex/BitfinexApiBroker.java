@@ -164,7 +164,7 @@ public class BitfinexApiBroker implements Closeable {
 		this.lastHeatbeat = new AtomicLong();
 		this.tickerManager = new TickerManager(executorService);
 		this.orderbookManager = new OrderbookManager(executorService);
-		this.orderManager = new OrderManager(executorService);
+		this.orderManager = new OrderManager(this);
 		this.positionManager = new PositionManager(executorService);
 		this.walletTable = HashBasedTable.create();
 		this.authenticated = false;

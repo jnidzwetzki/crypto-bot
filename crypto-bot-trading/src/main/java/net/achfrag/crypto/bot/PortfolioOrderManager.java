@@ -2,9 +2,6 @@ package net.achfrag.crypto.bot;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -19,7 +16,6 @@ import net.achfrag.trading.crypto.bitfinex.entity.APIException;
 import net.achfrag.trading.crypto.bitfinex.entity.BitfinexOrder;
 import net.achfrag.trading.crypto.bitfinex.entity.BitfinexOrderType;
 import net.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
-import net.achfrag.trading.crypto.bitfinex.entity.ExchangeOrderState;
 import net.achfrag.trading.crypto.bitfinex.entity.Trade;
 import net.achfrag.trading.crypto.bitfinex.entity.TradeState;
 
@@ -45,11 +41,6 @@ public class PortfolioOrderManager {
 	 */
 	private static final String OPEN_TRADES_QUERY = "from Trade t where t.tradeState = '" + TradeState.OPEN.name() + "'";
 
-	/**
-	 * The order timeout
-	 */
-	private final long TIMEOUT_IN_SECONDS = 120;
-	
 	public PortfolioOrderManager(final BitfinexApiBroker bitfinexApiBroker) {
 		this.bitfinexApiBroker = Objects.requireNonNull(bitfinexApiBroker);
 		
@@ -159,84 +150,6 @@ public class PortfolioOrderManager {
 	public List<Trade> getAllOpenTrades() {
 		try (final Session session = sessionFactory.openSession()) {
 			return session.createQuery(OPEN_TRADES_QUERY).list();
-		}
-	}
-	
-	/**
-	 * Cancel a order
-	 * @param id
-	 * @throws APIException, InterruptedException 
-	 */
-	public void placeOrderAndWaitUntilActive(final BitfinexOrder order) throws APIException, InterruptedException {
-		
-		if(! bitfinexApiBroker.isAuthenticated()) {
-			logger.error("Unable to cancel order {}, conecction is not authenticated", order);
-			return;
-		}
-		
-		order.setApikey(bitfinexApiBroker.getApiKey());
-		
-		final CountDownLatch waitLatch = new CountDownLatch(1);
-		
-		final Consumer<ExchangeOrder> ordercallback = (o) -> {
-			if(o.getCid() == order.getCid()) {
-				waitLatch.countDown();
-			}
-		};
-		
-		bitfinexApiBroker.getOrderManager().registerCallback(ordercallback);
-		
-		try {
-			logger.info("Place new order: {}", order);
-			bitfinexApiBroker.placeOrder(order);
-			
-			waitLatch.await(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
-			
-			if(waitLatch.getCount() != 0) {
-				throw new APIException("Timeout while waiting for order");
-			}		
-		} catch (Exception e) {
-			throw e;
-		} finally {
-			bitfinexApiBroker.getOrderManager().removeCallback(ordercallback);
-		}
-	}
-	
-	/**
-	 * Cancel a order
-	 * @param id
-	 * @throws APIException, InterruptedException 
-	 */
-	public void cancelOrderAndWaitForCompletion(final long id) throws APIException, InterruptedException {
-		
-		if(! bitfinexApiBroker.isAuthenticated()) {
-			logger.error("Unable to cancel order {}, conecction is not authenticated", id);
-			return;
-		}
-		
-		final CountDownLatch waitLatch = new CountDownLatch(1);
-		
-		final Consumer<ExchangeOrder> ordercallback = (o) -> {
-			if(o.getOrderId() == id && o.getState() == ExchangeOrderState.STATE_CANCELED) {
-				waitLatch.countDown();
-			}
-		};
-		
-		bitfinexApiBroker.getOrderManager().registerCallback(ordercallback);
-		
-		try {
-			logger.info("Cancel order: {}", id);
-			bitfinexApiBroker.cancelOrder(id);
-			waitLatch.await(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
-			
-			if(waitLatch.getCount() != 0) {
-				throw new APIException("Timeout while waiting for order");
-			}
-			
-		} catch (Exception e) {
-			throw e;
-		} finally {
-			bitfinexApiBroker.getOrderManager().removeCallback(ordercallback);
 		}
 	}
 }

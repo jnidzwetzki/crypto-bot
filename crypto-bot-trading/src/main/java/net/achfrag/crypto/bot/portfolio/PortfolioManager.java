@@ -14,6 +14,7 @@ import net.achfrag.crypto.bot.CurrencyEntry;
 import net.achfrag.crypto.bot.PortfolioOrderManager;
 import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import net.achfrag.trading.crypto.bitfinex.BitfinexOrderBuilder;
+import net.achfrag.trading.crypto.bitfinex.OrderManager;
 import net.achfrag.trading.crypto.bitfinex.entity.APIException;
 import net.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import net.achfrag.trading.crypto.bitfinex.entity.BitfinexOrder;
@@ -32,7 +33,7 @@ public abstract class PortfolioManager {
 	/**
 	 * The order manager
 	 */
-	protected final PortfolioOrderManager orderManager;
+	protected final OrderManager orderManager;
 	
 	/**
 	 * The positions for capital allocation
@@ -71,7 +72,11 @@ public abstract class PortfolioManager {
 
 	public PortfolioManager(BitfinexApiBroker bitfinexApiBroker) {
 		this.bitfinexApiBroker = bitfinexApiBroker;
-		this.orderManager = new PortfolioOrderManager(bitfinexApiBroker);
+		
+		this.orderManager = bitfinexApiBroker.getOrderManager();
+		
+		// Init to store orders in DB
+		new PortfolioOrderManager(bitfinexApiBroker);
 	}
 	
 	public void syncOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries, 
