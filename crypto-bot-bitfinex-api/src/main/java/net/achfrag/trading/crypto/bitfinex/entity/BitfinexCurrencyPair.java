@@ -21,10 +21,13 @@ public enum BitfinexCurrencyPair {
 	IOTA_USD("IOT", "USD", 6.0),
 	
 	// EOS
-	EOS_USD("EOS", "USD", 0.2);
+	EOS_USD("EOS", "USD", 0.2),
+	
+	// NEO
+	NEO_USD("NEO", "USD", 0.2);
 
 	/**
-	 * The name of the first curreny 
+	 * The name of the first currency 
 	 */
 	protected final String currency1;
 	
