@@ -148,9 +148,7 @@ public abstract class PortfolioManager {
 				logger.info("Cancel entry order for {}, values changed (amount: {} / {}} (price: {} / {})", 
 						currency, order.getAmount(), positionSize, order.getPrice(), entryPrice);	
 
-				if(! SIMULATION) {
-					orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
-				}
+				cancelOrder(order);
 			}
 		}
 	}
@@ -161,7 +159,8 @@ public abstract class PortfolioManager {
 	 * @throws APIException 
 	 * @throws InterruptedException 
 	 */
-	private void placeNewEntryOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries) throws APIException, InterruptedException {
+	private void placeNewEntryOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries) 
+			throws APIException, InterruptedException  {
 		
 		final double positionSizeUSD = captialAvailablePerPosition();
 		
@@ -198,10 +197,24 @@ public abstract class PortfolioManager {
 					.setPostOnly()
 					.build();
 	
-			if(! SIMULATION) {
-				orderManager.placeOrderAndWaitUntilActive(newOrder);
-			}
+			placeOrder(newOrder);	
 		}
+	}
+
+	/**
+	 *  Place an order and catch exceptions
+	 * @throws InterruptedException 
+	 */
+	private void placeOrder(final BitfinexOrder newOrder) throws InterruptedException {
+		if(SIMULATION) {
+			return;
+		}
+		
+		try {
+			orderManager.placeOrderAndWaitUntilActive(newOrder);
+		} catch(APIException e) {
+			logger.error("Unable to place order", e);
+		} 
 	}
 
 	/**
@@ -224,9 +237,7 @@ public abstract class PortfolioManager {
 			if(! entries.containsKey(currencyPair)) {
 				logger.info("Entry order for {} is not contained, canceling", currencyPair);
 				
-				if(! SIMULATION) {
-					orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
-				}
+				cancelOrder(order);
 			}
 		}
 	}
@@ -264,9 +275,7 @@ public abstract class PortfolioManager {
 					logger.info("Exit price for {} has moved form {} to {}, canceling old order", 
 							currency, order.getPrice(), exitPrice);
 					
-					if(! SIMULATION) {
-						orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
-					}
+					cancelOrder(order);
 				} else {
 					logger.info("Old order price for {} is fine: {}", currency, exitPrice);
 					continue;
@@ -284,9 +293,7 @@ public abstract class PortfolioManager {
 					.setPostOnly()
 					.build();
 	
-			if(! SIMULATION) {
-				orderManager.placeOrderAndWaitUntilActive(newOrder);
-			}
+			placeOrder(newOrder);
 		}
 	}
 
@@ -308,9 +315,7 @@ public abstract class PortfolioManager {
 			if(! exits.containsKey(symbol)) {
 				logger.error("Found old and unknown order {}, canceling", order);
 				
-				if(! SIMULATION) {
-					orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
-				}
+				cancelOrder(order);
 			}
 		}
 		
@@ -324,14 +329,28 @@ public abstract class PortfolioManager {
 				logger.error("Found duplicates {}", symbolOrderList);
 				
 				for(final ExchangeOrder order : symbolOrderList) {
-					if(! SIMULATION) {
-						orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
-					}
+					cancelOrder(order);
 				}
 			}
+		}		
+	}
+
+	/**
+	 * Cancel the order and catch the exception
+	 * @param order
+	 * @throws APIException
+	 * @throws InterruptedException
+	 */
+	private void cancelOrder(final ExchangeOrder order) throws InterruptedException {
+		if(SIMULATION) {
+			return;
 		}
 		
-		
+		try {
+			orderManager.cancelOrderAndWaitForCompletion(order.getOrderId());
+		} catch (APIException e) {
+			logger.error("Got an exception while canceling the order", e);
+		}
 	}
 	
 	/**
