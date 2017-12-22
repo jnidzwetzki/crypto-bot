@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.bboxdb.commons.MathUtil;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +14,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import net.achfrag.crypto.bot.CurrencyEntry;
 import net.achfrag.crypto.bot.PortfolioOrderManager;
+import net.achfrag.crypto.util.HibernateUtil;
 import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import net.achfrag.trading.crypto.bitfinex.BitfinexOrderBuilder;
 import net.achfrag.trading.crypto.bitfinex.OrderManager;
@@ -86,6 +89,28 @@ public abstract class PortfolioManager {
 		
 		placeEntryOrders(entries);
 		placeExitOrders(exits);
+		
+		updatePortfolioValue();
+	}
+
+	/**
+	 * Write the USD portfolio value to DB
+	 * @throws APIException
+	 */
+	private void updatePortfolioValue() throws APIException {
+		logger.debug("Updating portfolio value");
+		final double portfolioValueUSD = getTotalPortfolioValueInUSD();
+		final PortfolioValue portfolioValue = new PortfolioValue();
+		portfolioValue.setApikey(bitfinexApiBroker.getApiKey());
+		portfolioValue.setUsdValue(portfolioValueUSD);
+		
+		final SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+		
+		try(final Session session = sessionFactory.openSession()) {
+			session.beginTransaction();
+			session.save(portfolioValue);
+			session.getTransaction().commit();
+		}
 	}
 
 	/**
