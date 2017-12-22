@@ -17,13 +17,10 @@ public class PortfolioValue {
 	
 	private double usdValue;
 	
+	private long timestamp;
+	
 	public PortfolioValue() {
-	}
-
-	public PortfolioValue(final long id, final String apikey, final double usdValue) {
-		this.id = id;
-		this.apikey = apikey;
-		this.usdValue = usdValue;
+		this.timestamp = System.currentTimeMillis();
 	}
 
 	public long getId() {
@@ -50,9 +47,20 @@ public class PortfolioValue {
 		this.usdValue = usdValue;
 	}
 
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(final long timestamp) {
+		this.timestamp = timestamp;
+	}
+
 	@Override
 	public String toString() {
-		return "PortfolioValue [id=" + id + ", apikey=" + apikey + ", usdValue=" + usdValue + "]";
+		return "PortfolioValue [id=" + id + ", apikey=" + apikey + ", usdValue=" + usdValue + ", timestamp=" + timestamp
+				+ "]";
 	}
+
+
 	
 }
