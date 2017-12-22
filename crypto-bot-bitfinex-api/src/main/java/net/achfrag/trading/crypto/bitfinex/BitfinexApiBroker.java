@@ -31,6 +31,7 @@ import com.google.common.collect.Table;
 import net.achfrag.trading.crypto.bitfinex.channel.ChannelHandler;
 import net.achfrag.trading.crypto.bitfinex.channel.DoNothingHandler;
 import net.achfrag.trading.crypto.bitfinex.channel.HeartbeatHandler;
+import net.achfrag.trading.crypto.bitfinex.channel.NotificationHandler;
 import net.achfrag.trading.crypto.bitfinex.channel.OrderHandler;
 import net.achfrag.trading.crypto.bitfinex.channel.PositionHandler;
 import net.achfrag.trading.crypto.bitfinex.channel.WalletHandler;
@@ -212,7 +213,7 @@ public class BitfinexApiBroker implements Closeable {
 		// Trade update
 		channelHandler.put("tu", new DoNothingHandler());
 		// General notification 
-		channelHandler.put("n", new DoNothingHandler());
+		channelHandler.put("n", new NotificationHandler());
 	}
 	
 	public BitfinexApiBroker(final String apiKey, final String apiSecret) {
@@ -486,7 +487,7 @@ public class BitfinexApiBroker implements Closeable {
 		if(message.contains("ERROR")) {
 			logger.error("Got Error message: {}", message);
 		}
-				
+		
 		final String subchannel = jsonArray.getString(1);
 
 		if(! channelHandler.containsKey(subchannel)) {

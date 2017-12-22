@@ -8,8 +8,9 @@ public enum ExchangeOrderState {
 	STATE_EXECUTED("EXECUTED"),
 	STATE_PARTIALLY_FILLED("PARTIALLY FILLED"),
 	STATE_CANCELED("CANCELED"),
-	STATE_POSTONLY_CANCELED("POSTONLY CANCELED");
-	
+	STATE_POSTONLY_CANCELED("POSTONLY CANCELED"),
+	STATE_ERROR("ERROR");
+
 	private String bitfinexString;
 	
 	private ExchangeOrderState(final String bitfinexString) {

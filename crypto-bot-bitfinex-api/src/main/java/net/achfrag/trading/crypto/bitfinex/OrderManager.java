@@ -114,10 +114,23 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 			bitfinexApiBroker.placeOrder(order);
 			
 			waitLatch.await(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
-			
+
 			if(waitLatch.getCount() != 0) {
 				throw new APIException("Timeout while waiting for order");
-			}		
+			}
+			
+			// Check for order error
+			final boolean orderInErrorState = bitfinexApiBroker
+					.getOrderManager()
+					.getOrders()
+					.stream()
+					.filter(o -> o.getCid() == order.getCid())
+					.anyMatch(o -> o.getState() == ExchangeOrderState.STATE_ERROR);
+			
+			if(orderInErrorState) {
+				throw new APIException("Unable to place order " + order);
+			}
+			
 		} catch (Exception e) {
 			throw e;
 		} finally {
