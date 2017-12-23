@@ -15,6 +15,7 @@ import com.google.common.annotations.VisibleForTesting;
 import net.achfrag.crypto.bot.CurrencyEntry;
 import net.achfrag.crypto.bot.PortfolioOrderManager;
 import net.achfrag.crypto.util.HibernateUtil;
+import net.achfrag.crypto.util.MathHelper;
 import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import net.achfrag.trading.crypto.bitfinex.BitfinexOrderBuilder;
 import net.achfrag.trading.crypto.bitfinex.OrderManager;
@@ -167,15 +168,33 @@ public abstract class PortfolioManager {
 			final double entryPrice = entry.getEntryPrice();
 			final double positionSize = calculatePositionSize(entry);
 
-			if(order.getAmount() == positionSize && order.getPrice() <= entryPrice) {
-				logger.info("Order for {} is fine", currency);
-			} else {
+			if(hasEntryOrderChanged(order, entryPrice, positionSize)) {
 				logger.info("Cancel entry order for {}, values changed (amount: {} / {}} (price: {} / {})", 
 						currency, order.getAmount(), positionSize, order.getPrice(), entryPrice);	
 
 				cancelOrder(order);
+			} else {
+				logger.info("Order for {} is fine (amount: {} / {}} (price: {} / {})", 
+						currency, order.getAmount(), positionSize, order.getPrice(), entryPrice);
 			}
 		}
+	}
+
+	/** 
+	 * Has the entry order changed?
+	 */
+	private boolean hasEntryOrderChanged(final ExchangeOrder order, final double entryPrice,
+			final double positionSize) {
+		
+		if(order.getAmount() != positionSize) {
+			return true;
+		}
+		
+		if(order.getPrice() > entryPrice && ! MathHelper.almostEquals(order.getPrice(), entryPrice)) {
+			return true;
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -296,15 +315,18 @@ public abstract class PortfolioManager {
 			
 			// Check old orders
 			if(order != null) {
-				if(order.getPrice() < exitPrice) {
-					logger.info("Exit price for {} has moved form {} to {}, canceling old order", 
-							currency, order.getPrice(), exitPrice);
-					
-					cancelOrder(order);
-				} else {
-					logger.info("Old order price for {} is fine: {}", currency, exitPrice);
+				final double orderPrice = order.getPrice();
+				
+				if(orderPrice >= exitPrice || MathHelper.almostEquals(orderPrice, exitPrice)) {
+					logger.info("Old order price for {} is fine (price: order {} model {})", 
+							currency, orderPrice, exitPrice);
 					continue;
-				}
+				} 
+				
+				logger.info("Exit price for {} has moved form {} to {}, canceling old order", 
+						currency, orderPrice, exitPrice);
+				
+				cancelOrder(order);
 			} 
 			
 			final double positionSize = getOpenPositionSizeForCurrency(currency.getCurrency1());
