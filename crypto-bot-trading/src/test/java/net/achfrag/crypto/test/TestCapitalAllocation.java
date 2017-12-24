@@ -30,11 +30,10 @@ public class TestCapitalAllocation {
 		final CurrencyEntry entry1 = new CurrencyEntry(BitfinexCurrencyPair.BTC_USD, 1000, 990);
 		entries.put(BitfinexCurrencyPair.BTC_USD, entry1);
 		
-		portfolioManager.updatePositionForCapitalAllocation(entries, new HashMap<>());
-		final double positionSize1 = portfolioManager.calculatePositionSize(entry1);
+		portfolioManager.calculatePositionSizes(entries);
 		
 		// Max loss = 10, max capital allocation 50%
-		Assert.assertEquals(0.45, positionSize1, DELTA);
+		Assert.assertEquals(0.45, entry1.getPositionSize(), DELTA);
 	}
 	
 	@Test
@@ -48,13 +47,11 @@ public class TestCapitalAllocation {
 
 		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOTA_USD, 1000, 990);
 		entries.put(BitfinexCurrencyPair.IOTA_USD, entry2);
-		portfolioManager.updatePositionForCapitalAllocation(entries, new HashMap<>());
-		final double positionSize1 = portfolioManager.calculatePositionSize(entry1);
-		final double positionSize2 = portfolioManager.calculatePositionSize(entry2);
-
+		portfolioManager.calculatePositionSizes(entries);
+	
 		// Max loss = 10, max capital allocation 50%
-		Assert.assertEquals(0.45, positionSize1, DELTA);
-		Assert.assertEquals(0.45, positionSize2, DELTA);
+		Assert.assertEquals(0.45, entry1.getPositionSize(), DELTA);
+		Assert.assertEquals(0.45, entry2.getPositionSize(), DELTA);
 	}
 	
 	@Test
@@ -72,16 +69,12 @@ public class TestCapitalAllocation {
 		final CurrencyEntry entry3 = new CurrencyEntry(BitfinexCurrencyPair.XRP_USD, 1000, 990);
 		entries.put(BitfinexCurrencyPair.XRP_USD, entry3);
 		
-		portfolioManager.updatePositionForCapitalAllocation(entries, new HashMap<>());
+		portfolioManager.calculatePositionSizes(entries);
 		
-		final double positionSize1 = portfolioManager.calculatePositionSize(entry1);
-		final double positionSize2 = portfolioManager.calculatePositionSize(entry2);
-		final double positionSize3 = portfolioManager.calculatePositionSize(entry3);
-
 		// Max loss = 10, max capital allocation 50%
-		Assert.assertEquals(0.3, positionSize1, DELTA);
-		Assert.assertEquals(0.3, positionSize2, DELTA);		
-		Assert.assertEquals(0.3, positionSize3, DELTA);
+		Assert.assertEquals(0.3, entry1.getPositionSize(), DELTA);
+		Assert.assertEquals(0.3, entry2.getPositionSize(), DELTA);		
+		Assert.assertEquals(0.3, entry3.getPositionSize(), DELTA);
 	}
 	
 	@Test
@@ -93,11 +86,10 @@ public class TestCapitalAllocation {
 		final CurrencyEntry entry1 = new CurrencyEntry(BitfinexCurrencyPair.BTC_USD, 1000, 0);
 		entries.put(BitfinexCurrencyPair.BTC_USD, entry1);
 		
-		portfolioManager.updatePositionForCapitalAllocation(entries, new HashMap<>());
-		final double positionSize1 = portfolioManager.calculatePositionSize(entry1);
+		portfolioManager.calculatePositionSizes(entries);
 		
 		// Max loss = 10, max capital allocation 50%
-		Assert.assertEquals(0.05, positionSize1, DELTA);
+		Assert.assertEquals(0.045, entry1.getPositionSize(), DELTA);
 	}
 	
 	
@@ -112,13 +104,11 @@ public class TestCapitalAllocation {
 
 		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOTA_USD, 1000, 990);
 		entries.put(BitfinexCurrencyPair.IOTA_USD, entry2);
-		portfolioManager.updatePositionForCapitalAllocation(entries, new HashMap<>());
-		final double positionSize1 = portfolioManager.calculatePositionSize(entry1);
-		final double positionSize2 = portfolioManager.calculatePositionSize(entry2);
+		portfolioManager.calculatePositionSizes(entries);
 
 		// Max loss = 10, max capital allocation 50%
-		Assert.assertEquals(0.05, positionSize1, DELTA);
-		Assert.assertEquals(0.45, positionSize2, DELTA);
+		Assert.assertEquals(0.045, entry1.getPositionSize(), DELTA);
+		Assert.assertEquals(0.45, entry2.getPositionSize(), DELTA);
 	}
 	
 	@Test
@@ -136,16 +126,12 @@ public class TestCapitalAllocation {
 		final CurrencyEntry entry3 = new CurrencyEntry(BitfinexCurrencyPair.XRP_USD, 1000, 500);
 		entries.put(BitfinexCurrencyPair.XRP_USD, entry3);
 		
-		portfolioManager.updatePositionForCapitalAllocation(entries, new HashMap<>());
-		
-		final double positionSize1 = portfolioManager.calculatePositionSize(entry1);
-		final double positionSize2 = portfolioManager.calculatePositionSize(entry2);
-		final double positionSize3 = portfolioManager.calculatePositionSize(entry3);
+		portfolioManager.calculatePositionSizes(entries);
 
 		// Max loss = 10, max capital allocation 50%
-		Assert.assertEquals(0.05, positionSize1, DELTA);
-		Assert.assertEquals(0.3, positionSize2, DELTA);		
-		Assert.assertEquals(0.1, positionSize3, DELTA);
+		Assert.assertEquals(0.045, entry1.getPositionSize(), DELTA);
+		Assert.assertEquals(0.45, entry2.getPositionSize(), DELTA);		
+		Assert.assertEquals(0.09, entry3.getPositionSize(), DELTA);
 	}
 	
 	/**

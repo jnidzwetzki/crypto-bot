@@ -38,17 +38,7 @@ public abstract class PortfolioManager {
 	 * The order manager
 	 */
 	protected final OrderManager orderManager;
-	
-	/**
-	 * The positions for capital allocation
-	 */
-	private int positionsForCapitalAllocation;
-	
-	/**
-	 * The investment threshold
-	 */
-	private static final double USD_INVESTMENT_THRESHOLD = 20;
-	
+
 	/**
 	 * The threshold for invested / not invested
 	 */
@@ -85,9 +75,7 @@ public abstract class PortfolioManager {
 	
 	public void syncOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries, 
 			final Map<BitfinexCurrencyPair, Double> exits) throws InterruptedException, APIException {
-		
-		updatePositionForCapitalAllocation(entries, exits);
-		
+				
 		placeEntryOrders(entries);
 		placeExitOrders(exits);
 		
@@ -115,18 +103,6 @@ public abstract class PortfolioManager {
 	}
 
 	/**
-	 * Update the positions for capital allocation
-	 * @param entries
-	 * @param exits
-	 */
-	@VisibleForTesting
-	public void updatePositionForCapitalAllocation(final Map<BitfinexCurrencyPair, CurrencyEntry> entries,
-			final Map<BitfinexCurrencyPair, Double> exits) {
-		
-		positionsForCapitalAllocation = calculateTotalPositionsForCapitalAllocation(entries, exits);
-	}
-	
-	/**
 	 * Place the entry orders for the market
 	 * @param currencyPair
 	 * @throws APIException 
@@ -139,11 +115,52 @@ public abstract class PortfolioManager {
 		// Cancel old open entry orders
 		cancelRemovedEntryOrders(entries);
 		
+		calculatePositionSizes(entries);
+		
 		// Cancel old and changed orders
 		cancelOldChangedEntryOrders(entries);
 		
 		// Place the new entry orders
 		placeNewEntryOrders(entries);
+	}
+
+	/**
+	 * Calculate the position sizes
+	 * @param entries
+	 * @throws APIException
+	 */
+	@VisibleForTesting
+	public void calculatePositionSizes(final Map<BitfinexCurrencyPair, CurrencyEntry> entries) throws APIException {
+		final Wallet wallet = getWalletForCurrency("USD");
+		
+		// Wallet could be empty
+		if(wallet == null) {
+			throw new APIException("Unable to find USD wallet");
+		}
+		
+		final double capitalAvailable = getAvailablePortfolioValueInUSD() * getInvestmentRate();
+		double capitalNeeded = 0;
+		
+		for(final BitfinexCurrencyPair currency : entries.keySet()) {
+			final CurrencyEntry entry = entries.get(currency);
+			final double positionSize = calculatePositionSize(entry);
+			System.out.println("Position size: " + positionSize);
+			entry.setPositionSize(positionSize);
+			capitalNeeded = capitalNeeded + (positionSize * entry.getEntryPrice());
+		}
+		
+		// Need the n% risk per position more than the available capital
+		if(capitalNeeded > capitalAvailable) {
+			
+			logger.info("Needed capital {}, available capital {}", capitalNeeded, capitalAvailable);
+			
+			final double investmentCorrectionFactor = capitalAvailable / capitalNeeded;
+			
+			for(final BitfinexCurrencyPair currency : entries.keySet()) {
+				final CurrencyEntry entry = entries.get(currency);
+				entry.setPositionSize(entry.getPositionSize() * investmentCorrectionFactor);
+			}
+		}
 	}
 
 	/**
@@ -166,7 +183,7 @@ public abstract class PortfolioManager {
 
 			final CurrencyEntry entry = entries.get(currency);
 			final double entryPrice = entry.getEntryPrice();
-			final double positionSize = calculatePositionSize(entry);
+			final double positionSize = entry.getPositionSize();
 
 			if(hasEntryOrderChanged(order, entryPrice, positionSize)) {
 				logger.info("Cancel entry order for {}, values changed (amount: {} / {}} (price: {} / {})", 
@@ -206,23 +223,13 @@ public abstract class PortfolioManager {
 	private void placeNewEntryOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries) 
 			throws APIException, InterruptedException  {
 		
-		final double positionSizeUSD = captialAvailablePerPosition();
-		
-		if(positionSizeUSD < USD_INVESTMENT_THRESHOLD) {
-			logger.info("Dont place entry orders, USD per position is too small {} < {}", 
-					positionSizeUSD, USD_INVESTMENT_THRESHOLD);
-			
-			return;
-		}
-		
 		// Check current limits and position sizes
 		for(final BitfinexCurrencyPair currency : entries.keySet()) {
 			final ExchangeOrder order = getOpenOrderForSymbol(currency.toBitfinexString());
 			
 			final CurrencyEntry entry = entries.get(currency);
 			final double entryPrice = entry.getEntryPrice();
-			
-			final double positionSize = calculatePositionSize(entry);
+			final double positionSize = entry.getPositionSize();
 
 			if(positionSize < currency.getMinimalOrderSize()) {
 				logger.info("Not placing order for {}, position size is too small {}", currency, positionSize);
@@ -401,50 +408,19 @@ public abstract class PortfolioManager {
 	}
 	
 	/**
-	 * Calculate the positions size in USD
-	 * @return
-	 */
-	private double captialAvailablePerPosition() throws APIException {
-		final Wallet wallet = getWalletForCurrency("USD");
-		
-		// Wallet could be empty
-		if(wallet == null) {
-			return 0;
-		}
-		
-		final double investmentRate = getInvestmentRate();
-
-		// The total portfolio value
-		final double totalPortfolioValueInUSD = getTotalPortfolioValueInUSD() * investmentRate;
-				
-		// Capital per position
-		final double capitalAvailablePerPosition = (wallet.getBalance() * investmentRate) / positionsForCapitalAllocation;
-		
-		logger.debug("Total portfolio value {}, capital per position {} ({} total pos)", 
-				totalPortfolioValueInUSD, capitalAvailablePerPosition, positionsForCapitalAllocation);
-		
-		// Max position size is determined by MAX_POSITION_SIZE
-		return Math.min(capitalAvailablePerPosition, 
-				totalPortfolioValueInUSD * MAX_SINGLE_POSITION_SIZE);
-	}
-
-	/**
 	 * Calculate the position size
 	 * @param upperValue
 	 * @return
 	 * @throws APIException 
 	 */
-	@VisibleForTesting
-	public double calculatePositionSize(final CurrencyEntry entry) throws APIException  {
+	private double calculatePositionSize(final CurrencyEntry entry) throws APIException  {
 
 		/**
 		 * Calculate position size by max capital
-		 */
-		// Capital available per position
-		final double capitalAvailablePerPosition = captialAvailablePerPosition();
-						
+		 */		
 		// Max position size (capital)
-		final double positionSizePerCapital = (capitalAvailablePerPosition / entry.getEntryPrice());
+		final double positionSizePerCapital = (getTotalPortfolioValueInUSD() 
+				* getInvestmentRate() * MAX_SINGLE_POSITION_SIZE) / entry.getEntryPrice();
 		
 		/**
 		 * Calculate position size by max loss
@@ -453,13 +429,13 @@ public abstract class PortfolioManager {
 		final double maxLossPerPositon = entry.getEntryPrice() - entry.getStopLossPrice();
 		
 		// The total portfolio value
-		final double totalPortfolioValueInUSD = getTotalPortfolioValueInUSD();
+		final double totalPortfolioValueInUSD = getTotalPortfolioValueInUSD() * getInvestmentRate();
 		
 		// Max position size per stop loss
 		final double positionSizePerLoss = totalPortfolioValueInUSD * MAX_LOSS_PER_POSITION / maxLossPerPositon;
 
 		// =============
-		logger.debug("Position size {} per capital is {}, position size per max loss is {}", 
+		logger.info("Position size {} per capital is {}, position size per max loss is {}", 
 				entry.getCurrencyPair(), positionSizePerCapital, positionSizePerLoss);
 		
 		final double positionSize = Math.min(positionSizePerCapital, positionSizePerLoss);
@@ -595,15 +571,6 @@ public abstract class PortfolioManager {
 	protected abstract double getOpenPositionSizeForCurrency(final String currency) throws APIException;
 
 	/**
-	 * Calculate the amount of open positions
-	 * @param entries
-	 * @return
-	 */
-	protected abstract int calculateTotalPositionsForCapitalAllocation(
-			final Map<BitfinexCurrencyPair, CurrencyEntry> entries, 
-			final Map<BitfinexCurrencyPair, Double> exits);
-	
-	/**
 	 * Get the investment rate
 	 * @return
 	 */
@@ -614,5 +581,12 @@ public abstract class PortfolioManager {
 	 * @throws APIException 
 	 */
 	protected abstract double getTotalPortfolioValueInUSD() throws APIException;
+	
+	/**
+	 * Get the available portfolio value in USD
+	 * @throws APIException 
+	 */
+	protected abstract double getAvailablePortfolioValueInUSD() throws APIException;
+	
 
 }

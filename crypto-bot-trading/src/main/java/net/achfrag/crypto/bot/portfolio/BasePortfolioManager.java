@@ -1,16 +1,13 @@
 package net.achfrag.crypto.bot.portfolio;
 
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ta4j.core.Tick;
 
-import net.achfrag.crypto.bot.CurrencyEntry;
 import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import net.achfrag.trading.crypto.bitfinex.entity.APIException;
-import net.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
 import net.achfrag.trading.crypto.bitfinex.entity.BitfinexOrderType;
 import net.achfrag.trading.crypto.bitfinex.entity.Wallet;
 
@@ -57,21 +54,6 @@ public class BasePortfolioManager extends PortfolioManager {
 	}
 	
 	/**
-	 * Calculate the amount of open positions
-	 * @param entries
-	 * @return
-	 */
-	@Override
-	protected int calculateTotalPositionsForCapitalAllocation(
-			final Map<BitfinexCurrencyPair, CurrencyEntry> entries, 
-			final Map<BitfinexCurrencyPair, Double> exits) {		
-		
-		// Executed orders are moved to an extra wallet.
-		// So we need only to split the balance of the USD wallet 
-		return entries.size();
-	}
-	
-	/**
 	 * Get the investment rate
 	 */
 	@Override
@@ -102,6 +84,21 @@ public class BasePortfolioManager extends PortfolioManager {
 		}
 		
 		return totalValue;
+	}
+
+	@Override
+	protected double getAvailablePortfolioValueInUSD() throws APIException {
+		final List<Wallet> wallets = getAllWallets();
+		
+		for(final Wallet wallet : wallets) {
+			if(wallet.getCurreny().equals("USD")) {
+				return wallet.getBalance();
+			}
+		}
+		
+		logger.error("Unable to find USD wallet");
+		
+		return 0;
 	}
 
 }
