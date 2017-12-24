@@ -169,7 +169,7 @@ public abstract class PortfolioManager {
 	/** 
 	 * Has the entry order changed?
 	 */
-	private boolean hasEntryOrderChanged(final BitfinexCurrencyPair currency, final ExchangeOrder order, 
+	private boolean hasEntryOrderChanged(final ExchangeOrder order, 
 			final double entryPrice, final double positionSize) {
 		
 		if(order.getAmount() != positionSize) {
@@ -207,7 +207,7 @@ public abstract class PortfolioManager {
 			
 			// Old order present
 			if(order != null) {
-				if(hasEntryOrderChanged(currency, order, entryPrice, positionSize)) {
+				if(hasEntryOrderChanged(order, entryPrice, positionSize)) {
 					logger.info("Entry order for {}, values changed (amount: {} / {}} (price: {} / {})", 
 							currency, order.getAmount(), positionSize, order.getPrice(), entryPrice);	
 					
