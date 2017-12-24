@@ -115,6 +115,7 @@ public abstract class PortfolioManager {
 		// Cancel old open entry orders
 		cancelRemovedEntryOrders(entries);
 		
+		// Calculate the position sizes
 		calculatePositionSizes(entries);
 		
 		// Cancel old and changed orders
@@ -144,7 +145,6 @@ public abstract class PortfolioManager {
 		for(final BitfinexCurrencyPair currency : entries.keySet()) {
 			final CurrencyEntry entry = entries.get(currency);
 			final double positionSize = calculatePositionSize(entry);
-			System.out.println("Position size: " + positionSize);
 			entry.setPositionSize(positionSize);
 			capitalNeeded = capitalNeeded + (positionSize * entry.getEntryPrice());
 		}
