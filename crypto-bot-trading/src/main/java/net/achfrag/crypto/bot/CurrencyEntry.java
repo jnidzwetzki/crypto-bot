@@ -19,16 +19,22 @@ public class CurrencyEntry {
 	 */
 	private final double stopLossPrice;
 	
+	/**
+	 * The position size
+	 */
+	private double positionSize;
+	
 	public CurrencyEntry(final BitfinexCurrencyPair currencyPair, final double entryPrice, final double stopLossPrice) {
 		this.currencyPair = currencyPair;
 		this.entryPrice = entryPrice;
 		this.stopLossPrice = stopLossPrice;
 	}
 	
+
 	@Override
 	public String toString() {
 		return "CurrencyEntry [currencyPair=" + currencyPair + ", entryPrice=" + entryPrice + ", stopLossPrice="
-				+ stopLossPrice + "]";
+				+ stopLossPrice + ", positionSize=" + positionSize + "]";
 	}
 
 	public BitfinexCurrencyPair getCurrencyPair() {
@@ -41,6 +47,14 @@ public class CurrencyEntry {
 
 	public double getStopLossPrice() {
 		return stopLossPrice;
+	}
+
+	public double getPositionSize() {
+		return positionSize;
+	}
+
+	public void setPositionSize(final double positionSize) {
+		this.positionSize = positionSize;
 	}
 	
 }
