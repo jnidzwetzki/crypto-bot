@@ -117,10 +117,7 @@ public abstract class PortfolioManager {
 		
 		// Calculate the position sizes
 		calculatePositionSizes(entries);
-		
-		// Cancel old and changed orders
-		cancelOldChangedEntryOrders(entries);
-		
+
 		// Place the new entry orders
 		placeNewEntryOrders(entries);
 	}
@@ -152,56 +149,28 @@ public abstract class PortfolioManager {
 		// Need the n% risk per position more than the available capital
 		if(capitalNeeded > capitalAvailable) {
 			
-			logger.info("Needed capital {}, available capital {}", capitalNeeded, capitalAvailable);
-			
 			final double investmentCorrectionFactor = capitalAvailable / capitalNeeded;
+
+			logger.info("Needed capital {}, available capital {} ({})", capitalNeeded, 
+					capitalAvailable, investmentCorrectionFactor);
 			
+			capitalNeeded = 0;
 			for(final BitfinexCurrencyPair currency : entries.keySet()) {
 				final CurrencyEntry entry = entries.get(currency);
-				entry.setPositionSize(entry.getPositionSize() * investmentCorrectionFactor);
+				final double newPositionSize = roundPositionSize(entry.getPositionSize() * investmentCorrectionFactor);
+				entry.setPositionSize(newPositionSize);
+				capitalNeeded = capitalNeeded + (entry.getPositionSize() * entry.getEntryPrice());
 			}
-		}
-	}
-
-	/**
-	 * Adjust the entry orders
-	 * @param entries
-	 * @throws APIException
-	 * @throws InterruptedException
-	 */
-	private void cancelOldChangedEntryOrders(final Map<BitfinexCurrencyPair, CurrencyEntry> entries)
-			throws APIException, InterruptedException {
-
-		// Check current limits and position sizes
-		for(final BitfinexCurrencyPair currency : entries.keySet()) {
-			final ExchangeOrder order = getOpenOrderForSymbol(currency.toBitfinexString());
 			
-			// No old order present
-			if(order == null) {
-				continue;
-			}
-
-			final CurrencyEntry entry = entries.get(currency);
-			final double entryPrice = entry.getEntryPrice();
-			final double positionSize = entry.getPositionSize();
-
-			if(hasEntryOrderChanged(order, entryPrice, positionSize)) {
-				logger.info("Cancel entry order for {}, values changed (amount: {} / {}} (price: {} / {})", 
-						currency, order.getAmount(), positionSize, order.getPrice(), entryPrice);	
-
-				cancelOrder(order);
-			} else {
-				logger.info("Order for {} is fine (amount: {} / {}} (price: {} / {})", 
-						currency, order.getAmount(), positionSize, order.getPrice(), entryPrice);
-			}
+			logger.info("Needed capital {} after correction", capitalNeeded);
 		}
 	}
 
 	/** 
 	 * Has the entry order changed?
 	 */
-	private boolean hasEntryOrderChanged(final ExchangeOrder order, final double entryPrice,
-			final double positionSize) {
+	private boolean hasEntryOrderChanged(final BitfinexCurrencyPair currency, final ExchangeOrder order, 
+			final double entryPrice, final double positionSize) {
 		
 		if(order.getAmount() != positionSize) {
 			return true;
@@ -238,8 +207,15 @@ public abstract class PortfolioManager {
 			
 			// Old order present
 			if(order != null) {
-				logger.info("Not placing a new order for {}, old order still active", currency);
-				continue;
+				if(hasEntryOrderChanged(currency, order, entryPrice, positionSize)) {
+					logger.info("Entry order for {}, values changed (amount: {} / {}} (price: {} / {})", 
+							currency, order.getAmount(), positionSize, order.getPrice(), entryPrice);	
+					
+					cancelOrder(order);
+				} else {
+					logger.info("Not placing a new order for {}, old order still active", currency);
+					continue;
+				}
 			}
 			
 			final BitfinexOrder newOrder = BitfinexOrderBuilder
@@ -440,6 +416,15 @@ public abstract class PortfolioManager {
 		
 		final double positionSize = Math.min(positionSizePerCapital, positionSizePerLoss);
 
+		return roundPositionSize(positionSize);
+	}
+
+	/**
+	 * Round the position size
+	 * @param positionSize
+	 * @return
+	 */
+	private double roundPositionSize(final double positionSize) {
 		return MathUtil.round(positionSize, 6);
 	}
 
