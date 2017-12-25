@@ -2,10 +2,12 @@ package net.achfrag.trading.crypto.bitfinex;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.bboxdb.commons.Retryer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +91,7 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 	 * Cancel a order
 	 * @param id
 	 * @throws APIException, InterruptedException 
+	 * @throws InterruptedException 
 	 */
 	public void placeOrderAndWaitUntilActive(final BitfinexOrder order) throws APIException, InterruptedException {
 		
@@ -99,6 +102,34 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 		
 		order.setApikey(bitfinexApiBroker.getApiKey());
 		
+		final Callable<Boolean> orderCallable = () -> placeOrderOrderOnAPI(order);
+		
+		// Bitfinex does not implement a happens-before relationship. Sometimes
+		// canceling a stop-loss order and placing a new stop-loss order results 
+		// in a 'ERROR, reason is Invalid order: not enough exchange balance' 
+		// error for some seconds. The retryer tries to place the order up to 
+		// three times
+		final Retryer<Boolean> retryer = new Retryer<>(3, 1000, orderCallable);
+		retryer.execute();
+		
+		if(! retryer.isSuccessfully()) {
+			final Exception lastException = retryer.getLastException();
+			
+			if(lastException == null) {
+				throw new APIException("Unable to execute order");
+			} else {
+				throw new APIException(lastException);
+			}
+		}
+	}
+
+	/**
+	 * Execute a new Order
+	 * @param order
+	 * @return 
+	 * @throws Exception
+	 */
+	private boolean placeOrderOrderOnAPI(final BitfinexOrder order) throws Exception {
 		final CountDownLatch waitLatch = new CountDownLatch(1);
 		
 		final Consumer<ExchangeOrder> ordercallback = (o) -> {
@@ -131,11 +162,12 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 				throw new APIException("Unable to place order " + order);
 			}
 			
+			return true;
 		} catch (Exception e) {
 			throw e;
 		} finally {
 			bitfinexApiBroker.getOrderManager().removeCallback(ordercallback);
-		}
+		}		
 	}
 	
 	/**
