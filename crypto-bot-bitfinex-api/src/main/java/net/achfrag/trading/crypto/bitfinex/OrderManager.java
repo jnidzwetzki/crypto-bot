@@ -106,7 +106,7 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 		
 		// Bitfinex does not implement a happens-before relationship. Sometimes
 		// canceling a stop-loss order and placing a new stop-loss order results 
-		// in a 'ERROR, reason is Invalid order: not enough exchange balance' 
+		// in an 'ERROR, reason is Invalid order: not enough exchange balance' 
 		// error for some seconds. The retryer tries to place the order up to 
 		// three times
 		final Retryer<Boolean> retryer = new Retryer<>(3, 1000, orderCallable);
