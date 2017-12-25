@@ -160,9 +160,7 @@ public abstract class PortfolioManager {
 				final double newPositionSize = roundPositionSize(entry.getPositionSize() * investmentCorrectionFactor);
 				entry.setPositionSize(newPositionSize);
 				capitalNeeded = capitalNeeded + (entry.getPositionSize() * entry.getEntryPrice());
-			}
-			
-			logger.info("Needed capital {} after correction", capitalNeeded);
+			}			
 		}
 	}
 
