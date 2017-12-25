@@ -141,7 +141,6 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 		bitfinexApiBroker.getOrderManager().registerCallback(ordercallback);
 		
 		try {
-			logger.info("Place new order: {}", order);
 			bitfinexApiBroker.placeOrder(order);
 			
 			waitLatch.await(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
