@@ -38,6 +38,15 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(OrderManager.class);
 
+	/**
+	 * The number of order retries on error
+	 */
+	private static final int ORDER_RETRIES = 3;
+
+	/**
+	 * The delay between two retries
+	 */
+	private static final int RETRY_DELAY_IN_MS = 1000;
 
 	public OrderManager(final BitfinexApiBroker bitfinexApiBroker) {
 		super(bitfinexApiBroker.getExecutorService());
@@ -109,8 +118,12 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 		// in an 'ERROR, reason is Invalid order: not enough exchange balance' 
 		// error for some seconds. The retryer tries to place the order up to 
 		// three times
-		final Retryer<Boolean> retryer = new Retryer<>(3, 1000, orderCallable);
+		final Retryer<Boolean> retryer = new Retryer<>(ORDER_RETRIES, RETRY_DELAY_IN_MS, orderCallable);
 		retryer.execute();
+		
+		if(retryer.getNeededExecutions() > 1) {
+			logger.info("Nedded {} executions for placing the order", retryer.getNeededExecutions());
+		}
 		
 		if(! retryer.isSuccessfully()) {
 			final Exception lastException = retryer.getLastException();
@@ -181,6 +194,35 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 			return;
 		}
 		
+		final Callable<Boolean> orderCallable = () -> cancelOrderOnAPI(id);
+		
+		// See comment in placeOrder()
+		final Retryer<Boolean> retryer = new Retryer<>(ORDER_RETRIES, RETRY_DELAY_IN_MS, orderCallable);
+		retryer.execute();
+		
+		if(retryer.getNeededExecutions() > 1) {
+			logger.info("Nedded {} executions for canceling the order", retryer.getNeededExecutions());
+		}
+		
+		if(! retryer.isSuccessfully()) {
+			final Exception lastException = retryer.getLastException();
+			
+			if(lastException == null) {
+				throw new APIException("Unable to cancel order");
+			} else {
+				throw new APIException(lastException);
+			}
+		}
+	}
+
+	/**
+	 * Cancel the order on the API
+	 * @param id
+	 * @return
+	 * @throws APIException
+	 * @throws InterruptedException
+	 */
+	private boolean cancelOrderOnAPI(final long id) throws APIException, InterruptedException {
 		final CountDownLatch waitLatch = new CountDownLatch(1);
 		
 		final Consumer<ExchangeOrder> ordercallback = (o) -> {
@@ -199,6 +241,8 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 			if(waitLatch.getCount() != 0) {
 				throw new APIException("Timeout while waiting for order");
 			}
+			
+			return true;
 			
 		} catch (Exception e) {
 			throw e;
