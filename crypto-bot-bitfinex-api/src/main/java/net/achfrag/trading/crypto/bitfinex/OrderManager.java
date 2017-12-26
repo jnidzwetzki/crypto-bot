@@ -243,7 +243,6 @@ public class OrderManager extends AbstractSimpleCallbackManager<ExchangeOrder> {
 			}
 			
 			return true;
-			
 		} catch (Exception e) {
 			throw e;
 		} finally {
