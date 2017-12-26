@@ -1,4 +1,4 @@
-package net.achfrag.trading.crypto.bitfinex.channel;
+package net.achfrag.trading.crypto.bitfinex.callback.api;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -10,7 +10,7 @@ import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import net.achfrag.trading.crypto.bitfinex.entity.APIException;
 import net.achfrag.trading.crypto.bitfinex.entity.Wallet;
 
-public class WalletHandler implements ChannelHandler {
+public class WalletHandler implements APICallbackHandler {
 
 	@Override
 	public void handleChannelData(final BitfinexApiBroker bitfinexApiBroker, final JSONArray jsonArray) 

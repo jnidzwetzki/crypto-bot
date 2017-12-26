@@ -2,13 +2,9 @@ package net.achfrag.trading.crypto.bitfinex;
 
 import java.io.Closeable;
 import java.net.URI;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -22,19 +18,20 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ta4j.core.BaseTick;
-import org.ta4j.core.Tick;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
-import net.achfrag.trading.crypto.bitfinex.channel.ChannelHandler;
-import net.achfrag.trading.crypto.bitfinex.channel.DoNothingHandler;
-import net.achfrag.trading.crypto.bitfinex.channel.HeartbeatHandler;
-import net.achfrag.trading.crypto.bitfinex.channel.NotificationHandler;
-import net.achfrag.trading.crypto.bitfinex.channel.OrderHandler;
-import net.achfrag.trading.crypto.bitfinex.channel.PositionHandler;
-import net.achfrag.trading.crypto.bitfinex.channel.WalletHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.api.APICallbackHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.api.DoNothingHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.api.HeartbeatHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.api.NotificationHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.api.OrderHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.api.PositionHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.api.WalletHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.channel.CandlestickHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.channel.ChannelCallbackHandler;
+import net.achfrag.trading.crypto.bitfinex.callback.channel.TickHandler;
 import net.achfrag.trading.crypto.bitfinex.commands.AbstractAPICommand;
 import net.achfrag.trading.crypto.bitfinex.commands.AuthCommand;
 import net.achfrag.trading.crypto.bitfinex.commands.CancelOrderCommand;
@@ -147,7 +144,7 @@ public class BitfinexApiBroker implements Closeable {
 	/**
 	 * The channel handler
 	 */
-	private final Map<String, ChannelHandler> channelHandler;
+	private final Map<String, APICallbackHandler> channelHandler;
 	
 	/**
 	 * The executor service
@@ -473,7 +470,7 @@ public class BitfinexApiBroker implements Closeable {
 		if(channel == 0) {
 			handleSignalingChannelData(message, jsonArray);
 		} else {
-			handleChannelData(jsonArray, channel);
+			handleChannelData(jsonArray);
 		}
 	}
 
@@ -493,7 +490,7 @@ public class BitfinexApiBroker implements Closeable {
 		if(! channelHandler.containsKey(subchannel)) {
 			logger.error("No match found for message {}", message);
 		} else {
-			final ChannelHandler channelHandlerCallback = channelHandler.get(subchannel);
+			final APICallbackHandler channelHandlerCallback = channelHandler.get(subchannel);
 			
 			try {
 				channelHandlerCallback.handleChannelData(this, jsonArray);
@@ -507,94 +504,41 @@ public class BitfinexApiBroker implements Closeable {
 	 * Handle normal channel data
 	 * @param jsonArray
 	 * @param channel
+	 * @throws APIException 
 	 */
-	private void handleChannelData(final JSONArray jsonArray, final int channel) {
+	private void handleChannelData(final JSONArray jsonArray) {
+		final int channel = jsonArray.getInt(0);
+		final String channelSymbol = getFromChannelSymbolMap(channel);
+
+		if(channelSymbol == null) {
+			logger.error("Unable to determine symbol for channel {}", channel);
+			logger.error("Data is {}", jsonArray);
+			return;
+		}
+		
 		if(jsonArray.get(1) instanceof String) {
 			final String value = jsonArray.getString(1);
 			
 			if("hb".equals(value)) {
-				final String symbol = channelIdSymbolMap.get(channel);
-				tickerManager.updateChannelHeartbeat(symbol);		
+				tickerManager.updateChannelHeartbeat(channelSymbol);		
 			} else {
 				logger.error("Unable to process: {}", jsonArray);
 			}
 		} else {	
 			final JSONArray subarray = jsonArray.getJSONArray(1);			
-			final String channelSymbol = getFromChannelSymbolMap(channel);
-			
-			if(channelSymbol == null) {
-				logger.error("Unable to determine symbol for channel {}", channel);
-				logger.error("Data is {}", jsonArray);
-				return;
-			}
-			
-			if(channelSymbol.contains("trade")) {
-				handleCandlestickCallback(channelSymbol, subarray);
-			} else {
-				handleTickCallback(channel, subarray);
+
+			try {
+				if(channelSymbol.contains("trade")) {
+					final ChannelCallbackHandler handler = new CandlestickHandler();
+					handler.handleChannelData(this, channelSymbol, subarray);
+				} else {
+					final ChannelCallbackHandler handler = new TickHandler();
+					handler.handleChannelData(this, channelSymbol, subarray);
+				}
+			} catch (APIException e) {
+				logger.error("Got exception while handling callback", e);
 			}
 		}
-	}
-
-	/**
-	 * Handle a candlestick callback
-	 * @param channel
-	 * @param subarray
-	 */
-	private void handleCandlestickCallback(final String channelSymbol, final JSONArray subarray) {
-
-		// channel symbol trade:1m:tLTCUSD
-		final List<Tick> ticksBuffer = new ArrayList<>();
-		
-		// Snapshots contain multiple Bars, Updates only one
-		if(subarray.get(0) instanceof JSONArray) {
-			for (int pos = 0; pos < subarray.length(); pos++) {
-				final JSONArray parts = subarray.getJSONArray(pos);	
-				paseCandlestick(ticksBuffer, parts);
-			}
-		} else {
-			paseCandlestick(ticksBuffer, subarray);
-		}
-		
-		ticksBuffer.sort((t1, t2) -> t1.getEndTime().compareTo(t2.getEndTime()));
-
-		tickerManager.handleTicksList(channelSymbol, ticksBuffer);
-	}
-
-	/**
-	 * Parse a candlestick from JSON result
-	 */
-	private void paseCandlestick(final List<Tick> ticksBuffer, final JSONArray parts) {
-		// 0 = Timestamp, 1 = Open, 2 = Close, 3 = High, 4 = Low,  5 = Volume
-		final Instant i = Instant.ofEpochMilli(parts.getLong(0));
-		final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
-		
-		final double open = parts.getDouble(1);
-		final double close = parts.getDouble(2);
-		final double high = parts.getDouble(3);
-		final double low = parts.getDouble(4);
-		final double volume = parts.getDouble(5);
-		
-		final Tick tick = new BaseTick(withTimezone, open, high, low, close, volume);
-		ticksBuffer.add(tick);
-	}
-
-	/**
-	 * Handle a tick callback
-	 * @param channel
-	 * @param subarray
-	 */
-	protected void handleTickCallback(final int channel, final JSONArray subarray) {
-				
-		// 0 = BID
-		// 2 = ASK
-		// 6 = Price
-		final double price = subarray.getDouble(6);
-		final Tick tick = new BaseTick(ZonedDateTime.now(Const.BITFINEX_TIMEZONE), price, price, price, price, price);
-
-		final String symbol = getFromChannelSymbolMap(channel);
-		
-		tickerManager.handleNewTick(symbol, tick);
 	}
 
 	/**
@@ -602,7 +546,7 @@ public class BitfinexApiBroker implements Closeable {
 	 * @param channel
 	 * @return
 	 */
-	private String getFromChannelSymbolMap(final int channel) {
+	public String getFromChannelSymbolMap(final int channel) {
 		synchronized (channelIdSymbolMap) {
 			return channelIdSymbolMap.get(channel);
 		}
@@ -620,7 +564,7 @@ public class BitfinexApiBroker implements Closeable {
 	}
 
 	/**
-	 * Find the channel for the given symol
+	 * Find the channel for the given symbol
 	 * @param currencyString
 	 * @return
 	 */

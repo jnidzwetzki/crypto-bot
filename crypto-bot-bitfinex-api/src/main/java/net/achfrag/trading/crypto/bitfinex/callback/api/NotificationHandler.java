@@ -1,4 +1,4 @@
-package net.achfrag.trading.crypto.bitfinex.channel;
+package net.achfrag.trading.crypto.bitfinex.callback.api;
 
 import org.json.JSONArray;
 import org.slf4j.Logger;
@@ -9,7 +9,7 @@ import net.achfrag.trading.crypto.bitfinex.entity.APIException;
 import net.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
 import net.achfrag.trading.crypto.bitfinex.entity.ExchangeOrderState;
 
-public class NotificationHandler implements ChannelHandler {
+public class NotificationHandler implements APICallbackHandler {
 
 	/**
 	 * The Logger

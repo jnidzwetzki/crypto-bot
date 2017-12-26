@@ -1,4 +1,4 @@
-package net.achfrag.trading.crypto.bitfinex.channel;
+package net.achfrag.trading.crypto.bitfinex.callback.api;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -12,7 +12,7 @@ import net.achfrag.trading.crypto.bitfinex.entity.BitfinexOrderType;
 import net.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
 import net.achfrag.trading.crypto.bitfinex.entity.ExchangeOrderState;
 
-public class OrderHandler implements ChannelHandler {
+public class OrderHandler implements APICallbackHandler {
 	
 	/**
 	 * The Logger

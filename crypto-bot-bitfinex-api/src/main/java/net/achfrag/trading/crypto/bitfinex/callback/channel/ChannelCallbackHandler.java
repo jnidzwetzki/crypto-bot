@@ -1,11 +1,11 @@
-package net.achfrag.trading.crypto.bitfinex.channel;
+package net.achfrag.trading.crypto.bitfinex.callback.channel;
 
 import org.json.JSONArray;
 
 import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import net.achfrag.trading.crypto.bitfinex.entity.APIException;
 
-public interface ChannelHandler {
+public interface ChannelCallbackHandler {
 	
 	/**
 	 * Handle data for the channel
@@ -13,7 +13,8 @@ public interface ChannelHandler {
 	 * @param jsonArray
 	 * @throws APIException 
 	 */
-	public void handleChannelData(final BitfinexApiBroker bitfinexApiBroker, final JSONArray jsonArray) 
+	public void handleChannelData(final BitfinexApiBroker bitfinexApiBroker,  
+			final String channelSymbol, final JSONArray jsonArray) 
 			throws APIException;
 
 }

@@ -1,4 +1,4 @@
-package net.achfrag.trading.crypto.bitfinex.channel;
+package net.achfrag.trading.crypto.bitfinex.callback.api;
 
 import org.json.JSONArray;
 import org.slf4j.Logger;
@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
 import net.achfrag.trading.crypto.bitfinex.entity.APIException;
 
-public class HeartbeatHandler implements ChannelHandler {
+public class HeartbeatHandler implements APICallbackHandler {
 	
 	/**
 	 * The Logger
