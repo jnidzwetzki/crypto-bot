@@ -32,7 +32,7 @@ import net.achfrag.trading.crypto.bitfinex.entity.TradeDirection;
 import net.achfrag.trading.crypto.bitfinex.entity.TradeState;
 import net.achfrag.trading.crypto.bitfinex.util.TickMerger;
 
-public class Main implements Runnable {
+public class EMABot implements Runnable {
 
 	protected final Map<String, TickMerger> tickMerger;
 	
@@ -60,10 +60,10 @@ public class Main implements Runnable {
 	/**
 	 * The Logger
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(Main.class);
+	private final static Logger logger = LoggerFactory.getLogger(EMABot.class);
 
 	
-	public Main() {
+	public EMABot() {
 		
 		final List<BitfinexApiBroker> connections = BitfinexClientFactory.buildBifinexClient();
 
@@ -240,7 +240,7 @@ public class Main implements Runnable {
 	}
 
 	public static void main(final String[] args) {
-		final Main main = new Main();
+		final EMABot main = new EMABot();
 		main.run();
 	}
 	
