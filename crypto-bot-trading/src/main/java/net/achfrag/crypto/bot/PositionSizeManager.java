@@ -4,8 +4,8 @@ import java.util.Collection;
 
 import org.ta4j.core.Order.OrderType;
 
-import net.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
-import net.achfrag.trading.crypto.bitfinex.entity.Wallet;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
 
 public class PositionSizeManager {
 	

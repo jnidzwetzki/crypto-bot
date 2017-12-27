@@ -39,7 +39,6 @@
 
 	<modules>
 		<module>crypto-bot-backtest</module>
-		<module>crypto-bot-bitfinex-api</module>
 		<module>crypto-bot-trading</module>
 	</modules>
 

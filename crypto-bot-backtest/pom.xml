@@ -19,11 +19,10 @@
 	</properties>
 
 	<dependencies>
-		<!-- Project dependencies -->
 		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>crypto-bot-bitfinex-api</artifactId>
-			<version>${project.version}</version>
+			<groupId>com.github.jnidzwetzki</groupId>
+			<artifactId>bitfinex-v2-wss-api</artifactId>
+			<version>0.0.1</version>
 		</dependency>
 
 		<dependency>

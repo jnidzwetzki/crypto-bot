@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.achfrag.trading.crypto.bitfinex.util.EventsInTimeslotManager;
+import com.github.jnidzwetzki.bitfinex.v2.util.EventsInTimeslotManager;
 
 public class TestEventsInTimeslot {
 

@@ -16,18 +16,19 @@ import org.ta4j.core.TimeSeries;
 import org.ta4j.core.indicators.helpers.MaxPriceIndicator;
 import org.ta4j.core.indicators.helpers.MinPriceIndicator;
 
+import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
+import com.github.jnidzwetzki.bitfinex.v2.BitfinexClientFactory;
+import com.github.jnidzwetzki.bitfinex.v2.commands.AbstractAPICommand;
+import com.github.jnidzwetzki.bitfinex.v2.commands.SubscribeTickerCommand;
+import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
+import com.github.jnidzwetzki.bitfinex.v2.util.TickMerger;
+
 import net.achfrag.crypto.bot.portfolio.BasePortfolioManager;
 import net.achfrag.crypto.bot.portfolio.PortfolioManager;
 import net.achfrag.crypto.strategy.indicator.DonchianChannelLower;
 import net.achfrag.crypto.strategy.indicator.DonchianChannelUpper;
-import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
-import net.achfrag.trading.crypto.bitfinex.BitfinexClientFactory;
-import net.achfrag.trading.crypto.bitfinex.commands.AbstractAPICommand;
-import net.achfrag.trading.crypto.bitfinex.commands.SubscribeTickerCommand;
-import net.achfrag.trading.crypto.bitfinex.entity.APIException;
-import net.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
-import net.achfrag.trading.crypto.bitfinex.entity.Timeframe;
-import net.achfrag.trading.crypto.bitfinex.util.TickMerger;
 
 public class DonchianBot implements Runnable {
 	

@@ -22,15 +22,16 @@
 		<!-- Project dependencies -->
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>crypto-bot-bitfinex-api</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-				<dependency>
-			<groupId>${project.groupId}</groupId>
 			<artifactId>crypto-bot-backtest</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
+		<dependency>
+			<groupId>com.github.jnidzwetzki</groupId>
+			<artifactId>bitfinex-v2-wss-api</artifactId>
+			<version>0.0.1</version>
+		</dependency>
+	
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>

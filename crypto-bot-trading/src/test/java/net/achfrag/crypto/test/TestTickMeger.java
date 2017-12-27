@@ -10,8 +10,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.ta4j.core.Tick;
 
-import net.achfrag.trading.crypto.bitfinex.entity.Timeframe;
-import net.achfrag.trading.crypto.bitfinex.util.TickMerger;
+import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
+import com.github.jnidzwetzki.bitfinex.v2.util.TickMerger;
 
 public class TestTickMeger {
 	

@@ -13,12 +13,12 @@ import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 
-import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
-import net.achfrag.trading.crypto.bitfinex.commands.SubscribeCandlesCommand;
-import net.achfrag.trading.crypto.bitfinex.commands.UnsubscribeCandlesCommand;
-import net.achfrag.trading.crypto.bitfinex.entity.APIException;
-import net.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
-import net.achfrag.trading.crypto.bitfinex.entity.Timeframe;
+import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
+import com.github.jnidzwetzki.bitfinex.v2.commands.SubscribeCandlesCommand;
+import com.github.jnidzwetzki.bitfinex.v2.commands.UnsubscribeCandlesCommand;
+import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
 
 
 public class HistoricalCandlesHelper {

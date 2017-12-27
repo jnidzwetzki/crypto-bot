@@ -5,11 +5,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
-import net.achfrag.trading.crypto.bitfinex.entity.APIException;
-import net.achfrag.trading.crypto.bitfinex.entity.BitfinexOrderType;
-import net.achfrag.trading.crypto.bitfinex.entity.Position;
-import net.achfrag.trading.crypto.bitfinex.entity.Wallet;
+import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
+import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrderType;
+import com.github.jnidzwetzki.bitfinex.v2.entity.Position;
+import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
 
 public class MarginPortfolioManager extends PortfolioManager {
 	

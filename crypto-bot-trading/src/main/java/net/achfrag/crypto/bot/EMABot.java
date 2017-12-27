@@ -16,21 +16,22 @@ import org.ta4j.core.Strategy;
 import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 
+import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
+import com.github.jnidzwetzki.bitfinex.v2.BitfinexClientFactory;
+import com.github.jnidzwetzki.bitfinex.v2.TickerManager;
+import com.github.jnidzwetzki.bitfinex.v2.commands.AbstractAPICommand;
+import com.github.jnidzwetzki.bitfinex.v2.commands.SubscribeTickerCommand;
+import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.entity.ExchangeOrder;
+import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
+import com.github.jnidzwetzki.bitfinex.v2.entity.Trade;
+import com.github.jnidzwetzki.bitfinex.v2.entity.TradeDirection;
+import com.github.jnidzwetzki.bitfinex.v2.entity.TradeState;
+import com.github.jnidzwetzki.bitfinex.v2.util.TickMerger;
+
 import net.achfrag.crypto.strategy.EMAStrategy03;
 import net.achfrag.crypto.strategy.TradeStrategyFactory;
-import net.achfrag.trading.crypto.bitfinex.BitfinexApiBroker;
-import net.achfrag.trading.crypto.bitfinex.BitfinexClientFactory;
-import net.achfrag.trading.crypto.bitfinex.TickerManager;
-import net.achfrag.trading.crypto.bitfinex.commands.AbstractAPICommand;
-import net.achfrag.trading.crypto.bitfinex.commands.SubscribeTickerCommand;
-import net.achfrag.trading.crypto.bitfinex.entity.APIException;
-import net.achfrag.trading.crypto.bitfinex.entity.BitfinexCurrencyPair;
-import net.achfrag.trading.crypto.bitfinex.entity.ExchangeOrder;
-import net.achfrag.trading.crypto.bitfinex.entity.Timeframe;
-import net.achfrag.trading.crypto.bitfinex.entity.Trade;
-import net.achfrag.trading.crypto.bitfinex.entity.TradeDirection;
-import net.achfrag.trading.crypto.bitfinex.entity.TradeState;
-import net.achfrag.trading.crypto.bitfinex.util.TickMerger;
 
 public class EMABot implements Runnable {
 

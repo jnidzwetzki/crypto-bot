@@ -20,11 +20,12 @@ import org.ta4j.core.TradingRecord;
 import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
+import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
+import com.github.jnidzwetzki.bitfinex.v2.util.TickMerger;
+
 import net.achfrag.crypto.strategy.DonchianChannelStrategy;
 import net.achfrag.crypto.strategy.EMAStrategy03;
 import net.achfrag.crypto.strategy.TradeStrategyFactory;
-import net.achfrag.trading.crypto.bitfinex.entity.Timeframe;
-import net.achfrag.trading.crypto.bitfinex.util.TickMerger;
 
 public class Main implements Runnable {
 
