@@ -19,8 +19,8 @@ public class BasePortfolioManager extends PortfolioManager {
 	private final static Logger logger = LoggerFactory.getLogger(BasePortfolioManager.class);
 
 
-	public BasePortfolioManager(final BitfinexApiBroker bitfinexApiBroker) {
-		super(bitfinexApiBroker);
+	public BasePortfolioManager(final BitfinexApiBroker bitfinexApiBroker, final double maxLossPerPosition) {
+		super(bitfinexApiBroker, maxLossPerPosition);
 	}
 
 	/**

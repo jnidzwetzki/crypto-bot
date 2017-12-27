@@ -146,6 +146,6 @@ public class TestCapitalAllocation {
 		final BitfinexApiBroker apiBroker = Mockito.mock(BitfinexApiBroker.class);
 		Mockito.when(apiBroker.getWallets()).thenReturn(wallets);
 		
-		return new BasePortfolioManager(apiBroker);
+		return new BasePortfolioManager(apiBroker, 0.05);
 	}
 }

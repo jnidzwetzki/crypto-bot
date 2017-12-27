@@ -47,7 +47,7 @@ public abstract class PortfolioManager {
 	/**
 	 * Maximum loss per position 
 	 */
-	private static final double MAX_LOSS_PER_POSITION = 0.05;
+	private final double maxLossPerPosition;
 	
 	/**
 	 * The maximum position size
@@ -64,10 +64,11 @@ public abstract class PortfolioManager {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(PortfolioManager.class);
 
-	public PortfolioManager(BitfinexApiBroker bitfinexApiBroker) {
+	public PortfolioManager(BitfinexApiBroker bitfinexApiBroker, final double maxLossPerPosition) {
 		this.bitfinexApiBroker = bitfinexApiBroker;
 		
 		this.orderManager = bitfinexApiBroker.getOrderManager();
+		this.maxLossPerPosition = maxLossPerPosition;
 		
 		// Init to store orders in DB
 		new PortfolioOrderManager(bitfinexApiBroker);
@@ -400,13 +401,13 @@ public abstract class PortfolioManager {
 		 * Calculate position size by max loss
 		 */
 		// Max loss per position
-		final double maxLossPerPositon = entry.getEntryPrice() - entry.getStopLossPrice();
+		final double maxLossPerContract = entry.getEntryPrice() - entry.getStopLossPrice();
 		
 		// The total portfolio value
 		final double totalPortfolioValueInUSD = getTotalPortfolioValueInUSD() * getInvestmentRate();
 		
 		// Max position size per stop loss
-		final double positionSizePerLoss = totalPortfolioValueInUSD * MAX_LOSS_PER_POSITION / maxLossPerPositon;
+		final double positionSizePerLoss = (totalPortfolioValueInUSD * maxLossPerPosition) / maxLossPerContract;
 
 		// =============
 		logger.info("Position size {} per capital is {}, position size per max loss is {}", 

@@ -18,9 +18,8 @@ public class MarginPortfolioManager extends PortfolioManager {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(MarginPortfolioManager.class);
 
-
-	public MarginPortfolioManager(final BitfinexApiBroker bitfinexApiBroker) {
-		super(bitfinexApiBroker);
+	public MarginPortfolioManager(final BitfinexApiBroker bitfinexApiBroker, final double maxLossPerPosition) {
+		super(bitfinexApiBroker, maxLossPerPosition);
 	}
 
 	/**

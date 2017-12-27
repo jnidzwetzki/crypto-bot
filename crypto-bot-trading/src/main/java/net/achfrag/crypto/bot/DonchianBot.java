@@ -81,8 +81,7 @@ public class DonchianBot implements Runnable {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(DonchianBot.class);
 
-	
-	public DonchianBot(final int periodIn, final int periodOut) {
+	public DonchianBot(final int periodIn, final int periodOut, final double maxLossPerPosition) {
 		this.periodIn = periodIn;
 		this.periodOut = periodOut;
 		this.tickMerger = new HashMap<>();
@@ -103,7 +102,7 @@ public class DonchianBot implements Runnable {
 		}
 				
 		for(final BitfinexApiBroker bitfinexApiBroker : apiBrokerList) {
-			portfolioManagers.add(new BasePortfolioManager(bitfinexApiBroker));
+			portfolioManagers.add(new BasePortfolioManager(bitfinexApiBroker, maxLossPerPosition));
 		}
 	}
 
@@ -340,15 +339,22 @@ public class DonchianBot implements Runnable {
 	 */
 	public static void main(final String[] args) {
 		
-		if(args.length != 2) {
-			System.err.println("Usage: class <period-in> <period-out>");
+		if(args.length != 3) {
+			System.err.println("Usage: class <period-in> <period-out> <max loss per position>");
 			System.exit(-1);
 		}
 		
 		final int periodIn = MathUtil.tryParseIntOrExit(args[0], () -> "Unable to parse period in");
 		final int periodOut = MathUtil.tryParseIntOrExit(args[1], () -> "Unable to parse period out");
+		final double maxLossPerPosition = MathUtil.tryParseDoubleOrExit(args[2], () -> "Unable to parse max loss per position");
 
-		final DonchianBot donchianBot = new DonchianBot(periodIn, periodOut);
+		logger.info("======================================");
+		logger.info("Starting Donchian Robot");
+		logger.info("Period In {}, Period out {}, Max loss per position {}", 
+				periodIn, periodOut, maxLossPerPosition);
+		logger.info("======================================");
+
+		final DonchianBot donchianBot = new DonchianBot(periodIn, periodOut, maxLossPerPosition);
 		donchianBot.run();
 	}
 
