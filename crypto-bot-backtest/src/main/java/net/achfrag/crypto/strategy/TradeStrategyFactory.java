@@ -3,6 +3,9 @@ package net.achfrag.crypto.strategy;
 import org.ta4j.core.Strategy;
 import org.ta4j.core.TimeSeries;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.helpers.MaxPriceIndicator;
+import org.ta4j.core.indicators.helpers.MinPriceIndicator;
+import org.ta4j.core.indicators.helpers.OpenPriceIndicator;
 
 public abstract class TradeStrategyFactory {
 	
@@ -12,13 +15,31 @@ public abstract class TradeStrategyFactory {
 	protected final TimeSeries timeSeries;
 	
 	/**
+	 * The open price indicator
+	 */
+	protected final OpenPriceIndicator openPriceIndicator;
+	
+	/**
 	 * The close price indicator
 	 */
 	protected final ClosePriceIndicator closePriceIndicator;
 	
+	/**
+	 * The high price indicator
+	 */
+	protected final MaxPriceIndicator highPriceIndicator;
+	
+	/**
+	 * The low price indicator
+	 */
+	protected final MinPriceIndicator lowPriceIndicator;
+	
 	public TradeStrategyFactory(final TimeSeries timeSeries) {
 		this.timeSeries = timeSeries;
 		this.closePriceIndicator = new ClosePriceIndicator(timeSeries);
+		this.openPriceIndicator = new OpenPriceIndicator(timeSeries);
+		this.highPriceIndicator = new MaxPriceIndicator(timeSeries);
+		this.lowPriceIndicator = new MinPriceIndicator(timeSeries);
 	}
 
 	public TimeSeries getTimeSeries() {

@@ -27,8 +27,8 @@ public class DonchianChannelStrategy extends TradeStrategyFactory {
 		
 		this.periodUpper = periodUpper;
 		this.periodLower = periodLower;
-		this.donchianChannelLower = new DonchianChannelLower(closePriceIndicator, periodLower);
-		this.donchianChannelUpper = new DonchianChannelUpper(closePriceIndicator, periodUpper);
+		this.donchianChannelLower = new DonchianChannelLower(lowPriceIndicator, periodLower);
+		this.donchianChannelUpper = new DonchianChannelUpper(highPriceIndicator, periodUpper);
 	}
 	
 	@Override
@@ -58,11 +58,14 @@ public class DonchianChannelStrategy extends TradeStrategyFactory {
 	public double getContracts(final double portfolioValue, final int barIndex) {
 		final double channelUpper = donchianChannelUpper.getValue(barIndex).toDouble();
 		final double channelLower = donchianChannelLower.getValue(barIndex).toDouble();
-		final double channelWidth = channelUpper - channelLower;
+		final double maxLossPerContract = channelUpper - channelLower;
 		
 		final double closePrice = timeSeries.getTick(barIndex).getClosePrice().toDouble();
 		
-		return Math.min(portfolioValue * 0.02 / channelWidth, portfolioValue / closePrice);
+		// Max position size per stop loss
+		final double positionSizePerLoss = (portfolioValue * 0.02) / maxLossPerContract;
+		
+		return Math.min(positionSizePerLoss, portfolioValue * 0.5 / closePrice);
 	}
 
 }

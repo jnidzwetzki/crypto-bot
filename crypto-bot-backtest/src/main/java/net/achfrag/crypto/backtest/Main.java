@@ -10,10 +10,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.ta4j.core.BaseTimeSeries;
-import org.ta4j.core.Strategy;
 import org.ta4j.core.TimeSeries;
-import org.ta4j.core.indicators.EMAIndicator;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
 import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
 import com.github.jnidzwetzki.bitfinex.v2.util.TickMerger;
@@ -44,15 +41,16 @@ public class Main implements Runnable {
 			
 		//	final Strategy strategy = ForexStrategy01.getStrategy(timeSeries);
 			
-			final TradeStrategyFactory factory1 = new DonchianChannelStrategy(96, 48, timeSeries);
+			final TradeStrategyFactory factory1 = new DonchianChannelStrategy(24 * 4, 12 * 4, timeSeries);
 			processTrade(factory1);
 			
-			final TradeStrategyFactory factory2 = new DonchianChannelStrategy(96, 96, timeSeries);
+			final TradeStrategyFactory factory2 = new DonchianChannelStrategy(24* 4, 24* 4, timeSeries);
 			processTrade(factory2);
 			
-			final TradeStrategyFactory factory3 = new DonchianChannelStrategy(48, 96, timeSeries);
+			final TradeStrategyFactory factory3 = new DonchianChannelStrategy(12* 4, 24* 4, timeSeries);
 			processTrade(factory3);
 
+			
 			//findEma();
 			
 		} catch (Exception e) {
@@ -83,11 +81,12 @@ public class Main implements Runnable {
 		final TradeExecutor tradeExecutor = new TradeExecutor(USD_AMOUNT, strategyFactory);
 		tradeExecutor.executeTrades();
 	
-		System.out.format("%s\t%f\t%d\t%d\t%d\t%f\t%f\t%d\t%f\n", strategyFactory.getName(), 
-				tradeExecutor.getTotalPL(), tradeExecutor.getTotalTrades(),
+		System.out.format("%s\t%f\t%f\t%f\t%d\t%d\t%d\t%f\t%f\t%d\t%d\n", strategyFactory.getName(), 
+				tradeExecutor.getPortfolioValue(), tradeExecutor.getTotalPL(), 
+				tradeExecutor.getFees(), tradeExecutor.getTotalTrades(),
 				tradeExecutor.getWinner(), tradeExecutor.getLooser(), tradeExecutor.getMaxWin(), 
 				tradeExecutor.getMaxLoose(), tradeExecutor.getLoserInARow(), 
-				tradeExecutor.getFees());
+				tradeExecutor.getExecutedStopLoss());
 
 		/*
 		final Chart chart = new Chart(strategy, timeSeries);
@@ -96,7 +95,7 @@ public class Main implements Runnable {
 	}
 
 	private void printHeader() {
-		System.out.println("Strategy\tP/L\tTrades\tWinner\tLooser\tMax win\tMax loose\tLooser row\tFees\n");
+		System.out.println("Strategy\tPortfolio value\tP/L\tFees\tTrades\tWinner\tLooser\tMax win\tMax loose\tLooser row\tStop loss hard\n");
 	}
 
 	protected void loadDataFromFile() throws FileNotFoundException, IOException {
@@ -115,7 +114,7 @@ public class Main implements Runnable {
 			// 1483228800 - 01.01.2017
 			// 1451606400 - 01.01.2016
 			
-			if (timestamp < 1483228800) {
+			if (timestamp < 1451606400) {
 				continue;
 			}
 			

@@ -11,6 +11,7 @@ import net.achfrag.crypto.strategy.TradeStrategyFactory;
 
 public class TradeExecutor {
 	
+
 	private final double initialPortfolioValue;
 	private double portfolioValue = 0;
 	private double totalFees = 0;
@@ -18,6 +19,7 @@ public class TradeExecutor {
 	private int looser = 0;
 	private double maxWin = 0;
 	private double maxLoose = 0;
+	private int executedStopLoss = 0;
 	
 	private final List<Integer> looserInARowList = new ArrayList<>();
 
@@ -30,10 +32,14 @@ public class TradeExecutor {
 	private TradeStrategyFactory tradeStrategyFactory;
 
 	/**
-	 * The trading comission
+	 * The trading comission (0.2% for market orders)
 	 */
 	private static final double COMISSION = 0.002;
-
+	
+	/**
+	 * Hard stop loss at 5% portfolio value
+	 */
+	private final static double STOP_LOSS = -0.05;
 	
 	public TradeExecutor(final double portfolioValue, final TradeStrategyFactory tradeStrategyFactory) {
 		this.portfolioValue = portfolioValue;
@@ -65,10 +71,17 @@ public class TradeExecutor {
 		final Decimal priceIn = timeSeries.getTick(openBarIndex).getOpenPrice();
 
 		final double positionValue = priceOut.toDouble() * openContracts;
+
 		calculateFees(positionValue);
 		
-		final double pl = priceOut.minus(priceIn).toDouble() * openContracts;
-						
+		double pl = priceOut.minus(priceIn).toDouble() * openContracts;
+		
+		// Hard stop loss
+		if(pl < portfolioValue * STOP_LOSS) {
+			executedStopLoss++;
+			pl = portfolioValue * STOP_LOSS;
+		}
+				
 		portfolioValue = portfolioValue + pl;
 		
 		if(pl < 0) {
@@ -94,9 +107,10 @@ public class TradeExecutor {
 		final double positionSize = openPrice * openContracts;
 		
 		if(positionSize > portfolioValue) {
-			throw new IllegalArgumentException("Unable to open a trade with position size: " + positionSize);
+			throw new IllegalArgumentException("Unable to open a trade with position size: " 
+					+ positionSize + " portfolio size: " + positionSize);
 		}
-		
+				
 		calculateFees(openPrice);
 	}
 
@@ -136,5 +150,13 @@ public class TradeExecutor {
 	
 	public double getTotalPL() {
 		return portfolioValue - initialPortfolioValue;
+	}
+	
+	public int getExecutedStopLoss() {
+		return executedStopLoss;
+	}
+	
+	public double getPortfolioValue() {
+		return portfolioValue;
 	}
 }
