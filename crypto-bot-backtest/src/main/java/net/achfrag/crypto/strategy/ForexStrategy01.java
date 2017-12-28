@@ -9,21 +9,22 @@ import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.StochasticOscillatorDIndicator;
 import org.ta4j.core.indicators.StochasticOscillatorKIndicator;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.trading.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.trading.rules.CrossedUpIndicatorRule;
 import org.ta4j.core.trading.rules.OverIndicatorRule;
 import org.ta4j.core.trading.rules.UnderIndicatorRule;
 
-public class ForexStrategy01 implements TradeStrategyFactory {
-
-	public Strategy getStrategy(TimeSeries timeSeries) {
-		ClosePriceIndicator closePrice = new ClosePriceIndicator(timeSeries);
-
-		EMAIndicator sma1 = new EMAIndicator(closePrice, 5);
-		EMAIndicator sma2 = new EMAIndicator(closePrice, 10);
+public class ForexStrategy01 extends TradeStrategyFactory {
+	
+	public ForexStrategy01(final TimeSeries timeSeries) {
+		super(timeSeries);
+	}
+	
+	public Strategy getStrategy() {
+		EMAIndicator sma1 = new EMAIndicator(closePriceIndicator, 5);
+		EMAIndicator sma2 = new EMAIndicator(closePriceIndicator, 10);
 		
-		RSIIndicator rsi = new RSIIndicator(closePrice, 14);
+		RSIIndicator rsi = new RSIIndicator(closePriceIndicator, 14);
 		
 		StochasticOscillatorKIndicator stochK = new StochasticOscillatorKIndicator(timeSeries, 14);
 		StochasticOscillatorDIndicator stochD = new StochasticOscillatorDIndicator(stochK);
@@ -46,4 +47,8 @@ public class ForexStrategy01 implements TradeStrategyFactory {
 		return "ForexStrategy01";
 	}
 
+	@Override
+	public double getContracts(double portfolioValue, int barIndex) {
+		return portfolioValue / timeSeries.getTick(barIndex).getClosePrice().toDouble();
+	}
 }

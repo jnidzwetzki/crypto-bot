@@ -48,9 +48,7 @@ public class EMABot implements Runnable {
 	private final Map<BitfinexCurrencyPair, List<Trade>> trades;
 	
 	public static boolean UPDATE_SCREEN = true;
-	
-	public TradeStrategyFactory strategyFactory = new EMAStrategy03(5, 12, 40);
-	
+		
 	protected static final Timeframe TIMEFRAME = Timeframe.MINUTES_15;
 
 	/**
@@ -112,7 +110,8 @@ public class EMABot implements Runnable {
 	private void createStrategies() {
 		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			final String bitfinexString = currency.toBitfinexString();
-			final Strategy strategy = strategyFactory.getStrategy(timeSeries.get(bitfinexString));
+			TradeStrategyFactory strategyFactory = new EMAStrategy03(5, 12, 40, timeSeries.get(bitfinexString));
+			final Strategy strategy = strategyFactory.getStrategy();
 			strategies.put(bitfinexString, strategy);
 		}
 	}
@@ -207,7 +206,7 @@ public class EMABot implements Runnable {
 		final double amount = PositionSizeManager.getPositionSize(currency, OrderType.BUY, 
 				bitfinexApiBroker.getWallets());
 		
-		final Trade trade = new Trade(strategyFactory.getName(), TradeDirection.LONG, currency, amount);
+		final Trade trade = new Trade("EMA Strategy", TradeDirection.LONG, currency, amount);
 		trade.setExpectedPriceOpen(lastClosePrice.toDouble());
 
 		addTradeToOpenTradeList(trade);

@@ -14,21 +14,22 @@ import org.ta4j.core.trading.rules.OverIndicatorRule;
 import org.ta4j.core.trading.rules.StopLossRule;
 import org.ta4j.core.trading.rules.UnderIndicatorRule;
 
-public class BBreakoutStrategy implements TradeStrategyFactory {
+public class BBreakoutStrategy extends TradeStrategyFactory {
 
 	private final int bbPeriod;
 	
 	private final int deviationUp;
 	
 	private final int deviationDown;
-	
-	public BBreakoutStrategy(final int bbPeriod, final int deviationUp, final int deviationDown) {
+
+	public BBreakoutStrategy(final int bbPeriod, final int deviationUp, final int deviationDown, final TimeSeries timeSeries) {
+		super(timeSeries);
 		this.bbPeriod = bbPeriod;
 		this.deviationUp = deviationUp;
 		this.deviationDown = deviationDown;
 	}
 
-	public Strategy getStrategy(TimeSeries timeSeries) {
+	public Strategy getStrategy() {
 		
 		final ClosePriceIndicator closePrice = new ClosePriceIndicator(timeSeries);
 		final SMAIndicator sma = new SMAIndicator(closePrice, bbPeriod);
@@ -51,6 +52,11 @@ public class BBreakoutStrategy implements TradeStrategyFactory {
 	@Override
 	public String getName() {
 		return "Bolinger-breakout-" + bbPeriod + "-" + deviationUp + "-" + deviationDown;
+	}
+
+	@Override
+	public double getContracts(double portfolioValue, int barIndex) {
+		return portfolioValue / timeSeries.getTick(barIndex).getClosePrice().toDouble();
 	}
 
 }
