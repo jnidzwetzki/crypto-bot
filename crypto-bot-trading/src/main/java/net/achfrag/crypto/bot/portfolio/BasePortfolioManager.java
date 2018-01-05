@@ -10,6 +10,7 @@ import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrderType;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
+import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
 
 public class BasePortfolioManager extends PortfolioManager {
 	
@@ -71,7 +72,8 @@ public class BasePortfolioManager extends PortfolioManager {
 				totalValue = totalValue + wallet.getBalance();
 			} else {
 				final String symbol = "t" + wallet.getCurreny() + "USD";
-				final Tick lastTick = bitfinexApiBroker.getTickerManager().getLastTick(symbol);
+				final BitfinexCurrencyPair bitfinexCurrencyPair = BitfinexCurrencyPair.fromSymbolString(symbol);
+				final Tick lastTick = bitfinexApiBroker.getQuoteManager().getLastTick(bitfinexCurrencyPair);
 				
 				if(lastTick != null) {
 					final double rate = lastTick.getClosePrice().toDouble();

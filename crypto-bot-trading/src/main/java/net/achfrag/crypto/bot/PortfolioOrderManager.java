@@ -10,14 +10,14 @@ import org.slf4j.LoggerFactory;
 
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexOrderBuilder;
-import com.github.jnidzwetzki.bitfinex.v2.OrderManager;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrder;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrderType;
 import com.github.jnidzwetzki.bitfinex.v2.entity.ExchangeOrder;
-import com.github.jnidzwetzki.bitfinex.v2.entity.Trade;
-import com.github.jnidzwetzki.bitfinex.v2.entity.TradeState;
+import com.github.jnidzwetzki.bitfinex.v2.manager.OrderManager;
 
+import net.achfrag.crypto.bot.entity.Trade;
+import net.achfrag.crypto.bot.entity.TradeState;
 import net.achfrag.crypto.util.HibernateUtil;
 
 public class PortfolioOrderManager {

@@ -14,11 +14,10 @@ import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
-import com.github.jnidzwetzki.bitfinex.v2.commands.SubscribeCandlesCommand;
-import com.github.jnidzwetzki.bitfinex.v2.commands.UnsubscribeCandlesCommand;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
-import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
+import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCandlestickSymbol;
+import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
 
 
 public class HistoricalCandlesHelper {
@@ -38,29 +37,28 @@ public class HistoricalCandlesHelper {
 	 * @throws InterruptedException
 	 * @throws APIException
 	 */
-	public static Map<String, TimeSeries> requestHistoricalCandles(final BitfinexApiBroker bitfinexApiBroker, 
+	public static Map<BitfinexCandlestickSymbol, TimeSeries> requestHistoricalCandles(final BitfinexApiBroker bitfinexApiBroker, 
 			final Timeframe timeframe, final List<BitfinexCurrencyPair> tradedCurrencies) 
 			throws InterruptedException, APIException {
 		
 		logger.info("Request historical candles");
 		
-		final Map<String, TimeSeries> timeSeries = new HashMap<>();
+		final Map<BitfinexCandlestickSymbol, TimeSeries> timeSeries = new HashMap<>();
 
 		for(final BitfinexCurrencyPair currency : tradedCurrencies) {
 			
 			final String bitfinexString = currency.toBitfinexString();
 			final BaseTimeSeries currencyTimeSeries = new BaseTimeSeries(bitfinexString);
-			timeSeries.put(bitfinexString, currencyTimeSeries);
+			final BitfinexCandlestickSymbol barSymbol = new BitfinexCandlestickSymbol(currency, timeframe);
+
+			timeSeries.put(barSymbol, currencyTimeSeries);
 
 			final CountDownLatch tickCountdown = new CountDownLatch(100);
 			
 			// Add bars to timeseries callback
-			final BiConsumer<String, Tick> callback = (channelSymbol, tick) -> {
+			final BiConsumer<BitfinexCandlestickSymbol, Tick> callback = (channelSymbol, tick) -> {
 				
-				// channel symbol trade:1m:tLTCUSD
-				final String symbol = (channelSymbol.split(":"))[2];
-
-				final TimeSeries timeSeriesToAdd = timeSeries.get(symbol);
+				final TimeSeries timeSeriesToAdd = timeSeries.get(channelSymbol);
 				
 				try { 
 					timeSeriesToAdd.addTick(tick);
@@ -72,21 +70,20 @@ public class HistoricalCandlesHelper {
 				}
 			};
 			
-			final String barSymbol = currency.toBifinexCandlestickString(timeframe);
+								
+			bitfinexApiBroker.getQuoteManager().registerCandlestickCallback(barSymbol, callback);
+			bitfinexApiBroker.getQuoteManager().subscribeCandles(barSymbol);
 			
-			bitfinexApiBroker.getTickerManager().registerTickCallback(barSymbol, callback);
-			bitfinexApiBroker.sendCommand(new SubscribeCandlesCommand(currency, timeframe));
-
 			// Wait for 100 tics or 10 seconds. All snapshot ticks are handled in 
 			// a syncronized block, so we receive the full snapshot even if we 
 			// call removeTickCallback.
 			tickCountdown.await(10, TimeUnit.SECONDS);
 			
-			bitfinexApiBroker.getTickerManager().removeTickCallback(barSymbol, callback);
-			bitfinexApiBroker.sendCommand(new UnsubscribeCandlesCommand(currency, timeframe));
+			bitfinexApiBroker.getQuoteManager().registerCandlestickCallback(barSymbol, callback);
+			bitfinexApiBroker.getQuoteManager().unsubscribeCandles(barSymbol);
 			
 			logger.info("Loaded ticks for symbol {} {}", bitfinexString,
-					+ timeSeries.get(bitfinexString).getEndIndex());
+					+ timeSeries.get(barSymbol).getEndIndex());
 		}
 		
 		return timeSeries;
