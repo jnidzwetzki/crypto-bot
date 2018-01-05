@@ -171,11 +171,14 @@ public abstract class PortfolioManager {
 	private boolean hasEntryOrderChanged(final ExchangeOrder order, 
 			final double entryPrice, final double positionSize) {
 		
-		if(order.getAmount() != positionSize) {
+		// Compare the ordersize (delta 0.5%)
+		final boolean orderSizeEquals = MathHelper.almostEquals(order.getPrice(), entryPrice, 500);
+		
+		if(! orderSizeEquals) {
 			return true;
 		}
 		
-		if(order.getPrice() > entryPrice && ! MathHelper.almostEquals(order.getPrice(), entryPrice)) {
+		if(order.getPrice() > entryPrice) {
 			return true;
 		}
 		

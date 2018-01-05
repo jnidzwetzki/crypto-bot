@@ -11,10 +11,20 @@ public class MathHelper {
 	 * @return
 	 */
 	public static boolean almostEquals(final double a, final double b) {
+		return almostEquals(a, b, 1000);
+	}
+	
+	/**
+	 * Compare two double values for almost equality
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	public static boolean almostEquals(final double a, final double b, final double delta) {
 		if(a == b) {
 			return true;
 		}
 		
-		return DoubleMath.fuzzyEquals(a, b, a / 1000.0);
+		return DoubleMath.fuzzyEquals(a, b, a / delta);
 	}
 }
