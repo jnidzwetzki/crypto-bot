@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ -d target/lib/]; then
+   rm -r target/lib/
+fi
+
 mvn install -DskipTests
 
 libs=$(find target/lib -name '*.jar' | xargs echo | tr ' ' ':')
