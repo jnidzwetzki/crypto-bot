@@ -68,19 +68,27 @@ public class BasePortfolioManager extends PortfolioManager {
 				
 		double totalValue = 0;
 		for(final Wallet wallet : wallets) {
-			if(wallet.getCurreny().equals("USD")) {
+			
+			final String curreny = wallet.getCurreny();
+			
+			if(curreny.equals("USD")) {
 				totalValue = totalValue + wallet.getBalance();
 			} else {
-				final String symbol = "t" + wallet.getCurreny() + "USD";
-				final BitfinexCurrencyPair bitfinexCurrencyPair = BitfinexCurrencyPair.fromSymbolString(symbol);
-				final Tick lastTick = bitfinexApiBroker.getQuoteManager().getLastTick(bitfinexCurrencyPair);
+				final String symbol = "t" + curreny + "USD";
 				
-				if(lastTick != null) {
-					final double rate = lastTick.getClosePrice().toDouble();
-					final double value = rate * wallet.getBalance();
-					totalValue = totalValue + value;
-				} else {
-					logger.debug("Unable to find tick for {}, appraise wallet with 0 USD", symbol);
+				try {
+					final BitfinexCurrencyPair bitfinexCurrencyPair = BitfinexCurrencyPair.fromSymbolString(symbol);
+					final Tick lastTick = bitfinexApiBroker.getQuoteManager().getLastTick(bitfinexCurrencyPair);
+					
+					if(lastTick != null) {
+						final double rate = lastTick.getClosePrice().toDouble();
+						final double value = rate * wallet.getBalance();
+						totalValue = totalValue + value;
+					} else {
+						logger.debug("Unable to find tick for {}, appraise wallet with 0 USD", symbol);
+					}
+				} catch(IllegalArgumentException e) {
+					logger.debug("Unkown symbol {}, ignoring wallet", symbol);
 				}
 			}
 		}
