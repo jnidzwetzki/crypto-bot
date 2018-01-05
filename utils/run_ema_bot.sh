@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -d target/lib/]; then
+if [ -d target/lib/ ]; then
    rm -r target/lib/
 fi
 
