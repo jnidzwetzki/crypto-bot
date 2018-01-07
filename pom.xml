@@ -38,6 +38,7 @@
 	</issueManagement>
 
 	<modules>
+		<module>crypto-bot-commons</module>
 		<module>crypto-bot-backtest</module>
 		<module>crypto-bot-trading</module>
 	</modules>
@@ -49,6 +50,7 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+
 	<build>
 		<plugins>
 			<plugin>
