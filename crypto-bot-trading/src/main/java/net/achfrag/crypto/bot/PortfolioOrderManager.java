@@ -90,7 +90,7 @@ public class PortfolioOrderManager {
 		try {
 			trade.setTradeState(TradeState.OPENING);
 			trade.addOpenOrder(order);
-			bitfinexApiBroker.placeOrder(order);
+			bitfinexApiBroker.getOrderManager().placeOrder(order);
 			trade.setTradeState(TradeState.OPEN);
 		} catch (APIException e) {
 			logger.error("Got an exception while opening trade {}", trade);
@@ -120,7 +120,7 @@ public class PortfolioOrderManager {
 		try {
 			trade.setTradeState(TradeState.CLOSING);
 			trade.addCloseOrder(order);
-			bitfinexApiBroker.placeOrder(order);
+			bitfinexApiBroker.getOrderManager().placeOrder(order);
 			trade.setTradeState(TradeState.CLOSED);
 		} catch (APIException e) {
 			logger.error("Got an exception while closing trade {}", trade);

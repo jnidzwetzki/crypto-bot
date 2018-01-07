@@ -13,11 +13,12 @@ import org.ta4j.core.BaseTimeSeries;
 import org.ta4j.core.TimeSeries;
 
 import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
-import com.github.jnidzwetzki.bitfinex.v2.util.TickMerger;
+import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
 
 import net.achfrag.crypto.strategy.DonchianChannelStrategy;
 import net.achfrag.crypto.strategy.EMAStrategy03;
 import net.achfrag.crypto.strategy.TradeStrategyFactory;
+import net.achfrag.crypto.util.TickMerger;
 
 public class Main implements Runnable {
 
@@ -101,7 +102,8 @@ public class Main implements Runnable {
 	protected void loadDataFromFile() throws FileNotFoundException, IOException {
 		final BufferedReader br = new BufferedReader(new FileReader(new File(FILENAME)));
 
-		final TickMerger tickMerger = new TickMerger("BTC", Timeframe.MINUTES_15, (s, t) -> timeSeries.addTick(t));
+		final TickMerger tickMerger = new TickMerger(BitfinexCurrencyPair.BTC_USD, 
+				Timeframe.MINUTES_15, (s, t) -> timeSeries.addTick(t));
 
 		String line = null;
 		while ((line = br.readLine()) != null) {
