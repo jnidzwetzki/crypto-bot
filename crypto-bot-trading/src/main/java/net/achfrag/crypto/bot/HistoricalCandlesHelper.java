@@ -57,7 +57,7 @@ public class HistoricalCandlesHelper {
 			
 			// Add bars to timeseries callback
 			final BiConsumer<BitfinexCandlestickSymbol, Tick> callback = (channelSymbol, tick) -> {
-				
+
 				final TimeSeries timeSeriesToAdd = timeSeries.get(channelSymbol);
 				
 				try { 

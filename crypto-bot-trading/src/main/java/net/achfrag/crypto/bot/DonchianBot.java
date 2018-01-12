@@ -166,7 +166,7 @@ public class DonchianBot implements Runnable {
 
 			// Use only one connection for merging
 			tickMerger.put(currency, new TickMerger(currency, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
-
+ 
 			apiBrokerList.get(0)
 				.getQuoteManager()
 				.registerTickCallback(currency, (s, c) -> handleTickCallback(s, c));
@@ -181,7 +181,7 @@ public class DonchianBot implements Runnable {
 	private synchronized void barDoneCallback(final BitfinexCurrencyPair symbol, final Tick tick) {	
 		
 		final TimeSeries symbolTimeSeries = timeSeries.get(symbol);
-
+		
 		try {
 			symbolTimeSeries.addTick(tick);
 		} catch(Throwable e) {
