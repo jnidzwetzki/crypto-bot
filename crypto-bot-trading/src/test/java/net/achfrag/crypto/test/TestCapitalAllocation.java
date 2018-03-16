@@ -11,8 +11,8 @@ import org.mockito.Mockito;
 
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
-import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
 
 import net.achfrag.crypto.bot.CurrencyEntry;
 import net.achfrag.crypto.bot.portfolio.BasePortfolioManager;
@@ -46,8 +46,8 @@ public class TestCapitalAllocation {
 		final CurrencyEntry entry1 = new CurrencyEntry(BitfinexCurrencyPair.BTC_USD, 1000, 990);
 		entries.put(BitfinexCurrencyPair.BTC_USD, entry1);
 
-		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOTA_USD, 1000, 990);
-		entries.put(BitfinexCurrencyPair.IOTA_USD, entry2);
+		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOT_USD, 1000, 990);
+		entries.put(BitfinexCurrencyPair.IOT_USD, entry2);
 		portfolioManager.calculatePositionSizes(entries);
 	
 		// Max loss = 10, max capital allocation 50%
@@ -64,8 +64,8 @@ public class TestCapitalAllocation {
 		final CurrencyEntry entry1 = new CurrencyEntry(BitfinexCurrencyPair.BTC_USD, 1000, 990);
 		entries.put(BitfinexCurrencyPair.BTC_USD, entry1);
 
-		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOTA_USD, 1000, 990);
-		entries.put(BitfinexCurrencyPair.IOTA_USD, entry2);
+		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOT_USD, 1000, 990);
+		entries.put(BitfinexCurrencyPair.IOT_USD, entry2);
 		
 		final CurrencyEntry entry3 = new CurrencyEntry(BitfinexCurrencyPair.XRP_USD, 1000, 990);
 		entries.put(BitfinexCurrencyPair.XRP_USD, entry3);
@@ -103,8 +103,8 @@ public class TestCapitalAllocation {
 		final CurrencyEntry entry1 = new CurrencyEntry(BitfinexCurrencyPair.BTC_USD, 1000, 0);
 		entries.put(BitfinexCurrencyPair.BTC_USD, entry1);
 
-		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOTA_USD, 1000, 990);
-		entries.put(BitfinexCurrencyPair.IOTA_USD, entry2);
+		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOT_USD, 1000, 990);
+		entries.put(BitfinexCurrencyPair.IOT_USD, entry2);
 		portfolioManager.calculatePositionSizes(entries);
 
 		// Max loss = 10, max capital allocation 50%
@@ -121,8 +121,8 @@ public class TestCapitalAllocation {
 		final CurrencyEntry entry1 = new CurrencyEntry(BitfinexCurrencyPair.BTC_USD, 1000, 0);
 		entries.put(BitfinexCurrencyPair.BTC_USD, entry1);
 
-		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOTA_USD, 1000, 990);
-		entries.put(BitfinexCurrencyPair.IOTA_USD, entry2);
+		final CurrencyEntry entry2 = new CurrencyEntry(BitfinexCurrencyPair.IOT_USD, 1000, 990);
+		entries.put(BitfinexCurrencyPair.IOT_USD, entry2);
 		
 		final CurrencyEntry entry3 = new CurrencyEntry(BitfinexCurrencyPair.XRP_USD, 1000, 500);
 		entries.put(BitfinexCurrencyPair.XRP_USD, entry3);

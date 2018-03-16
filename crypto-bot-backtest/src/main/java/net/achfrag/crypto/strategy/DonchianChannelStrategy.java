@@ -56,11 +56,11 @@ public class DonchianChannelStrategy extends TradeStrategyFactory {
 	
 	@Override
 	public double getContracts(final double portfolioValue, final int barIndex) {
-		final double channelUpper = donchianChannelUpper.getValue(barIndex).toDouble();
-		final double channelLower = donchianChannelLower.getValue(barIndex).toDouble();
+		final double channelUpper = donchianChannelUpper.getValue(barIndex).doubleValue();
+		final double channelLower = donchianChannelLower.getValue(barIndex).doubleValue();
 		final double maxLossPerContract = channelUpper - channelLower;
 		
-		final double closePrice = timeSeries.getTick(barIndex).getClosePrice().toDouble();
+		final double closePrice = timeSeries.getBar(barIndex).getClosePrice().doubleValue();
 		
 		// Max position size per stop loss
 		final double positionSizePerLoss = (portfolioValue * 0.02) / maxLossPerContract;

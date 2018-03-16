@@ -9,15 +9,15 @@ import java.util.function.BiConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ta4j.core.Bar;
 import org.ta4j.core.BaseTimeSeries;
-import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
 import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCandlestickSymbol;
-import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
 
 
 public class HistoricalCandlesHelper {
@@ -56,17 +56,17 @@ public class HistoricalCandlesHelper {
 			final CountDownLatch tickCountdown = new CountDownLatch(100);
 			
 			// Add bars to timeseries callback
-			final BiConsumer<BitfinexCandlestickSymbol, Tick> callback = (channelSymbol, tick) -> {
+			final BiConsumer<BitfinexCandlestickSymbol, Bar> callback = (channelSymbol, bar) -> {
 
 				final TimeSeries timeSeriesToAdd = timeSeries.get(channelSymbol);
 				
 				try { 
-					timeSeriesToAdd.addTick(tick);
+					timeSeriesToAdd.addBar(bar);
 					tickCountdown.countDown();
 				} catch(IllegalArgumentException e) {
 					logger.error("Unable to add tick {} to time series, last tick is {}", 
-							tick, 
-							timeSeriesToAdd.getLastTick());
+							bar, 
+							timeSeriesToAdd.getLastBar());
 				}
 			};
 			
@@ -74,8 +74,8 @@ public class HistoricalCandlesHelper {
 			bitfinexApiBroker.getQuoteManager().registerCandlestickCallback(barSymbol, callback);
 			bitfinexApiBroker.getQuoteManager().subscribeCandles(barSymbol);
 			
-			// Wait for 100 tics or 10 seconds. All snapshot ticks are handled in 
-			// a syncronized block, so we receive the full snapshot even if we 
+			// Wait for 100 bars or 10 seconds. All snapshot ticks are handled in 
+			// a synchronized block, so we receive the full snapshot even if we 
 			// call removeTickCallback.
 			tickCountdown.await(10, TimeUnit.SECONDS);
 			

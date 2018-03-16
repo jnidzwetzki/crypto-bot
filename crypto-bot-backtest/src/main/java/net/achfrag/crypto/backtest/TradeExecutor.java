@@ -67,14 +67,14 @@ public class TradeExecutor {
 
 	private void closeTrade(final int i) {
 
-		final Decimal priceOut = timeSeries.getTick(i).getOpenPrice();
-		final Decimal priceIn = timeSeries.getTick(openBarIndex).getOpenPrice();
+		final Decimal priceOut = timeSeries.getBar(i).getOpenPrice();
+		final Decimal priceIn = timeSeries.getBar(openBarIndex).getOpenPrice();
 
-		final double positionValue = priceOut.toDouble() * openContracts;
+		final double positionValue = priceOut.doubleValue() * openContracts;
 
 		calculateFees(positionValue);
 		
-		double pl = priceOut.minus(priceIn).toDouble() * openContracts;
+		double pl = priceOut.minus(priceIn).doubleValue() * openContracts;
 		
 		// Hard stop loss
 		if(pl < portfolioValue * STOP_LOSS) {
@@ -101,7 +101,7 @@ public class TradeExecutor {
 
 	private void openTrade(final int i) {
 		openBarIndex = i;
-		final double openPrice = timeSeries.getTick(i).getOpenPrice().toDouble();
+		final double openPrice = timeSeries.getBar(i).getOpenPrice().doubleValue();
 		openContracts = tradeStrategyFactory.getContracts(portfolioValue, i);
 		
 		final double positionSize = openPrice * openContracts;

@@ -1,6 +1,6 @@
 package net.achfrag.crypto.bot;
 
-import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 
 public class CurrencyEntry {
 	

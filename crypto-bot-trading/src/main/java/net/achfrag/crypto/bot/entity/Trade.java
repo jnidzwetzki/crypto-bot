@@ -32,8 +32,8 @@ import javax.persistence.Table;
 
 import org.bboxdb.commons.MicroSecondTimestampProvider;
 
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrder;
-import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
 
 @Entity
 @Table(name = "trades")

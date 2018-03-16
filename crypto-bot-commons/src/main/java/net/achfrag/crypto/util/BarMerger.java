@@ -24,19 +24,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-import org.ta4j.core.BaseTick;
-import org.ta4j.core.Tick;
+import org.ta4j.core.Bar;
+import org.ta4j.core.BaseBar;
 
 import com.github.jnidzwetzki.bitfinex.v2.Const;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
-import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
 
-public class TickMerger implements Closeable {
+public class BarMerger implements Closeable {
 
 
 	private Timeframe timeframe;
 
-	private BiConsumer<BitfinexCurrencyPair, Tick> tickConsumer;
+	private BiConsumer<BitfinexCurrencyPair, Bar> tickConsumer;
 	
 	private long timeframeBegin = -1;
 	
@@ -46,7 +46,7 @@ public class TickMerger implements Closeable {
 
 	private BitfinexCurrencyPair symbol;
 
-	public TickMerger(final BitfinexCurrencyPair symbol, final Timeframe timeframe, final BiConsumer<BitfinexCurrencyPair, Tick> tickConsumer) {
+	public BarMerger(final BitfinexCurrencyPair symbol, final Timeframe timeframe, final BiConsumer<BitfinexCurrencyPair, Bar> tickConsumer) {
 		this.symbol = symbol;
 		this.timeframe = timeframe;
 		this.tickConsumer = tickConsumer;
@@ -93,10 +93,10 @@ public class TickMerger implements Closeable {
 		final Instant i = Instant.ofEpochMilli(timeframeBegin + timeframe.getMilliSeconds() - 1);
 		final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
 	
-		final Tick tick = new BaseTick(withTimezone, open, high, low, close, totalVolume);
+		final Bar bar = new BaseBar(withTimezone, open, high, low, close, totalVolume);
 
 		try {
-			tickConsumer.accept(symbol, tick);
+			tickConsumer.accept(symbol, bar);
 		} catch (IllegalArgumentException e) {
 			// ignore time shift
 		}

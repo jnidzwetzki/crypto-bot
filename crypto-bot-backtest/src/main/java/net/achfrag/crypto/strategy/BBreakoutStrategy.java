@@ -56,7 +56,7 @@ public class BBreakoutStrategy extends TradeStrategyFactory {
 
 	@Override
 	public double getContracts(double portfolioValue, int barIndex) {
-		return portfolioValue / timeSeries.getTick(barIndex).getClosePrice().toDouble();
+		return portfolioValue / timeSeries.getBar(barIndex).getClosePrice().doubleValue();
 	}
 
 }

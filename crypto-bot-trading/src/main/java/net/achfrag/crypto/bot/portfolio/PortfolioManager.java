@@ -13,12 +13,12 @@ import org.slf4j.LoggerFactory;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexOrderBuilder;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrder;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrderType;
 import com.github.jnidzwetzki.bitfinex.v2.entity.ExchangeOrder;
 import com.github.jnidzwetzki.bitfinex.v2.entity.ExchangeOrderState;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
-import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.manager.OrderManager;
 import com.google.common.annotations.VisibleForTesting;
 
@@ -202,7 +202,7 @@ public abstract class PortfolioManager {
 			final double entryPrice = entry.getEntryPrice();
 			final double positionSize = entry.getPositionSize();
 
-			if(positionSize < currency.getMinimalOrderSize()) {
+			if(positionSize < currency.getMinimumOrderSize()) {
 				logger.info("Not placing order for {}, position size is too small {}", currency, positionSize);
 				continue;
 			}

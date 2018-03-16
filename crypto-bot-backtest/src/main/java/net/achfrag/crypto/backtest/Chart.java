@@ -17,10 +17,10 @@ import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
+import org.ta4j.core.Bar;
 import org.ta4j.core.Decimal;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.Strategy;
-import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 import org.ta4j.core.TimeSeriesManager;
 import org.ta4j.core.Trade;
@@ -48,9 +48,9 @@ public class Chart {
 	private static org.jfree.data.time.TimeSeries buildChartTimeSeries(TimeSeries tickSeries,
 			Indicator<Decimal> indicator, String name) {
 		org.jfree.data.time.TimeSeries chartTimeSeries = new org.jfree.data.time.TimeSeries(name);
-		for (int i = 0; i < tickSeries.getTickCount(); i++) {
-			Tick tick = tickSeries.getTick(i);
-			chartTimeSeries.add(new Minute(Date.from(tick.getEndTime().toInstant())), indicator.getValue(i).toDouble());
+		for (int i = 0; i < tickSeries.getBarCount(); i++) {
+			final Bar tick = tickSeries.getBar(i);
+			chartTimeSeries.add(new Minute(Date.from(tick.getEndTime().toInstant())), indicator.getValue(i).doubleValue());
 		}
 		return chartTimeSeries;
 	}
@@ -65,7 +65,7 @@ public class Chart {
 		for (Trade trade : trades) {
 			// Buy signal
 			double buySignalTickTime = new Minute(
-					Date.from(series.getTick(trade.getEntry().getIndex()).getEndTime().toInstant()))
+					Date.from(series.getBar(trade.getEntry().getIndex()).getEndTime().toInstant()))
 							.getFirstMillisecond();
 			Marker buyMarker = new ValueMarker(buySignalTickTime);
 			buyMarker.setPaint(Color.GREEN);
@@ -73,7 +73,7 @@ public class Chart {
 			plot.addDomainMarker(buyMarker);
 			// Sell signal
 			double sellSignalTickTime = new Minute(
-					Date.from(series.getTick(trade.getExit().getIndex()).getEndTime().toInstant()))
+					Date.from(series.getBar(trade.getExit().getIndex()).getEndTime().toInstant()))
 							.getFirstMillisecond();
 			Marker sellMarker = new ValueMarker(sellSignalTickTime);
 			sellMarker.setPaint(Color.RED);

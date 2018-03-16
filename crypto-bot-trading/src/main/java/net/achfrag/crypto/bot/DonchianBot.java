@@ -10,33 +10,32 @@ import java.util.concurrent.CountDownLatch;
 import org.bboxdb.commons.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ta4j.core.Bar;
 import org.ta4j.core.Decimal;
-import org.ta4j.core.Tick;
 import org.ta4j.core.TimeSeries;
 import org.ta4j.core.indicators.helpers.MaxPriceIndicator;
 import org.ta4j.core.indicators.helpers.MinPriceIndicator;
 
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
-import com.github.jnidzwetzki.bitfinex.v2.commands.AbstractAPICommand;
-import com.github.jnidzwetzki.bitfinex.v2.commands.SubscribeTickerCommand;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
 import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCandlestickSymbol;
-import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexTickerSymbol;
 
 import net.achfrag.crypto.bot.portfolio.BasePortfolioManager;
 import net.achfrag.crypto.bot.portfolio.PortfolioManager;
 import net.achfrag.crypto.strategy.indicator.DonchianChannelLower;
 import net.achfrag.crypto.strategy.indicator.DonchianChannelUpper;
+import net.achfrag.crypto.util.BarMerger;
 import net.achfrag.crypto.util.BitfinexClientFactory;
-import net.achfrag.crypto.util.TickMerger;
 
 public class DonchianBot implements Runnable {
 	
 	/**
 	 * The ticker merger
 	 */
-	private final Map<BitfinexCurrencyPair, TickMerger> tickMerger;
+	private final Map<BitfinexCurrencyPair, BarMerger> tickMerger;
 	
 	/**
 	 * The time series
@@ -92,7 +91,7 @@ public class DonchianBot implements Runnable {
 		this.tradedCurrencies = Arrays.asList(BitfinexCurrencyPair.BTC_USD,
 				BitfinexCurrencyPair.ETH_USD, BitfinexCurrencyPair.LTC_USD, 
 				BitfinexCurrencyPair.BCH_USD, BitfinexCurrencyPair.XRP_USD,
-				BitfinexCurrencyPair.IOTA_USD, BitfinexCurrencyPair.EOS_USD,
+				BitfinexCurrencyPair.IOT_USD, BitfinexCurrencyPair.EOS_USD,
 				BitfinexCurrencyPair.NEO_USD);
 		
 		this.portfolioManagers = new ArrayList<>();
@@ -154,22 +153,24 @@ public class DonchianBot implements Runnable {
 			
 			// Subscribe ticket on all connections (needed for wallet in USD conversion)
 			for(final BitfinexApiBroker bitfinexApiBroker : apiBrokerList) {
-				final AbstractAPICommand subscribeCommandTicker = new SubscribeTickerCommand(currency);
-				bitfinexApiBroker.sendCommand(subscribeCommandTicker);
+				final BitfinexTickerSymbol symbol = new BitfinexTickerSymbol(currency);
+				bitfinexApiBroker.getQuoteManager().subscribeTicker(symbol);
 	
 				logger.info("Wait for ticker");
 	
-				while (! bitfinexApiBroker.isTickerActive(currency)) {
+				while (! bitfinexApiBroker.isTickerActive(symbol)) {
 					Thread.sleep(100);
 				}
 			}
 
 			// Use only one connection for merging
-			tickMerger.put(currency, new TickMerger(currency, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
+			tickMerger.put(currency, new BarMerger(currency, TIMEFRAME, (s, t) -> barDoneCallback(s, t)));
  
+			final BitfinexTickerSymbol symbol = new BitfinexTickerSymbol(currency);
+			
 			apiBrokerList.get(0)
 				.getQuoteManager()
-				.registerTickCallback(currency, (s, c) -> handleTickCallback(s, c));
+				.registerTickCallback(symbol, (s, c) -> handleBarCallback(s, c));
 		}
 	}
 	
@@ -178,18 +179,18 @@ public class DonchianBot implements Runnable {
 	 * @param symbol
 	 * @param tick
 	 */
-	private synchronized void barDoneCallback(final BitfinexCurrencyPair symbol, final Tick tick) {	
+	private synchronized void barDoneCallback(final BitfinexCurrencyPair symbol, final Bar bar) {	
 		
 		final TimeSeries symbolTimeSeries = timeSeries.get(symbol);
 		
 		try {
-			symbolTimeSeries.addTick(tick);
+			symbolTimeSeries.addBar(bar);
 		} catch(Throwable e) {
 			logger.error("Unable to add {} to symbol {}, last bar is {}", 
-					tick, symbol, symbolTimeSeries.getLastTick());
+					bar, symbol, symbolTimeSeries.getLastBar());
 		}
 		
-		logger.info("Newest bar is {}", tick);
+		logger.info("Newest bar is {}", bar);
 		
 		// Notify portfolio manager about bar done
 		if(tickerLatch != null) {
@@ -201,7 +202,7 @@ public class DonchianBot implements Runnable {
 	 * Get the last price for the symbol
 	 */
 	private double getLastPriceForSymbol(final BitfinexCurrencyPair symbol) {
-		return timeSeries.get(symbol).getLastTick().getClosePrice().toDouble();
+		return timeSeries.get(symbol).getLastBar().getClosePrice().doubleValue();
 	}
 
 	/**
@@ -209,11 +210,13 @@ public class DonchianBot implements Runnable {
 	 * @param symbol
 	 * @param tick
 	 */
-	private void handleTickCallback(final BitfinexCurrencyPair symbol, final Tick tick) {		
-		tickMerger.get(symbol).addNewPrice(
-				tick.getEndTime().toEpochSecond() * 1000, 
-				tick.getOpenPrice().toDouble(), 
-				tick.getVolume().toDouble());		
+	private void handleBarCallback(final BitfinexTickerSymbol symbol, 
+			final Bar bar) {		
+		
+		tickMerger.get(symbol.getBitfinexCurrencyPair()).addNewPrice(
+				bar.getEndTime().toEpochSecond() * 1000, 
+				bar.getOpenPrice().doubleValue(), 
+				bar.getVolume().doubleValue());		
 	}
 	
 	/**
@@ -250,8 +253,8 @@ public class DonchianBot implements Runnable {
 				final boolean open = portfolioManager.isPositionOpen(currencyPair.getCurrency1());
 				
 				// The channel values
-				final double upperValue = getUpperChannelValue(currencyPair).toDouble();
-				final double lowerValue = getLowerChannelValue(currencyPair).toDouble();
+				final double upperValue = getUpperChannelValue(currencyPair).doubleValue();
+				final double lowerValue = getLowerChannelValue(currencyPair).doubleValue();
 				final double channelSize = upperValue - lowerValue;
 				
 				// The prices
