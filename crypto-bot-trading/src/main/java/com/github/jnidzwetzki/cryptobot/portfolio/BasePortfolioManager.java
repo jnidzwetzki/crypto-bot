@@ -4,12 +4,12 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.ta4j.core.Bar;
 
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrderType;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexTick;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
 import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexTickerSymbol;
 
@@ -80,10 +80,10 @@ public class BasePortfolioManager extends PortfolioManager {
 				try {
 					final BitfinexCurrencyPair bitfinexCurrencyPair = BitfinexCurrencyPair.fromSymbolString(symbol);
 					final BitfinexTickerSymbol bitfinexSymbol = new BitfinexTickerSymbol(bitfinexCurrencyPair);
-					final Bar lastTick = bitfinexApiBroker.getQuoteManager().getLastTick(bitfinexSymbol);
+					final BitfinexTick lastTick = bitfinexApiBroker.getQuoteManager().getLastTick(bitfinexSymbol);
 					
 					if(lastTick != null) {
-						final double rate = lastTick.getClosePrice().doubleValue();
+						final double rate = lastTick.getClose();
 						final double value = rate * wallet.getBalance();
 						totalValue = totalValue + value;
 					} else {

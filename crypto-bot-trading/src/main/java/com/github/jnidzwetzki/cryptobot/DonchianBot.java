@@ -19,6 +19,7 @@ import org.ta4j.core.indicators.helpers.MinPriceIndicator;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexTick;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
 import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCandlestickSymbol;
 import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexTickerSymbol;
@@ -210,12 +211,12 @@ public class DonchianBot implements Runnable {
 	 * @param tick
 	 */
 	private void handleBarCallback(final BitfinexTickerSymbol symbol, 
-			final Bar bar) {		
+			final BitfinexTick bar) {		
 		
 		tickMerger.get(symbol.getBitfinexCurrencyPair()).addNewPrice(
-				bar.getEndTime().toEpochSecond() * 1000, 
-				bar.getOpenPrice().doubleValue(), 
-				bar.getVolume().doubleValue());		
+				bar.getTimestamp(), 
+				bar.getOpen(),
+				bar.getVolume());	
 	}
 	
 	/**

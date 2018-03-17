@@ -16,8 +16,10 @@ import org.ta4j.core.TimeSeries;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexTick;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
 import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCandlestickSymbol;
+import com.github.jnidzwetzki.cryptobot.util.BarConverter;
 
 
 public class HistoricalCandlesHelper {
@@ -56,10 +58,11 @@ public class HistoricalCandlesHelper {
 			final CountDownLatch tickCountdown = new CountDownLatch(100);
 			
 			// Add bars to timeseries callback
-			final BiConsumer<BitfinexCandlestickSymbol, Bar> callback = (channelSymbol, bar) -> {
+			final BiConsumer<BitfinexCandlestickSymbol, BitfinexTick> callback = (channelSymbol, tick) -> {
 
 				final TimeSeries timeSeriesToAdd = timeSeries.get(channelSymbol);
-				
+				final Bar bar = BarConverter.convertBitfinexTick(tick);
+
 				try { 
 					timeSeriesToAdd.addBar(bar);
 					tickCountdown.countDown();

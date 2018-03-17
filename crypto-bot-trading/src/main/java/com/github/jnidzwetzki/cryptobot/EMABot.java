@@ -19,6 +19,7 @@ import org.ta4j.core.TimeSeries;
 import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
+import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexTick;
 import com.github.jnidzwetzki.bitfinex.v2.entity.ExchangeOrder;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
 import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCandlestickSymbol;
@@ -225,11 +226,11 @@ public class EMABot implements Runnable {
 		trades.get(currency).add(trade);
 	}
 	
-	private void handleTickCallback(final BitfinexTickerSymbol symbol, final Bar bar) {		
+	private void handleTickCallback(final BitfinexTickerSymbol symbol, final BitfinexTick bar) {		
 		tickMerger.get(symbol.getBitfinexCurrencyPair()).addNewPrice(
-				bar.getEndTime().toEpochSecond() * 1000, 
-				bar.getOpenPrice().doubleValue(), 
-				bar.getVolume().doubleValue());
+				bar.getTimestamp(), 
+				bar.getOpen(),
+				bar.getVolume());
 		
 		updateScreen();
 	}
@@ -277,7 +278,7 @@ public class EMABot implements Runnable {
 			final Trade trade = getOpenTrade(currency);
 			if(trade != null) {
 				final double priceIn = trade.getExpectedPriceOpen();
-				final double currentPrice = tickerManager.getLastTick(tickerSymbol).getClosePrice().doubleValue();
+				final double currentPrice = tickerManager.getLastTick(tickerSymbol).getClose();
 				System.out.println(symbol + ": price in " + priceIn + " / " + (currentPrice - priceIn));
 			}	
 		}
