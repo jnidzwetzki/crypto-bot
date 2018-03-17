@@ -1,4 +1,4 @@
-package com.github.jnidzwetzki.cryptobot.bot;
+package com.github.jnidzwetzki.cryptobot;
 
 import java.util.List;
 import java.util.Objects;
@@ -15,8 +15,8 @@ import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrder;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrderType;
 import com.github.jnidzwetzki.bitfinex.v2.entity.ExchangeOrder;
 import com.github.jnidzwetzki.bitfinex.v2.manager.OrderManager;
-import com.github.jnidzwetzki.cryptobot.bot.entity.Trade;
-import com.github.jnidzwetzki.cryptobot.bot.entity.TradeState;
+import com.github.jnidzwetzki.cryptobot.entity.Trade;
+import com.github.jnidzwetzki.cryptobot.entity.TradeState;
 import com.github.jnidzwetzki.cryptobot.util.HibernateUtil;
 
 public class PortfolioOrderManager {

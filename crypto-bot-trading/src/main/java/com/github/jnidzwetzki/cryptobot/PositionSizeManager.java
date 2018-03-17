@@ -1,4 +1,4 @@
-package com.github.jnidzwetzki.cryptobot.bot;
+package com.github.jnidzwetzki.cryptobot;
 
 import java.util.Collection;
 

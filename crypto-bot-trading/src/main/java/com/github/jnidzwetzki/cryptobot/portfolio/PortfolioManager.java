@@ -1,4 +1,4 @@
-package com.github.jnidzwetzki.cryptobot.bot.portfolio;
+package com.github.jnidzwetzki.cryptobot.portfolio;
 
 import java.util.List;
 import java.util.Map;
@@ -20,8 +20,8 @@ import com.github.jnidzwetzki.bitfinex.v2.entity.ExchangeOrder;
 import com.github.jnidzwetzki.bitfinex.v2.entity.ExchangeOrderState;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
 import com.github.jnidzwetzki.bitfinex.v2.manager.OrderManager;
-import com.github.jnidzwetzki.cryptobot.bot.CurrencyEntry;
-import com.github.jnidzwetzki.cryptobot.bot.PortfolioOrderManager;
+import com.github.jnidzwetzki.cryptobot.CurrencyEntry;
+import com.github.jnidzwetzki.cryptobot.PortfolioOrderManager;
 import com.github.jnidzwetzki.cryptobot.util.HibernateUtil;
 import com.github.jnidzwetzki.cryptobot.util.MathHelper;
 import com.google.common.annotations.VisibleForTesting;

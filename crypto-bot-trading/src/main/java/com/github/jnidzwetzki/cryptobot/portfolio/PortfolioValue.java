@@ -1,4 +1,4 @@
-package com.github.jnidzwetzki.cryptobot.bot.portfolio;
+package com.github.jnidzwetzki.cryptobot.portfolio;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

@@ -1,4 +1,4 @@
-package com.github.jnidzwetzki.cryptobot.bot;
+package com.github.jnidzwetzki.cryptobot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,9 +24,9 @@ import com.github.jnidzwetzki.bitfinex.v2.entity.Timeframe;
 import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexCandlestickSymbol;
 import com.github.jnidzwetzki.bitfinex.v2.entity.symbol.BitfinexTickerSymbol;
 import com.github.jnidzwetzki.bitfinex.v2.manager.QuoteManager;
-import com.github.jnidzwetzki.cryptobot.bot.entity.Trade;
-import com.github.jnidzwetzki.cryptobot.bot.entity.TradeDirection;
-import com.github.jnidzwetzki.cryptobot.bot.entity.TradeState;
+import com.github.jnidzwetzki.cryptobot.entity.Trade;
+import com.github.jnidzwetzki.cryptobot.entity.TradeDirection;
+import com.github.jnidzwetzki.cryptobot.entity.TradeState;
 import com.github.jnidzwetzki.cryptobot.strategy.EMAStrategy03;
 import com.github.jnidzwetzki.cryptobot.strategy.TradeStrategyFactory;
 import com.github.jnidzwetzki.cryptobot.util.BarMerger;

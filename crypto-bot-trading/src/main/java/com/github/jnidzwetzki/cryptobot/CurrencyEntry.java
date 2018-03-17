@@ -1,4 +1,4 @@
-package com.github.jnidzwetzki.cryptobot.bot;
+package com.github.jnidzwetzki.cryptobot;
 
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 

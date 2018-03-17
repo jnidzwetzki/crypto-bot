@@ -15,13 +15,9 @@
  *    limitations under the License. 
  *    
  *******************************************************************************/
-package com.github.jnidzwetzki.cryptobot.bot.entity;
+package com.github.jnidzwetzki.cryptobot.entity;
 
-public enum TradeState {
-	CREATED,
-	OPENING,
-	OPEN,
-	CLOSING,
-	CLOSED,
-	ERROR;
+public enum TradeDirection {
+	LONG,
+	SHORT;
 }

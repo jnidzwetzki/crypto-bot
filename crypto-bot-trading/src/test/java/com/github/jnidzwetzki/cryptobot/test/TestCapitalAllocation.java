@@ -13,9 +13,9 @@ import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
-import com.github.jnidzwetzki.cryptobot.bot.CurrencyEntry;
-import com.github.jnidzwetzki.cryptobot.bot.portfolio.BasePortfolioManager;
-import com.github.jnidzwetzki.cryptobot.bot.portfolio.PortfolioManager;
+import com.github.jnidzwetzki.cryptobot.CurrencyEntry;
+import com.github.jnidzwetzki.cryptobot.portfolio.BasePortfolioManager;
+import com.github.jnidzwetzki.cryptobot.portfolio.PortfolioManager;
 
 public class TestCapitalAllocation {
 	

@@ -15,10 +15,10 @@ import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrder;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrderType;
-import com.github.jnidzwetzki.cryptobot.bot.PortfolioOrderManager;
-import com.github.jnidzwetzki.cryptobot.bot.entity.Trade;
-import com.github.jnidzwetzki.cryptobot.bot.entity.TradeDirection;
-import com.github.jnidzwetzki.cryptobot.bot.entity.TradeState;
+import com.github.jnidzwetzki.cryptobot.PortfolioOrderManager;
+import com.github.jnidzwetzki.cryptobot.entity.Trade;
+import com.github.jnidzwetzki.cryptobot.entity.TradeDirection;
+import com.github.jnidzwetzki.cryptobot.entity.TradeState;
 import com.github.jnidzwetzki.cryptobot.util.HibernateUtil;
 
 public class TestPersistence {

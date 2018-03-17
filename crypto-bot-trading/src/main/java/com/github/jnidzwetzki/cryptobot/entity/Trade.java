@@ -15,7 +15,7 @@
  *    limitations under the License. 
  *    
  *******************************************************************************/
-package com.github.jnidzwetzki.cryptobot.bot.entity;
+package com.github.jnidzwetzki.cryptobot.entity;
 
 import java.util.ArrayList;
 import java.util.List;
