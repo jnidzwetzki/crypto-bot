@@ -11,4 +11,4 @@ projects=$(find crypto-bot* -name '*.jar' | xargs echo | tr ' ' ':')
 
 classpath="$libs:$projects"
 
-java -cp $classpath net.achfrag.crypto.bot.DonchianBot $@
+java -cp $classpath com.github.jnidzwetzki.cryptobot.DonchianBot $@
