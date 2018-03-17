@@ -10,8 +10,6 @@ This repository contains a crypto currency trading bot. The bot implements some 
 
 **Warning:** Trading carries significant financial risk; you could lose a lot of money. If you are planning to use this software to trade, you should perform many tests and simulations first. This software is provided 'as is' and released under the _Apache 2.0 license_. 
 
-**Notice:** The bitfinex api client has moved to [https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java](https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java)
-
 ## Installation
 
 Clone the repository and add at least one API key to the `auth.properties` file. The bot is able to trade multiple Bitfinex accounts in parallel. 
@@ -35,3 +33,7 @@ apiSecret.1=<YOUR-SECOND-API-SECRET>
 ```
 
 After the configuration is done, you can start the `EMABot` or the `DonchianBot`.
+
+## What's next?
+* If you like the project, please star it on GitHub!
+* If you are interested in the Bitfinex API implementation, see my other project at [https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java](https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java)
