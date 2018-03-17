@@ -33,8 +33,8 @@
 
         <mapping class="com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexOrder"/>
         <mapping class="com.github.jnidzwetzki.bitfinex.v2.entity.ExchangeOrder"/>
-        <mapping class="net.achfrag.crypto.bot.entity.Trade"/>
-        <mapping class="net.achfrag.crypto.bot.portfolio.PortfolioValue"/>
+        <mapping class="com.github.jnidzwetzki.cryptobot.entity.Trade"/>
+        <mapping class="com.github.jnidzwetzki.cryptobot.portfolio.PortfolioValue"/>
 
     </session-factory>
 
