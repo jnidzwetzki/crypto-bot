@@ -1,5 +1,7 @@
 # crypto-bot
 
+[![Join the chat at https://gitter.im/trading-bot/Lobby](https://badges.gitter.im/trading-bot/Lobby.svg)](https://gitter.im/trading-bot/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 <a href="https://travis-ci.org/jnidzwetzki/crypto-bot">
   <img alt="Build Status" src="https://travis-ci.org/jnidzwetzki/crypto-bot.svg?branch=master">
 </a><a href="https://scan.coverity.com/projects/jnidzwetzki-crypto-bot">
