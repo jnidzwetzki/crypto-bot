@@ -1,6 +1,9 @@
 language: java
 jdk:
    - oraclejdk8
+   
+before_install:
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
@@ -11,3 +14,21 @@ cache:
 
 sudo: false
 dist: trusty
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "JrMeOr2VzeLfjnb0TlAyHLJGL9/g7OvEvbt1FcaoJj6HXD2FvXKK/AYUk2RpH/xS939O0JCs7GhQHdbC4vkzo8FzdmLa7hykppWHt83wrNqGFo1WilzQqA5LM2HIHRFFYacoh/Gfzo6mX+ybBdslubXsinRILK3Mc23FO/gHw50="
+   
+
+addons:
+  coverity_scan:
+    project:
+      name: "jnidzwetzki/bitfinex-v2-wss-api-java"
+      description: "Build submitted via Travis CI"
+    notification_email: jnidzwetzki@gmx.de
+    build_command_prepend: "mvn clean"
+    build_command:   "mvn -DskipTests=true compile"
+    branch_pattern: coverity_scan
+
