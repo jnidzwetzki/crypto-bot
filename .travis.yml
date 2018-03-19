@@ -25,7 +25,7 @@ env:
 addons:
   coverity_scan:
     project:
-      name: "jnidzwetzki/bitfinex-v2-wss-api-java"
+      name: "jnidzwetzki/crypto-bot"
       description: "Build submitted via Travis CI"
     notification_email: jnidzwetzki@gmx.de
     build_command_prepend: "mvn clean"
