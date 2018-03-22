@@ -42,12 +42,15 @@ public class BitfinexClientFactory {
 	public static List<BitfinexApiBroker> buildBifinexClient() {
 		final Properties prop = new Properties();
 		final List<BitfinexApiBroker> resultList = new ArrayList<>();
-		
-		try {
-			final InputStream input = BitfinexClientFactory.class.getClassLoader().getResourceAsStream("auth.properties");
+		final ClassLoader classLoader = BitfinexClientFactory.class.getClassLoader();
+
+		try(			
+				final InputStream input = classLoader.getResourceAsStream("auth.properties");
+		   ) {
 			
 			if(input != null) {
 				prop.load(input);
+				
 				final String apiConnectionsString = prop.getProperty("apiConnections");
 				final int apiConnections = MathUtil.tryParseInt(apiConnectionsString, 
 						() -> "Invalid integer value: " + apiConnectionsString);

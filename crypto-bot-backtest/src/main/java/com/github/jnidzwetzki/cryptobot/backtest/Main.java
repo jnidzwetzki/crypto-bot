@@ -116,35 +116,34 @@ public class Main implements Runnable {
 	}
 
 	protected void loadDataFromFile() throws FileNotFoundException, IOException {
-		final BufferedReader br = new BufferedReader(new FileReader(new File(FILENAME)));
-
-		final BarMerger tickMerger = new BarMerger(BitfinexCurrencyPair.BTC_USD, 
-				Timeframe.MINUTES_15, (s, t) -> timeSeries.addBar(t));
-
-		String line = null;
-		while ((line = br.readLine()) != null) {
-			final String[] parts = line.split(",");
-			final long timestamp = Long.parseLong(parts[0]);
-			final double price = Double.parseDouble(parts[1]);
-			final double volume = Double.parseDouble(parts[2]);
-			
-			// Drop unstable data 
-			// 1483228800 - 01.01.2017
-			// 1451606400 - 01.01.2016
-			
-			if (timestamp < 1451606400) {
-				continue;
+		try (
+				final BufferedReader br = new BufferedReader(new FileReader(new File(FILENAME)));
+				final BarMerger tickMerger = new BarMerger(BitfinexCurrencyPair.BTC_USD, 
+								Timeframe.MINUTES_15, (s, t) -> timeSeries.addBar(t));
+				) {
+			String line = null;
+			while ((line = br.readLine()) != null) {
+				final String[] parts = line.split(",");
+				final long timestamp = Long.parseLong(parts[0]);
+				final double price = Double.parseDouble(parts[1]);
+				final double volume = Double.parseDouble(parts[2]);
+				
+				// Drop unstable data 
+				// 1483228800 - 01.01.2017
+				// 1451606400 - 01.01.2016
+				
+				if (timestamp < 1451606400) {
+					continue;
+				}
+				
+				//if(timestamp > 1483228800) {
+				//	continue;
+				//}
+	
+				tickMerger.addNewPrice(TimeUnit.SECONDS.toMillis(timestamp), price, volume);
 			}
 			
-			//if(timestamp > 1483228800) {
-			//	continue;
-			//}
-
-			tickMerger.addNewPrice(TimeUnit.SECONDS.toMillis(timestamp), price, volume);
 		}
-		
-		tickMerger.close();
-		br.close();
 	}
 
 	public static void main(final String[] args) {
