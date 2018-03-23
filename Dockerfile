@@ -1,4 +1,4 @@
-# Build with: docker build --build-arg version=0.0.1 -t jnidzwetzki/crypto-bot - < Dockerfile
+# Build with: docker build --build-arg version=0.0.1 -t jnidzwetzki/crypto-bot:0.0.1 - < Dockerfile
 
 FROM alpine/git as clone
 ARG version
