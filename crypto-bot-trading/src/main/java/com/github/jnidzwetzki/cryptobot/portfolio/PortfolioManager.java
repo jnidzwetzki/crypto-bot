@@ -502,7 +502,7 @@ public abstract class PortfolioManager {
 	 * @throws APIException 
 	 */
 	protected Wallet getWalletForCurrency(final String currency) throws APIException {
-		return bitfinexApiBroker.getWallets()
+		return bitfinexApiBroker.getWalletManager().getWallets()
 			.stream()
 			.filter(w -> w.getWalletType().equals(getWalletType()))
 			.filter(w -> w.getCurreny().equals(currency))
@@ -517,7 +517,7 @@ public abstract class PortfolioManager {
 	 * @throws APIException 
 	 */
 	protected List<Wallet> getAllWallets() throws APIException {
-		return bitfinexApiBroker.getWallets()
+		return bitfinexApiBroker.getWalletManager().getWallets()
 			.stream()
 			.filter(w -> w.getWalletType().equals(getWalletType()))
 			.collect(Collectors.toList());

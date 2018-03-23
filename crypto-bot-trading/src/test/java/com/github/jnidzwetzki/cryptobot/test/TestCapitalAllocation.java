@@ -30,6 +30,7 @@ import com.github.jnidzwetzki.bitfinex.v2.BitfinexApiBroker;
 import com.github.jnidzwetzki.bitfinex.v2.entity.APIException;
 import com.github.jnidzwetzki.bitfinex.v2.entity.BitfinexCurrencyPair;
 import com.github.jnidzwetzki.bitfinex.v2.entity.Wallet;
+import com.github.jnidzwetzki.bitfinex.v2.manager.WalletManager;
 import com.github.jnidzwetzki.cryptobot.CurrencyEntry;
 import com.github.jnidzwetzki.cryptobot.portfolio.BasePortfolioManager;
 import com.github.jnidzwetzki.cryptobot.portfolio.PortfolioManager;
@@ -161,8 +162,11 @@ public class TestCapitalAllocation {
 		wallets.add(new Wallet(Wallet.WALLET_TYPE_EXCHANGE, "USD", 1000, 0, 1000));
 		
 		final BitfinexApiBroker apiBroker = Mockito.mock(BitfinexApiBroker.class);
-		Mockito.when(apiBroker.getWallets()).thenReturn(wallets);
+		final WalletManager walletManager = Mockito.mock(WalletManager.class);
 		
+		Mockito.when(walletManager.getWallets()).thenReturn(wallets);
+		Mockito.when(apiBroker.getWalletManager()).thenReturn(walletManager);
+
 		return new BasePortfolioManager(apiBroker, 0.05);
 	}
 }

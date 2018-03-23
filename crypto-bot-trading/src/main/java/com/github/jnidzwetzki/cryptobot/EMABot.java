@@ -217,7 +217,7 @@ public class EMABot implements Runnable {
 		}
 		
 		final double amount = PositionSizeManager.getPositionSize(symbol, OrderType.BUY, 
-				bitfinexApiBroker.getWallets());
+				bitfinexApiBroker.getWalletManager().getWallets());
 		
 		final Trade trade = new Trade("EMA Strategy", TradeDirection.LONG, symbol, amount);
 		trade.setExpectedPriceOpen(lastClosePrice.doubleValue());
