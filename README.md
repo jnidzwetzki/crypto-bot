@@ -39,6 +39,9 @@ apiSecret.1=<YOUR-SECOND-API-SECRET>
 
 After the configuration is done, you can start the `EMABot` or the `DonchianBot`.
 
+# Changelog
+You will find the changelog of the project [here](https://github.com/jnidzwetzki/crypto-bot/blob/master/CHANGELOG.md).
+
 ## What's next?
 * If you like the project, please star it on GitHub!
 * If you are interested in the Bitfinex API implementation, see my other project at [https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java](https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java)
