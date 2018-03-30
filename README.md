@@ -40,10 +40,10 @@ apiSecret.1=<YOUR-SECOND-API-SECRET>
 After the configuration is done, you can start the `EMABot` or the `DonchianBot`.
 
 # Strategies
-The bot implements two strategies at the moment. 
+The bot contains two major trend following strategies at the moment. 
 
 ## EMA Bot
-The EMA bot uses three simple moving averages with different lengths. A buy is triggered when `ema short > ema middle > ema long` and a sell is triggerd when the `ema middle < ema long`.
+The EMA bot uses three simple moving averages with different lengths. A buy is triggered when `ema short > ema middle > ema long` and a sell is triggered when the `ema middle < ema long`. A ATR filter can be applied, buys only executed when the ATR (Average True Range) indicator confirms a trend (`ATR >= 14`).
 
 ## Donchian bot
 The Donchaian bot calculated the [Donchian channel](https://en.wikipedia.org/wiki/Donchian_channel) for a given time interval. A buy is triggered when the price touches upper channel, a sell is triggered when the lower channel is touched.
