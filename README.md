@@ -39,6 +39,15 @@ apiSecret.1=<YOUR-SECOND-API-SECRET>
 
 After the configuration is done, you can start the `EMABot` or the `DonchianBot`.
 
+# Strategies
+The bot implements two strategies at the moment. 
+
+## EMA Bot
+The EMA bot uses three simple moving averages with different lengths. A buy is triggered when `ema short > ema middle > ema long` and a sell is triggerd when the `ema middle < ema long`.
+
+## Donchian bot
+The Donchaian bot calculated the [Donchian channel](https://en.wikipedia.org/wiki/Donchian_channel) for a given time interval. A buy is triggered when the price touches upper channel, a sell is triggered when the lower channel is touched.
+
 # Changelog
 You will find the changelog of the project [here](https://github.com/jnidzwetzki/crypto-bot/blob/master/CHANGELOG.md).
 
