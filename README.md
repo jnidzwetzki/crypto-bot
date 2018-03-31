@@ -1,4 +1,4 @@
-# crypto-bot
+# A crypto currency trading bot
 
 <a href="https://travis-ci.org/jnidzwetzki/crypto-bot">
   <img alt="Build Status" src="https://travis-ci.org/jnidzwetzki/crypto-bot.svg?branch=master">
