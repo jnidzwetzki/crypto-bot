@@ -91,7 +91,7 @@ public class BasePortfolioManager extends PortfolioManager {
 			final String curreny = wallet.getCurreny();
 			
 			if(curreny.equals("USD")) {
-				totalValue.add(wallet.getBalance());
+				totalValue = totalValue.add(wallet.getBalance());
 			} else {
 				final String symbol = "t" + curreny + "USD";
 				
@@ -103,7 +103,7 @@ public class BasePortfolioManager extends PortfolioManager {
 					if(lastTick != null) {
 						final BigDecimal rate = lastTick.getClose();
 						final BigDecimal value = rate.multiply(wallet.getBalance());
-						totalValue.add(value);
+						totalValue = totalValue.add(value);
 					} else {
 						logger.debug("Unable to find tick for {}, appraise wallet with 0 USD", symbol);
 					}
