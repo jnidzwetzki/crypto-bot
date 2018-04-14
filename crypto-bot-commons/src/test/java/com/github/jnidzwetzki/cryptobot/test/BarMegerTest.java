@@ -19,6 +19,7 @@ package com.github.jnidzwetzki.cryptobot.test;
 
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.CountDownLatch;
@@ -60,7 +61,7 @@ public class BarMegerTest {
 		};
 		
 		final BarMerger tickMerger = new BarMerger(BitfinexCurrencyPair.BTC_USD, Timeframe.MINUTES_1, tickConsumer);
-		tickMerger.addNewPrice(1000000, 1.0, 5.0);
+		tickMerger.addNewPrice(1000000, new BigDecimal(1.0), new BigDecimal(5.0));
 		tickMerger.close();
 		
 		latch.await();
@@ -87,8 +88,8 @@ public class BarMegerTest {
 		};
 		
 		final BarMerger tickMerger = new BarMerger(BitfinexCurrencyPair.BTC_USD, Timeframe.MINUTES_1, tickConsumer);
-		tickMerger.addNewPrice(parser.parse("01:01:13").getTime(), 1.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("01:01:13").getTime(), new BigDecimal(1.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
 		tickMerger.close();
 		
 		latch.await();
@@ -112,9 +113,9 @@ public class BarMegerTest {
 		};
 		
 		final BarMerger tickMerger = new BarMerger(BitfinexCurrencyPair.BTC_USD, Timeframe.MINUTES_1, tickConsumer);
-		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), 1.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:33").getTime(), 2.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:02:53").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), new BigDecimal(1.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:01:33").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:02:53").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
 
 		tickMerger.close();
 		
@@ -139,9 +140,9 @@ public class BarMegerTest {
 		};
 		
 		final BarMerger tickMerger = new BarMerger(BitfinexCurrencyPair.BTC_USD, Timeframe.MINUTES_1, tickConsumer);
-		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), 1.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:33").getTime(), 2.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("02:02:53").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), new BigDecimal(1.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:01:33").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("02:02:53").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
 
 		tickMerger.close();
 		
@@ -170,13 +171,13 @@ public class BarMegerTest {
 		};
 		
 		final BarMerger tickMerger = new BarMerger(BitfinexCurrencyPair.BTC_USD, Timeframe.MINUTES_1, tickConsumer);
-		tickMerger.addNewPrice(parser.parse("01:01:01").getTime(), 3.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:02").getTime(), 2.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:03").getTime(), 8.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:04").getTime(), 1.5, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:05").getTime(), 2.5, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:06").getTime(), 1.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:01:07").getTime(), 4.5, 5.0);
+		tickMerger.addNewPrice(parser.parse("01:01:01").getTime(), new BigDecimal(3.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:01:02").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:01:03").getTime(), new BigDecimal(8.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:01:04").getTime(), new BigDecimal(1.5), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:01:05").getTime(), new BigDecimal(2.5), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:01:06").getTime(), new BigDecimal(1.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:01:07").getTime(), new BigDecimal(4.5), new BigDecimal(5.0));
 
 		tickMerger.close();
 		
@@ -202,10 +203,10 @@ public class BarMegerTest {
 		};
 		
 		final BarMerger tickMerger = new BarMerger(BitfinexCurrencyPair.BTC_USD, Timeframe.MINUTES_1, tickConsumer);
-		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), 1.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("01:02:33").getTime(), 2.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("02:03:53").getTime(), 2.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("22:22:53").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("01:01:23").getTime(), new BigDecimal(1.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("01:02:33").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("02:03:53").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("22:22:53").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
 
 		tickMerger.close();
 		
@@ -236,10 +237,10 @@ public class BarMegerTest {
 		};
 		
 		final BarMerger tickMerger = new BarMerger(BitfinexCurrencyPair.BTC_USD, Timeframe.MINUTES_15, tickConsumer);
-		tickMerger.addNewPrice(parser.parse("01:01:00").getTime(), 1.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("02:41:33").getTime(), 2.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("10:33:11").getTime(), 2.0, 5.0);
-		tickMerger.addNewPrice(parser.parse("22:22:53").getTime(), 2.0, 5.0);
+		tickMerger.addNewPrice(parser.parse("01:01:00").getTime(), new BigDecimal(1.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("02:41:33").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("10:33:11").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
+		tickMerger.addNewPrice(parser.parse("22:22:53").getTime(), new BigDecimal(2.0), new BigDecimal(5.0));
 
 		tickMerger.close();
 		

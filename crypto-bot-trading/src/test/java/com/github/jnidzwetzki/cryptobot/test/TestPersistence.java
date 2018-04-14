@@ -17,6 +17,7 @@
  *******************************************************************************/
 package com.github.jnidzwetzki.cryptobot.test;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -71,7 +72,8 @@ public class TestPersistence {
 	public void testStoreAndFetchOrder() {
 		
 		final BitfinexOrder order = new BitfinexOrder(BitfinexCurrencyPair.BTC_USD, 
-				BitfinexOrderType.EXCHANGE_LIMIT, 0, 0, 0, 0, false, false, -1);
+				BitfinexOrderType.EXCHANGE_LIMIT, BigDecimal.ZERO, BigDecimal.ZERO, 
+				BigDecimal.ZERO, BigDecimal.ZERO, false, false, -1);
 
 		final Session session = sessionFactory.openSession();
 
@@ -94,12 +96,13 @@ public class TestPersistence {
 	}
 	
 	/**
-	 * Test testade persistence
+	 * Test persistence
 	 */
 	@Test
 	public void testTradePersistence() {
 		final BitfinexOrder order = new BitfinexOrder(BitfinexCurrencyPair.BTC_USD, 
-				BitfinexOrderType.EXCHANGE_LIMIT, 0, 0, 0, 0, false, false, -1);
+				BitfinexOrderType.EXCHANGE_LIMIT, BigDecimal.ZERO, BigDecimal.ZERO, 
+				BigDecimal.ZERO, BigDecimal.ZERO, false, false, -1);
 		
 		final Trade trade = new Trade("ABC", TradeDirection.LONG, BitfinexCurrencyPair.BTC_USD, 1);
 		trade.getOrdersOpen().add(order);

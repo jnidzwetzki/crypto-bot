@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -140,7 +141,8 @@ public class Main implements Runnable {
 				//	continue;
 				//}
 	
-				tickMerger.addNewPrice(TimeUnit.SECONDS.toMillis(timestamp), price, volume);
+				tickMerger.addNewPrice(TimeUnit.SECONDS.toMillis(timestamp), 
+						new BigDecimal(price), new BigDecimal(volume));
 			}
 			
 		}

@@ -17,6 +17,7 @@
  *******************************************************************************/
 package com.github.jnidzwetzki.cryptobot.test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -159,7 +160,9 @@ public class TestCapitalAllocation {
 	 */
 	private PortfolioManager buildPortfolioManager() throws APIException {
 		final Collection<Wallet> wallets = new ArrayList<>();
-		wallets.add(new Wallet(Wallet.WALLET_TYPE_EXCHANGE, "USD", 1000, 0, 1000));
+		
+		wallets.add(new Wallet(Wallet.WALLET_TYPE_EXCHANGE, "USD", new BigDecimal(1000), 
+				new BigDecimal(0), new BigDecimal(1000)));
 		
 		final BitfinexApiBroker apiBroker = Mockito.mock(BitfinexApiBroker.class);
 		final WalletManager walletManager = Mockito.mock(WalletManager.class);

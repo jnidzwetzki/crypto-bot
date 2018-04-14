@@ -17,6 +17,7 @@
  *******************************************************************************/
 package com.github.jnidzwetzki.cryptobot.portfolio;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -64,7 +65,7 @@ public class MarginPortfolioManager extends PortfolioManager {
 	 * @throws APIException 
 	 */
 	@Override
-	protected double getOpenPositionSizeForCurrency(final String currency) throws APIException {
+	protected BigDecimal getOpenPositionSizeForCurrency(final String currency) throws APIException {
 		final List<Position> positions = bitfinexApiBroker.getPositionManager().getPositions();
 		
 		final Position position = positions.stream()
@@ -73,7 +74,7 @@ public class MarginPortfolioManager extends PortfolioManager {
 				.orElse(null);
 		
 		if(position == null) {
-			return 0;
+			return BigDecimal.ZERO;
 		}
 		
 		return position.getAmount();
@@ -83,12 +84,12 @@ public class MarginPortfolioManager extends PortfolioManager {
 	 * Get the investment rate
 	 */
 	@Override
-	protected double getInvestmentRate() {
-		return 2.0;
+	protected BigDecimal getInvestmentRate() {
+		return new BigDecimal(2.0);
 	}
 
 	@Override
-	protected double getTotalPortfolioValueInUSD() throws APIException {
+	protected BigDecimal getTotalPortfolioValueInUSD() throws APIException {
 		final List<Wallet> wallets = getAllWallets();
 		
 		for(final Wallet wallet : wallets) {
@@ -99,11 +100,11 @@ public class MarginPortfolioManager extends PortfolioManager {
 		
 		logger.error("Unable to find USD wallet");
 		
-		return 0;
+		return BigDecimal.ZERO;
 	}
 
 	@Override
-	protected double getAvailablePortfolioValueInUSD() throws APIException {
+	protected BigDecimal getAvailablePortfolioValueInUSD() throws APIException {
 		final List<Wallet> wallets = getAllWallets();
 		
 		for(final Wallet wallet : wallets) {
@@ -114,7 +115,7 @@ public class MarginPortfolioManager extends PortfolioManager {
 		
 		logger.error("Unable to find USD wallet");
 		
-		return 0;
+		return BigDecimal.ZERO;
 	}
 	
 }

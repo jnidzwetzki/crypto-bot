@@ -17,6 +17,7 @@
  *******************************************************************************/
 package com.github.jnidzwetzki.cryptobot;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -247,7 +248,7 @@ public class EMABot implements Runnable {
 		tickMerger.get(symbol.getBitfinexCurrencyPair()).addNewPrice(
 				bar.getTimestamp(), 
 				bar.getOpen(),
-				bar.getVolume());
+				bar.getVolume().orElse(BigDecimal.ZERO));
 		
 		updateScreen();
 	}
@@ -295,7 +296,7 @@ public class EMABot implements Runnable {
 			final Trade trade = getOpenTrade(currency);
 			if(trade != null) {
 				final double priceIn = trade.getExpectedPriceOpen();
-				final double currentPrice = tickerManager.getLastTick(tickerSymbol).getClose();
+				final double currentPrice = tickerManager.getLastTick(tickerSymbol).getClose().doubleValue();
 				System.out.println(symbol + ": price in " + priceIn + " / " + (currentPrice - priceIn));
 			}	
 		}

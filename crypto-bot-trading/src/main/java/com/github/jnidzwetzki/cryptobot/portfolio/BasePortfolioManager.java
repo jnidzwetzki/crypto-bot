@@ -17,6 +17,7 @@
  *******************************************************************************/
 package com.github.jnidzwetzki.cryptobot.portfolio;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -67,7 +68,7 @@ public class BasePortfolioManager extends PortfolioManager {
 	 * @throws APIException 
 	 */
 	@Override
-	protected double getOpenPositionSizeForCurrency(final String currency) throws APIException {
+	protected BigDecimal getOpenPositionSizeForCurrency(final String currency) throws APIException {
 		final Wallet wallet = getWalletForCurrency(currency);
 		return wallet.getBalance();
 	}
@@ -76,21 +77,21 @@ public class BasePortfolioManager extends PortfolioManager {
 	 * Get the investment rate
 	 */
 	@Override
-	protected double getInvestmentRate() {
-		return 0.9;
+	protected BigDecimal getInvestmentRate() {
+		return new BigDecimal(0.9);
 	}
 
 	@Override
-	protected double getTotalPortfolioValueInUSD() throws APIException {
+	protected BigDecimal getTotalPortfolioValueInUSD() throws APIException {
 		final List<Wallet> wallets = getAllWallets();
 				
-		double totalValue = 0;
+		BigDecimal totalValue = new BigDecimal(0);
 		for(final Wallet wallet : wallets) {
 			
 			final String curreny = wallet.getCurreny();
 			
 			if(curreny.equals("USD")) {
-				totalValue = totalValue + wallet.getBalance();
+				totalValue.add(wallet.getBalance());
 			} else {
 				final String symbol = "t" + curreny + "USD";
 				
@@ -100,9 +101,9 @@ public class BasePortfolioManager extends PortfolioManager {
 					final BitfinexTick lastTick = bitfinexApiBroker.getQuoteManager().getLastTick(bitfinexSymbol);
 					
 					if(lastTick != null) {
-						final double rate = lastTick.getClose();
-						final double value = rate * wallet.getBalance();
-						totalValue = totalValue + value;
+						final BigDecimal rate = lastTick.getClose();
+						final BigDecimal value = rate.multiply(wallet.getBalance());
+						totalValue.add(value);
 					} else {
 						logger.debug("Unable to find tick for {}, appraise wallet with 0 USD", symbol);
 					}
@@ -116,7 +117,7 @@ public class BasePortfolioManager extends PortfolioManager {
 	}
 
 	@Override
-	protected double getAvailablePortfolioValueInUSD() throws APIException {
+	protected BigDecimal getAvailablePortfolioValueInUSD() throws APIException {
 		final List<Wallet> wallets = getAllWallets();
 		
 		for(final Wallet wallet : wallets) {
@@ -127,7 +128,7 @@ public class BasePortfolioManager extends PortfolioManager {
 		
 		logger.error("Unable to find USD wallet");
 		
-		return 0;
+		return BigDecimal.ZERO;
 	}
 
 }

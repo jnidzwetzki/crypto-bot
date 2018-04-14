@@ -17,6 +17,7 @@
  *******************************************************************************/
 package com.github.jnidzwetzki.cryptobot;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -233,7 +234,7 @@ public class DonchianBot implements Runnable {
 		tickMerger.get(symbol.getBitfinexCurrencyPair()).addNewPrice(
 				bar.getTimestamp(), 
 				bar.getOpen(),
-				bar.getVolume());	
+				bar.getVolume().orElse(BigDecimal.ZERO));	
 	}
 	
 	/**

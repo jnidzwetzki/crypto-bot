@@ -18,6 +18,7 @@
 package com.github.jnidzwetzki.cryptobot.util;
 
 import java.io.Closeable;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -40,9 +41,8 @@ public class BarMerger implements Closeable {
 	
 	private long timeframeBegin = -1;
 	
-	private double totalVolume = 0;
-	
-	private final List<Double> prices = new ArrayList<>();
+	private double  totalVolume = 0;
+		private final List<BigDecimal> prices = new ArrayList<>();
 
 	private BitfinexCurrencyPair symbol;
 
@@ -52,7 +52,7 @@ public class BarMerger implements Closeable {
 		this.tickConsumer = tickConsumer;
 	}
 	
-	public void addNewPrice(final long timestamp, final double price, final double volume)  {
+	public void addNewPrice(final long timestamp, final BigDecimal price, final BigDecimal volume)  {
 
 		if (timeframeBegin == -1) {
 			// Align timeframe
@@ -77,7 +77,7 @@ public class BarMerger implements Closeable {
 
 		prices.add(price);
 		
-		totalVolume = totalVolume + volume;
+		totalVolume = totalVolume + volume.doubleValue();
 	}
 
 	protected void closeBar() {
@@ -85,15 +85,16 @@ public class BarMerger implements Closeable {
 			return;
 		}
 		
-		final double open = prices.get(0);
-		final double close = prices.get(prices.size() - 1);
-		final double high = prices.stream().mapToDouble(e -> e).max().orElse(-1);
-		final double low = prices.stream().mapToDouble(e -> e).min().orElse(-1);
+		final BigDecimal open = prices.get(0);
+		final BigDecimal close = prices.get(prices.size() - 1);
+		final double high = prices.stream().mapToDouble(e -> e.doubleValue()).max().orElse(-1);
+		final double low = prices.stream().mapToDouble(e -> e.doubleValue()).min().orElse(-1);
 
 		final Instant i = Instant.ofEpochMilli(timeframeBegin + timeframe.getMilliSeconds() - 1);
 		final ZonedDateTime withTimezone = ZonedDateTime.ofInstant(i, Const.BITFINEX_TIMEZONE);
 	
-		final Bar bar = new BaseBar(withTimezone, open, high, low, close, totalVolume);
+		final Bar bar = new BaseBar(withTimezone, open.doubleValue(), high, low, 
+				close.doubleValue(), totalVolume);
 
 		try {
 			tickConsumer.accept(symbol, bar);

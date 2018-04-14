@@ -17,6 +17,8 @@
  *******************************************************************************/
 package com.github.jnidzwetzki.cryptobot.portfolio;
 
+import java.math.BigDecimal;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -32,7 +34,7 @@ public class PortfolioValue {
 	
 	private String apikey;
 	
-	private double usdValue;
+	private BigDecimal usdValue;
 	
 	private long timestamp;
 	
@@ -56,11 +58,11 @@ public class PortfolioValue {
 		this.apikey = apikey;
 	}
 
-	public double getUsdValue() {
+	public BigDecimal getUsdValue() {
 		return usdValue;
 	}
 
-	public void setUsdValue(final double usdValue) {
+	public void setUsdValue(final BigDecimal usdValue) {
 		this.usdValue = usdValue;
 	}
 

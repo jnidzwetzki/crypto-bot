@@ -17,6 +17,7 @@
  *******************************************************************************/
 package com.github.jnidzwetzki.cryptobot.util;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 
@@ -37,11 +38,11 @@ public class BarConverter {
 		final Instant instant = Instant.ofEpochMilli(bitfinexTick.getTimestamp());
 		final ZonedDateTime time = ZonedDateTime.ofInstant(instant, Const.BITFINEX_TIMEZONE);
 
-		final Bar bar = new BaseBar(time, bitfinexTick.getOpen(), 
-				bitfinexTick.getHigh(), 
-				bitfinexTick.getLow(), 
-				bitfinexTick.getClose(), 
-				bitfinexTick.getVolume() != BitfinexTick.INVALID_VOLUME ? bitfinexTick.getVolume() : 0);
+		final Bar bar = new BaseBar(time, bitfinexTick.getOpen().doubleValue(), 
+				bitfinexTick.getHigh().doubleValue(), 
+				bitfinexTick.getLow().doubleValue(), 
+				bitfinexTick.getClose().doubleValue(), 
+				bitfinexTick.getVolume().orElse(BigDecimal.ZERO).doubleValue());
 		
 		return bar;
 	}

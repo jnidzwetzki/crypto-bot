@@ -17,6 +17,7 @@
  *******************************************************************************/
 package com.github.jnidzwetzki.cryptobot.portfolio;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -63,12 +64,12 @@ public abstract class PortfolioManager {
 	/**
 	 * Maximum loss per position 
 	 */
-	private final double maxLossPerPosition;
+	private final BigDecimal maxLossPerPosition;
 	
 	/**
 	 * The maximum position size
 	 */
-	private static final double MAX_SINGLE_POSITION_SIZE = 0.5;
+	private static final BigDecimal MAX_SINGLE_POSITION_SIZE = new BigDecimal(0.5);
 	
 	/**
 	 * Simulate or real trading
@@ -84,7 +85,7 @@ public abstract class PortfolioManager {
 		this.bitfinexApiBroker = bitfinexApiBroker;
 		
 		this.orderManager = bitfinexApiBroker.getOrderManager();
-		this.maxLossPerPosition = maxLossPerPosition;
+		this.maxLossPerPosition = new BigDecimal(maxLossPerPosition);
 		
 		// Init to store orders in DB
 		new PortfolioOrderManager(bitfinexApiBroker);
@@ -105,7 +106,7 @@ public abstract class PortfolioManager {
 	 */
 	private void updatePortfolioValue() throws APIException {
 		logger.debug("Updating portfolio value");
-		final double portfolioValueUSD = getTotalPortfolioValueInUSD();
+		final BigDecimal portfolioValueUSD = getTotalPortfolioValueInUSD();
 		final PortfolioValue portfolioValue = new PortfolioValue();
 		portfolioValue.setApikey(bitfinexApiBroker.getApiKey());
 		portfolioValue.setUsdValue(portfolioValueUSD);
@@ -153,30 +154,30 @@ public abstract class PortfolioManager {
 			throw new APIException("Unable to find USD wallet");
 		}
 		
-		final double capitalAvailable = getAvailablePortfolioValueInUSD() * getInvestmentRate();
-		double capitalNeeded = 0;
+		final BigDecimal capitalAvailable = getAvailablePortfolioValueInUSD().multiply(getInvestmentRate());
+		BigDecimal capitalNeeded = new BigDecimal(0);
 		
 		for(final BitfinexCurrencyPair currency : entries.keySet()) {
 			final CurrencyEntry entry = entries.get(currency);
 			final double positionSize = calculatePositionSize(entry);
 			entry.setPositionSize(positionSize);
-			capitalNeeded = capitalNeeded + (positionSize * entry.getEntryPrice());
+			capitalNeeded = capitalNeeded.add(new BigDecimal(positionSize * entry.getEntryPrice()));
 		}
 		
 		// Need the n% risk per position more than the available capital
-		if(capitalNeeded > capitalAvailable) {
+		if(capitalNeeded.doubleValue() > capitalAvailable.doubleValue()) {
 			
-			final double investmentCorrectionFactor = capitalAvailable / capitalNeeded;
+			final double investmentCorrectionFactor = capitalAvailable.doubleValue() / capitalNeeded.doubleValue();
 
 			logger.info("Needed capital {}, available capital {} ({})", capitalNeeded, 
 					capitalAvailable, investmentCorrectionFactor);
 			
-			capitalNeeded = 0;
+			capitalNeeded = new BigDecimal(0);
 			for(final BitfinexCurrencyPair currency : entries.keySet()) {
 				final CurrencyEntry entry = entries.get(currency);
 				final double newPositionSize = roundPositionSize(entry.getPositionSize() * investmentCorrectionFactor);
 				entry.setPositionSize(newPositionSize);
-				capitalNeeded = capitalNeeded + (entry.getPositionSize() * entry.getEntryPrice());
+				capitalNeeded = capitalNeeded.add(new BigDecimal(newPositionSize * entry.getEntryPrice()));
 			}			
 		}
 	}
@@ -187,14 +188,15 @@ public abstract class PortfolioManager {
 	private boolean hasEntryOrderChanged(final ExchangeOrder order, 
 			final double entryPrice, final double positionSize) {
 		
+		final double orderPrice = order.getPrice().doubleValue();
 		// Compare the ordersize (delta 0.5%)
-		final boolean orderSizeEquals = MathHelper.almostEquals(order.getPrice(), entryPrice, 500);
+		final boolean orderSizeEquals = MathHelper.almostEquals(orderPrice, entryPrice, 500);
 		
 		if(! orderSizeEquals) {
 			return true;
 		}
 		
-		if(order.getPrice() > entryPrice) {
+		if(orderPrice > entryPrice) {
 			return true;
 		}
 		
@@ -316,7 +318,7 @@ public abstract class PortfolioManager {
 			
 			// Check old orders
 			if(order != null) {
-				final double orderPrice = order.getPrice();
+				final double orderPrice = order.getPrice().doubleValue();
 				
 				if(orderPrice >= exitPrice || MathHelper.almostEquals(orderPrice, exitPrice)) {
 					logger.info("Old order price for {} is fine (price: order {} model {})", 
@@ -330,7 +332,8 @@ public abstract class PortfolioManager {
 				cancelOrder(order);
 			} 
 			
-			final double positionSize = getOpenPositionSizeForCurrency(currency.getCurrency1());
+			final String currency1 = currency.getCurrency1();
+			final double positionSize = getOpenPositionSizeForCurrency(currency1).doubleValue();
 		
 			// * -1.0 for sell order
 			final double positionSizeSell = positionSize * -1.0;
@@ -409,30 +412,36 @@ public abstract class PortfolioManager {
 	 */
 	private double calculatePositionSize(final CurrencyEntry entry) throws APIException  {
 
+		final BigDecimal entryPrice = new BigDecimal(entry.getEntryPrice());
+		
 		/**
 		 * Calculate position size by max capital
 		 */		
 		// Max position size (capital)
-		final double positionSizePerCapital = (getTotalPortfolioValueInUSD() 
-				* getInvestmentRate() * MAX_SINGLE_POSITION_SIZE) / entry.getEntryPrice();
+		final BigDecimal positionSizePerCapital = getTotalPortfolioValueInUSD()
+				.multiply(getInvestmentRate())
+				.multiply(MAX_SINGLE_POSITION_SIZE)
+				.divide(entryPrice);
 		
 		/**
 		 * Calculate position size by max loss
 		 */
 		// Max loss per position
-		final double maxLossPerContract = entry.getEntryPrice() - entry.getStopLossPrice();
+		final BigDecimal maxLossPerContract = new BigDecimal(entry.getEntryPrice() - entry.getStopLossPrice());
 		
 		// The total portfolio value
-		final double totalPortfolioValueInUSD = getTotalPortfolioValueInUSD() * getInvestmentRate();
+		final BigDecimal totalPortfolioValueInUSD = getTotalPortfolioValueInUSD().multiply(getInvestmentRate());
 		
 		// Max position size per stop loss
-		final double positionSizePerLoss = (totalPortfolioValueInUSD * maxLossPerPosition) / maxLossPerContract;
+		final BigDecimal positionSizePerLoss = totalPortfolioValueInUSD
+				.multiply(maxLossPerPosition)
+				.divide(maxLossPerContract);
 
 		// =============
 		logger.info("Position size {} per capital is {}, position size per max loss is {}", 
 				entry.getCurrencyPair(), positionSizePerCapital, positionSizePerLoss);
 		
-		final double positionSize = Math.min(positionSizePerCapital, positionSizePerLoss);
+		final double positionSize = Math.min(positionSizePerCapital.doubleValue(), positionSizePerLoss.doubleValue());
 
 		return roundPositionSize(positionSize);
 	}
@@ -476,7 +485,7 @@ public abstract class PortfolioManager {
 		return openOrders.stream()
 			.filter(e -> e.getOrderType() == getOrderType())
 			.filter(e -> e.getState() == ExchangeOrderState.STATE_ACTIVE)
-			.filter(e -> e.getAmount() > 0)
+			.filter(e -> e.getAmount().doubleValue() > 0)
 			.collect(Collectors.toList());
 	}
 	
@@ -491,7 +500,7 @@ public abstract class PortfolioManager {
 		return openOrders.stream()
 			.filter(e -> e.getOrderType() == getOrderType())
 			.filter(e -> e.getState() == ExchangeOrderState.STATE_ACTIVE)
-			.filter(e -> e.getAmount() <= 0)
+			.filter(e -> e.getAmount().doubleValue() <= 0)
 			.collect(Collectors.toList());
 	}
  	
@@ -538,7 +547,7 @@ public abstract class PortfolioManager {
 			return false;
 		}
 		
-		if(wallet.getBalance() > INVESTED_THRESHOLD) {
+		if(wallet.getBalance().doubleValue() > INVESTED_THRESHOLD) {
 			return true;
 		}
 		
@@ -571,25 +580,25 @@ public abstract class PortfolioManager {
 	 * @return
 	 * @throws APIException 
 	 */
-	protected abstract double getOpenPositionSizeForCurrency(final String currency) throws APIException;
+	protected abstract BigDecimal getOpenPositionSizeForCurrency(final String currency) throws APIException;
 
 	/**
 	 * Get the investment rate
 	 * @return
 	 */
-	protected abstract double getInvestmentRate();
+	protected abstract BigDecimal getInvestmentRate();
 	
 	/**
 	 * Get the total portfolio value in USD
 	 * @throws APIException 
 	 */
-	protected abstract double getTotalPortfolioValueInUSD() throws APIException;
+	protected abstract BigDecimal getTotalPortfolioValueInUSD() throws APIException;
 	
 	/**
 	 * Get the available portfolio value in USD
 	 * @throws APIException 
 	 */
-	protected abstract double getAvailablePortfolioValueInUSD() throws APIException;
+	protected abstract BigDecimal getAvailablePortfolioValueInUSD() throws APIException;
 	
 
 }
