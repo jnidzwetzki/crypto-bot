@@ -10,7 +10,7 @@
                 <TimeBasedTriggeringPolicy/>
                 <SizeBasedTriggeringPolicy size="100 MB"/>
             </Policies>
-            <DefaultRolloverStrategy max="90"/>
+            <DefaultRolloverStrategy max="5"/>
         </RollingFile>
         <Console name="STDOUT" target="SYSTEM_OUT">
             <PatternLayout>
