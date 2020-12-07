@@ -53,4 +53,6 @@ You will find the changelog of the project [here](https://github.com/jnidzwetzki
 
 ## What's next?
 * If you like the project, please star it on GitHub!
-* If you are interested in the Bitfinex API implementation, see my other project at [https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java](https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java)
+* If you are interested in the Bitfinex API implementation, see my other project at [https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java](https://github.com/jnidzwetzki/bitfinex-v2-wss-api-java).
+* You need a highly available MySQL server for your trading? Have a look at [https://github.com/jnidzwetzki/mysql-ha-cloud](https://github.com/jnidzwetzki/mysql-ha-cloud).
+* For more information see [https://github.com/jnidzwetzki](https://github.com/jnidzwetzki).
